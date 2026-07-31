@@ -1,0 +1,177 @@
+export type UserRole = 
+  | 'admin_master'
+  | 'admin_bidang'
+  | 'sekretaris'
+  | 'bendahara'
+  | 'wakil_ketua'
+  | 'ketua'
+  | 'anggota';
+
+export interface UserPersona {
+  role: UserRole;
+  name: string;
+  title: string;
+  avatar: string;
+  memberId?: string;
+}
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  email: string;
+  role: UserRole;          // Role fallback jika non-anggota, atau role otomatis jika terhubung ke memberId
+  memberId?: string;       // Optional link to Member. Null for non-member IT Admins.
+  status: 'aktif' | 'non-aktif';
+  createdAt: string;
+}
+
+export interface Member {
+  id: string;
+  nip?: string;
+  name: string;
+  jabatan: string; // e.g. "Ketua Bidang Pendidikan", "Anggota", "Sekretaris II"
+  unitKerja: string; // Instansi / Tempat Bekerja
+  pekerjaan?: string; // Pekerjaan / Profesi
+  golonganDarah?: string; // Golongan Darah (A, B, AB, O, -)
+  namaSuami?: string; // Nama Suami
+  namaAnak?: string; // Nama Anak-Anak
+  bidang: 'Pendidikan' | 'Ekonomi' | 'Sosial Budaya' | '-';
+
+
+
+
+  phone: string;
+  email: string;
+  status: 'Aktif' | 'Non-Aktif';
+  dateJoined: string;
+  avatar?: string;
+}
+
+export type ProposalStage = 
+  | 'stage_4_wakil_ketua'
+  | 'stage_5_ketua'
+  | 'approved'
+  | 'rejected'
+  | 'revision_requested';
+
+export interface ApprovalLog {
+  id: string;
+  stageName: string;
+  actorRole: UserRole;
+  actorName: string;
+  decision: 'approved' | 'rejected' | 'revision';
+  notes: string;
+  timestamp: string;
+}
+
+export interface ActivityProposal {
+  id: string;
+  title: string;
+  bidang: 'Pendidikan' | 'Ekonomi' | 'Sosial Budaya' | 'Sekretariat';
+  organizer: string;
+  background: string;
+  objective: string;
+  targetAudience: string;
+  estimatedBudget: number;
+  location: string;
+  startDate: string;
+  endDate: string;
+  currentStage: ProposalStage;
+  stageProgress: number; // 1 to 5
+  logs: ApprovalLog[];
+  createdBy: string;
+  creatorRole?: UserRole;
+  createdAt: string;
+  revisionComment?: string;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  activityId: string;
+  memberId?: string;
+  participantName: string;
+  nip?: string;
+  jabatan: string;
+  phone: string;
+  checkInTime: string;
+  signatureUrl: string; // Base64 Canvas Drawing
+  status: 'verified' | 'unverified';
+  verifiedBy?: string;
+  notes?: string;
+}
+
+export interface ExecutionReport {
+  id: string;
+  activityId: string;
+  activityTitle: string;
+  reportTitle: string;
+  background: string;
+  executionSummary: string;
+  totalParticipants: number;
+  actualBudget: number;
+  outcomeResults: string;
+  photoUrls: string[];
+  status: 'draft' | 'pending_ketua_review' | 'approved_published';
+  ketuaNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NewsArticle {
+  id: string;
+  title: string;
+  category: string;
+  author: string;
+  date: string;
+  summary: string;
+  content: string;
+  mainImage: string;
+  isPublished: boolean;
+  sourceReportId?: string;
+}
+
+export interface SiteConfig {
+  siteTitle: string;
+  subTitle?: string;
+  siteLogoUrl?: string;
+  faviconUrl?: string;
+  heroTitle: string;
+  heroSubtext: string;
+  heroCtaText?: string;
+  heroCtaAction?: 'scroll_berita' | 'scroll_agenda' | 'scroll_sambutan' | 'scroll_visi' | 'scroll_struktur' | 'open_admin' | 'custom_url';
+  heroCtaUrl?: string;
+  heroBannerUrl: string;
+
+  heroOverlayOpacity?: number; // 0 to 100
+  heroOverlayStyle?: 'dark' | 'burgundy' | 'navy' | 'subtle';
+  sambutanTagText?: string;
+  sambutanKetuaQuote?: string;
+  sambutanKetuaText: string;
+
+  visiTagText?: string;
+  visiTitle?: string;
+  visiSubtext?: string;
+  visiText: string;
+  misiList: string[];
+  strukturTagText?: string;
+  strukturTitle?: string;
+  strukturSubtext?: string;
+  beritaTagText?: string;
+  beritaTitle?: string;
+  beritaSubtext?: string;
+  agendaTagText?: string;
+  agendaTitle?: string;
+  agendaSubtext?: string;
+  address: string;
+  phone: string;
+  email: string;
+  facebook: string;
+  instagram: string;
+  youtube: string;
+  primaryThemeColor: string;
+  footerDescription?: string;
+  copyrightText?: string;
+}
+
+
+

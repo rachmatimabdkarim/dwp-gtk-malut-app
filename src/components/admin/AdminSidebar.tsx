@@ -1,0 +1,121 @@
+import React from 'react';
+import { useApp } from '../../context/AppContext';
+import { hasTabAccess, getRoleDescription, AdminSubTab } from '../../utils/RoleAccessControl';
+import { 
+  LayoutDashboard, 
+  CheckSquare,
+  Users, 
+  UserCheck,
+  Globe, 
+  Sparkles,
+  Info,
+  FileText
+} from 'lucide-react';
+
+export const AdminSidebar: React.FC = () => {
+  const { currentRole, activePersona, adminSubTab, setAdminSubTab, proposals, userAccounts } = useApp();
+
+  const roleInfo = getRoleDescription(currentRole);
+  const pendingApprovalCount = proposals.filter(p => p.currentStage !== 'approved' && p.currentStage !== 'rejected').length;
+
+  const rawNavItems = [
+    {
+      id: 'dashboard' as AdminSubTab,
+      label: 'Dashboard',
+      icon: LayoutDashboard,
+      badge: null
+    },
+    {
+      id: 'proposals' as AdminSubTab,
+      label: 'Workflow Proposal',
+      icon: CheckSquare,
+      badge: pendingApprovalCount > 0 ? pendingApprovalCount : null
+    },
+    {
+      id: 'members' as AdminSubTab,
+      label: 'Data Anggota',
+      icon: Users,
+      badge: null
+    },
+    {
+      id: 'users' as AdminSubTab,
+      label: 'Akun User & Hak Akses',
+      icon: UserCheck,
+      badge: userAccounts.length
+    },
+    {
+      id: 'cms' as AdminSubTab,
+      label: 'CMS Customizer',
+      icon: Globe,
+      badge: null
+    }
+  ];
+
+  // Dynamically filter nav items based on active role permissions
+  const navItems = rawNavItems.filter(item => hasTabAccess(currentRole, item.id));
+
+  return (
+    <aside className="w-56 bg-slate-900 text-slate-300 border-r border-slate-800 flex flex-col flex-shrink-0 min-h-[calc(100vh-60px)] p-3 space-y-4">
+      
+      {/* Role Active Info Card */}
+      <div className="bg-slate-950/80 p-3 rounded-2xl border border-slate-800 text-xs space-y-1.5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] uppercase font-bold text-dwp-gold tracking-wider">Akses Role Aktif</span>
+          <span className="text-sm">{roleInfo.icon}</span>
+        </div>
+        <div className="font-bold text-white text-xs truncate">
+          {activePersona.name}
+        </div>
+        <p className="text-[10px] text-slate-400 leading-tight">
+          {roleInfo.description}
+        </p>
+      </div>
+
+      <div className="space-y-1">
+        <p className="px-2 text-[9px] uppercase font-bold tracking-widest text-slate-500 mb-1.5 flex items-center justify-between">
+          <span>Menu Pengelolaan</span>
+          <span className="text-dwp-gold font-mono">[{navItems.length} Menu]</span>
+        </p>
+
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = adminSubTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setAdminSubTab(item.id)}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                isActive
+                  ? 'bg-dwp-burgundy text-white shadow border border-dwp-gold/40'
+                  : 'hover:bg-slate-800 text-slate-300 hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-dwp-gold' : 'text-slate-400'}`} />
+                <span>{item.label}</span>
+              </div>
+              {item.badge !== null && (
+                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold ${
+                  isActive ? 'bg-dwp-gold text-slate-950' : 'bg-slate-800 text-dwp-gold border border-slate-700'
+                }`}>
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Fase 0 Info Card */}
+      <div className="mt-auto bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-1.5">
+        <div className="flex items-center gap-1.5 text-dwp-gold font-bold text-[11px]">
+          <Info className="w-3.5 h-3.5" />
+          <span>Fase 0: Modul Fondasi</span>
+        </div>
+        <p className="text-[10px] text-slate-400 leading-relaxed">
+          Sistem difokuskan pada Data Anggota, Akun User & CMS. Modul proposal akan dirancang ulang tuntas satu per satu pada fase berikutnya.
+        </p>
+      </div>
+    </aside>
+  );
+};
