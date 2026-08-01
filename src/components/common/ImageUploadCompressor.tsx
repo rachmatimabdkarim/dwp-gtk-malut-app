@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { compressImage, CompressionResult, purgePreviousImageAsset } from '../../utils/imageCompressor';
-import { Upload, Image as ImageIcon, Sparkles, CheckCircle2, AlertCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { Upload, Image as ImageIcon, Sparkles, CheckCircle2, AlertCircle, RefreshCw, RotateCcw } from 'lucide-react';
 
 interface ImageUploadCompressorProps {
   label: string;
@@ -33,7 +33,7 @@ export const ImageUploadCompressor: React.FC<ImageUploadCompressorProps> = ({
     setErrorMsg(null);
 
     try {
-      // Auto purge previous image asset from storage/memory
+      // 1-Step Automatic Purge: Clean old image from memory/storage behind the scenes
       purgePreviousImageAsset(value);
 
       const result = await compressImage(file, maxWidth, maxHeight, quality);
@@ -46,7 +46,7 @@ export const ImageUploadCompressor: React.FC<ImageUploadCompressorProps> = ({
     }
   };
 
-  const handleReset = () => {
+  const handleClear = () => {
     purgePreviousImageAsset(value);
     onChange('');
     setLastResult(null);
@@ -71,17 +71,18 @@ export const ImageUploadCompressor: React.FC<ImageUploadCompressorProps> = ({
             )}
 
             <div>
-              <div className="flex items-center gap-2">
-                <label className="inline-flex items-center gap-2 bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow cursor-pointer transition-all">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* 1-Step Action Button */}
+                <label className="inline-flex items-center gap-2 bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow cursor-pointer transition-all hover:scale-[1.02]">
                   {isCompressing ? (
                     <>
                       <RefreshCw className="w-3.5 h-3.5 animate-spin text-dwp-gold" />
-                      <span>Mengompres Foto...</span>
+                      <span>Mengompres & Mengganti Foto...</span>
                     </>
                   ) : (
                     <>
                       <Upload className="w-3.5 h-3.5 text-dwp-gold" />
-                      <span>Pilih Foto dari Perangkat</span>
+                      <span>{value ? 'Ganti Foto (Otomatis Hapus Foto Lama)' : 'Pilih Foto dari Perangkat'}</span>
                     </>
                   )}
                   <input 
@@ -96,12 +97,11 @@ export const ImageUploadCompressor: React.FC<ImageUploadCompressorProps> = ({
                 {value && (
                   <button
                     type="button"
-                    onClick={handleReset}
-                    className="text-xs text-rose-600 font-semibold border border-rose-200 bg-white hover:bg-rose-50 px-3 py-2 rounded-xl flex items-center gap-1 transition-colors"
-                    title="Hapus Foto dan Bersihkan Storage Server"
+                    onClick={handleClear}
+                    className="text-[11px] text-slate-500 hover:text-rose-600 font-semibold underline px-1 py-1 transition-colors"
+                    title="Kosongkan Foto"
                   >
-                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                    <span>Hapus Foto</span>
+                    Kosongkan Foto
                   </button>
                 )}
               </div>
@@ -117,14 +117,14 @@ export const ImageUploadCompressor: React.FC<ImageUploadCompressorProps> = ({
             <div className="flex items-center justify-between font-bold">
               <span className="flex items-center gap-1 text-emerald-800">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Foto Berhasil Dikompres Cerdas (WebP HD)</span>
+                <span>Foto Berhasil Dikompres & Foto Lama Terhapus Otomatis</span>
               </span>
               <span className="bg-emerald-200 text-emerald-900 font-extrabold px-2 py-0.5 rounded-full text-[10px]">
                 ⚡ Hemat {lastResult.compressionRatio}% Storage
               </span>
             </div>
             <div className="text-[10px] text-emerald-700 font-mono">
-              Ukuran Asli: {lastResult.originalSizeKB} KB ➔ Terkompres: {lastResult.compressedSizeKB} KB (Dimensi: {lastResult.width}x{lastResult.height}px)
+              Ukuran Asli: {lastResult.originalSizeKB} KB ➔ Terkompres WebP: {lastResult.compressedSizeKB} KB ({lastResult.width}x{lastResult.height}px)
             </div>
           </div>
         )}
