@@ -85,6 +85,12 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
 
   const handleDecision = (decision: 'approved' | 'rejected' | 'revision') => {
     if (!selectedProposal) return;
+
+    if ((decision === 'rejected' || decision === 'revision') && !decisionNotes.trim()) {
+      alert(`⚠️ CATATAN ALASAN WAJIB DIISI:\n\nMohon berikan catatan arahan revisi atau alasan penolakan secara jelas agar pengusul kegiatan mengetahui poin yang harus diperbaiki.`);
+      return;
+    }
+
     advanceApproval(selectedProposal.id, decision, decisionNotes);
     setSelectedProposal(null);
     setDecisionNotes('');
@@ -456,13 +462,16 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 block">
-                Catatan Review / Masukan Verifikator:
+              <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                <span>Catatan Review / Masukan Verifikator:</span>
+                <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                  * Wajib diisi jika Minta Revisi / Tolak
+                </span>
               </label>
               <textarea
                 value={decisionNotes}
                 onChange={(e) => setDecisionNotes(e.target.value)}
-                placeholder="Tuliskan catatan verifikasi, arahan revisi, atau catatan persetujuan..."
+                placeholder="Tuliskan catatan verifikasi, arahan revisi, atau alasan penolakan..."
                 rows={3}
                 className="w-full p-3 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
               />
