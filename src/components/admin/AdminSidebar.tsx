@@ -3,10 +3,11 @@ import { useApp } from '../../context/AppContext';
 import { hasTabAccess, getRoleDescription, AdminSubTab } from '../../utils/RoleAccessControl';
 import { 
   LayoutDashboard, 
-  CheckSquare,
+  CheckSquare, 
   Users, 
-  UserCheck,
-  Globe
+  UserCheck, 
+  Globe,
+  ScrollText
 } from 'lucide-react';
 
 export const AdminSidebar: React.FC = () => {
@@ -44,6 +45,12 @@ export const AdminSidebar: React.FC = () => {
       id: 'cms' as AdminSubTab,
       label: 'CMS Customizer',
       icon: Globe,
+      badge: null
+    },
+    {
+      id: 'logs' as AdminSubTab,
+      label: 'Log Audit & Aktivitas',
+      icon: ScrollText,
       badge: null
     }
   ];

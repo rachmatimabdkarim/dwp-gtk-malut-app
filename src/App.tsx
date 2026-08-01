@@ -19,6 +19,7 @@ import { FiveStageApprovalWorkflow } from './components/admin/FiveStageApprovalW
 import { MemberManagement } from './components/admin/MemberManagement';
 import { UserManagement } from './components/admin/UserManagement';
 import { CMSCustomizer } from './components/admin/CMSCustomizer';
+import { SystemAuditLogs } from './components/admin/SystemAuditLogs';
 
 // Auth & Security Components
 import { LoginPage } from './components/auth/LoginPage';
@@ -91,6 +92,7 @@ const MainLayout: React.FC = () => {
               {adminSubTab === 'members' && <MemberManagement />}
               {adminSubTab === 'users' && <UserManagement />}
               {adminSubTab === 'cms' && <CMSCustomizer />}
+              {adminSubTab === 'logs' && <SystemAuditLogs />}
             </>
           )}
         </main>

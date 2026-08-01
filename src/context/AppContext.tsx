@@ -16,7 +16,8 @@ import {
   DynamicPermissionMatrix, 
   getDynamicPermissions, 
   saveDynamicPermissions, 
-  resetDynamicPermissionsToDefault 
+  resetDynamicPermissionsToDefault,
+  AdminSubTab
 } from '../utils/RoleAccessControl';
 
 export const getEffectiveRole = (user: UserAccount, membersList: Member[]): UserRole => {
@@ -603,8 +604,8 @@ interface AppContextType {
   
   activeTab: 'public' | 'admin';
   setActiveTab: (tab: 'public' | 'admin') => void;
-  adminSubTab: 'dashboard' | 'proposals' | 'members' | 'users' | 'cms';
-  setAdminSubTab: (tab: 'dashboard' | 'proposals' | 'members' | 'users' | 'cms') => void;
+  adminSubTab: AdminSubTab;
+  setAdminSubTab: (tab: AdminSubTab) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -658,9 +659,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [activeTab, setActiveTabState] = useState<'public' | 'admin'>('public');
-  const [adminSubTab, setAdminSubTabState] = useState<'dashboard' | 'proposals' | 'members' | 'users' | 'cms'>('dashboard');
+  const [adminSubTab, setAdminSubTabState] = useState<AdminSubTab>('dashboard');
 
-  const updateUrlPath = (tab: 'public' | 'admin', subTab?: 'dashboard' | 'proposals' | 'members' | 'users' | 'cms') => {
+  const updateUrlPath = (tab: 'public' | 'admin', subTab?: AdminSubTab) => {
     let path = '/';
     if (tab === 'admin') {
       path = `/admin/${subTab || 'dashboard'}`;
@@ -675,7 +676,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateUrlPath(tab, adminSubTab);
   };
 
-  const setAdminSubTab = (subTab: 'dashboard' | 'proposals' | 'members' | 'users' | 'cms') => {
+  const setAdminSubTab = (subTab: AdminSubTab) => {
     setAdminSubTabState(subTab);
     updateUrlPath('admin', subTab);
   };
@@ -690,6 +691,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         else if (path.includes('/members')) setAdminSubTabState('members');
         else if (path.includes('/users')) setAdminSubTabState('users');
         else if (path.includes('/cms')) setAdminSubTabState('cms');
+        else if (path.includes('/logs')) setAdminSubTabState('logs');
         else setAdminSubTabState('dashboard');
       } else {
         setActiveTabState('public');

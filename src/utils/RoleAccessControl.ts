@@ -5,7 +5,8 @@ export type AdminSubTab =
   | 'proposals'
   | 'members' 
   | 'users' 
-  | 'cms';
+  | 'cms'
+  | 'logs';
 
 export type CMSSection = 
   | 'identitas' 
@@ -29,12 +30,12 @@ export interface DynamicPermissionMatrix {
 
 // Default Access Control Matrix
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, AdminSubTab[]> = {
-  admin_master: ['dashboard', 'proposals', 'members', 'users', 'cms'],
-  ketua: ['dashboard', 'proposals', 'members', 'users', 'cms'],
-  wakil_ketua: ['dashboard', 'proposals', 'members', 'users'],
-  sekretaris: ['dashboard', 'proposals', 'members', 'cms'],
-  bendahara: ['dashboard', 'proposals', 'members'],
-  admin_bidang: ['dashboard', 'proposals', 'members'],
+  admin_master: ['dashboard', 'proposals', 'members', 'users', 'cms', 'logs'],
+  ketua: ['dashboard', 'proposals', 'members', 'users', 'cms', 'logs'],
+  wakil_ketua: ['dashboard', 'proposals', 'members', 'users', 'logs'],
+  sekretaris: ['dashboard', 'proposals', 'members', 'cms', 'logs'],
+  bendahara: ['dashboard', 'proposals', 'members', 'logs'],
+  admin_bidang: ['dashboard', 'proposals', 'members', 'logs'],
   anggota: ['dashboard', 'members']
 };
 
