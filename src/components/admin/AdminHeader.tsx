@@ -46,6 +46,7 @@ export const AdminHeader: React.FC = () => {
               <option value="bendahara">💰 Bendahara DWP (Keuangan & RAB)</option>
               <option value="wakil_ketua">🛡️ Wakil Ketua DWP (Verifikator Usulan)</option>
               <option value="ketua">👑 Ketua DWP (Persetujuan Akhir)</option>
+              <option value="anggota">👤 Anggota DWP (Anggota Biasa)</option>
             </select>
           </div>
         </div>
