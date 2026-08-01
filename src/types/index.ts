@@ -73,6 +73,15 @@ export interface CommitteeMember {
   phone?: string;
 }
 
+export interface CommitteeLog {
+  id: string;
+  stageName: string;
+  actorName: string;
+  decision: 'submitted' | 'verified' | 'approved' | 'revision';
+  notes: string;
+  timestamp: string;
+}
+
 export type CommitteeStatus = 
   | 'draft' 
   | 'pending_waket_verification' 
@@ -102,6 +111,7 @@ export interface ActivityProposal {
   committeeMembers?: CommitteeMember[];
   committeeStatus?: CommitteeStatus;
   committeeNotes?: string;
+  committeeLogs?: CommitteeLog[];
 }
 
 export interface AttendanceRecord {

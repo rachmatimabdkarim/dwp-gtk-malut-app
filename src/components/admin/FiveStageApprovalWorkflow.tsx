@@ -682,7 +682,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                     return;
                                   }
 
-                                  updateCommitteeStatus(detailProposal.id, 'pending_waket_verification');
+                                  updateCommitteeStatus(detailProposal.id, 'pending_waket_verification', 'Susunan panitia pelaksana diajukan untuk verifikasi Wakil Ketua.', activePersona.name);
                                   setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'pending_waket_verification' } : null);
                                   alert('✅ Usulan Susunan Panitia berhasil dikirimkan ke Wakil Ketua untuk verifikasi awal!');
                                 }}
@@ -700,7 +700,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                   onClick={() => {
                                     const notes = prompt('Masukkan Catatan Verifikasi Panitia (Opsional):', 'Susunan panitia sesuai dan diverifikasi.');
                                     if (notes === null) return;
-                                    updateCommitteeStatus(detailProposal.id, 'pending_ketua_approval', notes);
+                                    updateCommitteeStatus(detailProposal.id, 'pending_ketua_approval', notes, activePersona.name);
                                     setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'pending_ketua_approval', committeeNotes: notes } : null);
                                     alert('🛡️ Susunan Panitia Berhasil Diverifikasi! Diteruskan ke Ketua DWP untuk persetujuan akhir.');
                                   }}
@@ -713,7 +713,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                   onClick={() => {
                                     const notes = prompt('Masukkan Alasan Revisi Susunan Panitia:');
                                     if (!notes) return;
-                                    updateCommitteeStatus(detailProposal.id, 'revision_requested', notes);
+                                    updateCommitteeStatus(detailProposal.id, 'revision_requested', notes, activePersona.name);
                                     setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'revision_requested', committeeNotes: notes } : null);
                                     alert('⚠️ Permintaan revisi susunan panitia telah dikirimkan ke pengusul kegiatan.');
                                   }}
@@ -732,7 +732,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                   onClick={() => {
                                     const notes = prompt('Masukkan Catatan Persetujuan Ketua DWP (Opsional):', 'Disetujui resmi susunan panitia pelaksana.');
                                     if (notes === null) return;
-                                    updateCommitteeStatus(detailProposal.id, 'approved_by_ketua', notes);
+                                    updateCommitteeStatus(detailProposal.id, 'approved_by_ketua', notes, activePersona.name);
                                     setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'approved_by_ketua', committeeNotes: notes } : null);
                                     alert('👑 Susunan Panitia Pelaksana Berhasil Disetujui Resmi oleh Ketua DWP! Draf SK Panitia dapat dicetak oleh Sekretaris.');
                                   }}
@@ -745,7 +745,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                   onClick={() => {
                                     const notes = prompt('Masukkan Alasan Revisi Susunan Panitia dari Ketua DWP:');
                                     if (!notes) return;
-                                    updateCommitteeStatus(detailProposal.id, 'revision_requested', notes);
+                                    updateCommitteeStatus(detailProposal.id, 'revision_requested', notes, activePersona.name);
                                     setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'revision_requested', committeeNotes: notes } : null);
                                     alert('⚠️ Catatan revisi panitia telah dikirimkan ke pengusul kegiatan.');
                                   }}
@@ -827,6 +827,31 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
                                   )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Riwayat Verifikasi & Persetujuan Panitia */}
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                          <div className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
+                            <ShieldCheck className="w-4 h-4 text-dwp-burgundy" />
+                            <span>Riwayat Verifikasi & Persetujuan Panitia:</span>
+                          </div>
+
+                          {(!detailProposal.committeeLogs || detailProposal.committeeLogs.length === 0) ? (
+                            <p className="text-[11px] text-slate-400 italic">Belum ada catatan riwayat verifikasi panitia.</p>
+                          ) : (
+                            <div className="space-y-2 divide-y divide-slate-200">
+                              {detailProposal.committeeLogs.map((log) => (
+                                <div key={log.id} className="pt-2 first:pt-0 flex items-start justify-between text-xs gap-2">
+                                  <div>
+                                    <span className="font-bold text-slate-800">{log.actorName}</span>
+                                    <span className="text-slate-500"> ({log.stageName}): </span>
+                                    <span className="italic text-slate-700">"{log.notes}"</span>
+                                  </div>
+                                  <span className="text-[10px] text-slate-400 shrink-0 font-mono">{log.timestamp}</span>
                                 </div>
                               ))}
                             </div>

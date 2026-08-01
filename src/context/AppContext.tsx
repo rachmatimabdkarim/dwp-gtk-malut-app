@@ -12,7 +12,8 @@ import {
   ProposalStage,
   AppNotification,
   CommitteeMember,
-  CommitteeStatus
+  CommitteeStatus,
+  CommitteeLog
 } from '../types';
 import { apiService } from '../services/apiService';
 import { 
@@ -630,7 +631,7 @@ interface AppContextType {
   advanceApproval: (proposalId: string, decision: 'approved' | 'rejected' | 'revision', notes: string) => void;
   resubmitProposal: (proposalId: string, updated: Partial<ActivityProposal>) => void;
   updateProposalCommittee: (proposalId: string, committeeMembers: CommitteeMember[]) => void;
-  updateCommitteeStatus: (proposalId: string, status: CommitteeStatus, notes?: string) => void;
+  updateCommitteeStatus: (proposalId: string, status: CommitteeStatus, notes?: string, actorName?: string) => void;
   deleteProposal: (proposalId: string) => void;
   
   attendanceRecords: AttendanceRecord[];
@@ -1220,18 +1221,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, committeeMembers } : p));
   };
 
-  const updateCommitteeStatus = (proposalId: string, status: CommitteeStatus, notes?: string) => {
+  const updateCommitteeStatus = (proposalId: string, status: CommitteeStatus, notes?: string, actorName?: string) => {
     let targetProposalTitle = '';
     let creatorRole: UserRole = 'admin_bidang';
+    const timestampStr = new Date().toLocaleString('id-ID');
 
     setProposals(prev => prev.map(p => {
       if (p.id !== proposalId) return p;
       targetProposalTitle = p.title;
       creatorRole = p.creatorRole || 'admin_bidang';
+
+      let stageName = 'Pengajuan Panitia Pelaksana';
+      let decision: 'submitted' | 'verified' | 'approved' | 'revision' = 'submitted';
+
+      if (status === 'pending_waket_verification') {
+        stageName = 'Pengajuan Panitia Pelaksana';
+        decision = 'submitted';
+      } else if (status === 'pending_ketua_approval') {
+        stageName = 'Verifikasi Wakil Ketua';
+        decision = 'verified';
+      } else if (status === 'approved_by_ketua') {
+        stageName = 'Persetujuan Ketua DWP';
+        decision = 'approved';
+      } else if (status === 'revision_requested') {
+        stageName = 'Permintaan Revisi Panitia';
+        decision = 'revision';
+      }
+
+      const newLog: CommitteeLog = {
+        id: `commlog-${Date.now()}`,
+        stageName,
+        actorName: actorName || activePersona.name || 'Pengurus DWP',
+        decision,
+        notes: notes || (status === 'pending_waket_verification' ? 'Susunan panitia diajukan untuk verifikasi.' : 'Tindak lanjut susunan panitia.'),
+        timestamp: timestampStr
+      };
+
+      const existingLogs = p.committeeLogs || [];
+
       return {
         ...p,
         committeeStatus: status,
-        committeeNotes: notes
+        committeeNotes: notes,
+        committeeLogs: [...existingLogs, newLog]
       };
     }));
 
