@@ -65,6 +65,14 @@ export interface ApprovalLog {
   timestamp: string;
 }
 
+export interface CommitteeMember {
+  id: string;
+  roleTitle: 'Ketua Panitia' | 'Sekretaris Panitia' | 'Bendahara Panitia' | 'Seksi Acara' | 'Seksi Humas & Logistik' | 'Anggota Panitia';
+  memberName: string;
+  memberId?: string;
+  phone?: string;
+}
+
 export interface ActivityProposal {
   id: string;
   title: string;
@@ -84,6 +92,7 @@ export interface ActivityProposal {
   creatorRole?: UserRole;
   createdAt: string;
   revisionComment?: string;
+  committeeMembers?: CommitteeMember[];
 }
 
 export interface AttendanceRecord {

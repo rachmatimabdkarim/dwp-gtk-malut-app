@@ -32,7 +32,18 @@ import {
 } from 'lucide-react';
 
 export const FiveStageApprovalWorkflow: React.FC = () => {
-  const { proposals, addProposal, advanceApproval, resubmitProposal, deleteProposal, activePersona, members, currentAccount } = useApp();
+  const { 
+    proposals, 
+    addProposal, 
+    advanceApproval, 
+    resubmitProposal, 
+    updateProposalCommittee,
+    deleteProposal, 
+    activePersona, 
+    currentRole,
+    members, 
+    currentAccount 
+  } = useApp();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<ActivityProposal | null>(null);
@@ -42,6 +53,11 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
   // Activity Workspace Detail Modal State
   const [detailProposal, setDetailProposal] = useState<ActivityProposal | null>(null);
   const [activeTabWorkspace, setActiveTabWorkspace] = useState<'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj'>('usulan');
+
+  // Committee Modal State
+  const [showAddCommitteeModal, setShowAddCommitteeModal] = useState(false);
+  const [committeeMemberId, setCommitteeMemberId] = useState('');
+  const [committeeRoleTitle, setCommitteeRoleTitle] = useState<'Ketua Panitia' | 'Sekretaris Panitia' | 'Bendahara Panitia' | 'Seksi Acara' | 'Seksi Humas & Logistik' | 'Anggota Panitia'>('Anggota Panitia');
 
   // Form State
   const [title, setTitle] = useState('');
@@ -158,6 +174,43 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     advanceApproval(selectedProposal.id, decision, decisionNotes);
     setSelectedProposal(null);
     setDecisionNotes('');
+  };
+
+  const handleAddCommitteeMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!detailProposal) return;
+    if (!committeeMemberId) {
+      alert('Pilih anggota DWP terlebih dahulu!');
+      return;
+    }
+
+    const targetMem = members.find(m => m.id === committeeMemberId);
+    const newCommItem = {
+      id: `comm-${Date.now()}`,
+      roleTitle: committeeRoleTitle,
+      memberName: targetMem ? targetMem.name : 'Anggota DWP',
+      memberId: committeeMemberId,
+      phone: targetMem ? targetMem.phone : undefined
+    };
+
+    const currentComm = detailProposal.committeeMembers || [];
+    const updatedComm = [...currentComm, newCommItem];
+
+    updateProposalCommittee(detailProposal.id, updatedComm);
+    setDetailProposal(prev => prev ? { ...prev, committeeMembers: updatedComm } : null);
+    setShowAddCommitteeModal(false);
+    setCommitteeMemberId('');
+  };
+
+  const handleRemoveCommitteeMember = (commId: string) => {
+    if (!detailProposal) return;
+    if (!confirm('Apakah Anda yakin ingin menghapus susunan panitia ini?')) return;
+
+    const currentComm = detailProposal.committeeMembers || [];
+    const updatedComm = currentComm.filter(c => c.id !== commId);
+
+    updateProposalCommittee(detailProposal.id, updatedComm);
+    setDetailProposal(prev => prev ? { ...prev, committeeMembers: updatedComm } : null);
   };
 
   const canPersonaActOnStage = (proposal: ActivityProposal) => {
@@ -499,42 +552,97 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
               )}
 
               {/* TAB 2: KEPANITIAAN PELAKSANA */}
-              {activeTabWorkspace === 'panitia' && (
-                <div className="space-y-4">
-                  {detailProposal.currentStage !== 'approved' ? (
-                    <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-amber-900 space-y-1">
-                      <div className="font-bold flex items-center gap-2 text-xs">
-                        <Lock className="w-4 h-4 text-amber-700" />
-                        <span>Pembentukan Panitia Terkunci (Menunggu Approval)</span>
-                      </div>
-                      <p className="text-[11px] text-amber-800">
-                        Penunjukan Panitia Pelaksana dapat dilakukan setelah kegiatan ini resmi disetujui oleh <strong>Ketua DWP</strong>.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                      <div className="font-bold text-slate-900 flex items-center justify-between">
-                        <span>Panitia Pelaksana Kegiatan:</span>
-                        <button className="bg-dwp-burgundy text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow flex items-center gap-1">
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Pilih Anggota Panitia</span>
-                        </button>
-                      </div>
+              {activeTabWorkspace === 'panitia' && (() => {
+                const isProposer = detailProposal.createdBy === activePersona.name || 
+                                   detailProposal.creatorRole === currentRole || 
+                                   currentRole === 'admin_master';
+                const commList = detailProposal.committeeMembers || [];
 
-                      <div className="grid sm:grid-cols-2 gap-3 text-xs">
-                        <div className="bg-white p-3 rounded-xl border border-slate-200">
-                          <span className="text-slate-400 block text-[10px]">Ketua Panitia:</span>
-                          <strong className="text-slate-800 text-sm">Ny. Mariam Syaiful, S.Sos</strong>
+                return (
+                  <div className="space-y-4">
+                    {detailProposal.currentStage !== 'approved' ? (
+                      <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-amber-900 space-y-1">
+                        <div className="font-bold flex items-center gap-2 text-xs">
+                          <Lock className="w-4 h-4 text-amber-700" />
+                          <span>Pembentukan Panitia Terkunci (Menunggu Persetujuan Ketua DWP)</span>
                         </div>
-                        <div className="bg-white p-3 rounded-xl border border-slate-200">
-                          <span className="text-slate-400 block text-[10px]">Sekretaris Panitia:</span>
-                          <strong className="text-slate-800 text-sm">Ny. Salmawati, SE</strong>
+                        <p className="text-[11px] text-amber-800">
+                          Penunjukan Panitia Pelaksana dapat dilakukan setelah kegiatan ini resmi disetujui oleh <strong>Ketua DWP</strong>.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {!isProposer && (
+                          <div className="bg-sky-50 border border-sky-200 p-3.5 rounded-2xl text-sky-900 flex items-start gap-2.5">
+                            <Lock className="w-4 h-4 text-sky-700 shrink-0 mt-0.5" />
+                            <div className="text-xs space-y-0.5">
+                              <span className="font-bold block">Wewenang Khusus Pengusul Kegiatan ({detailProposal.createdBy})</span>
+                              <p className="text-[11px] text-sky-800 leading-relaxed">
+                                Penambahan & penunjukan susunan Panitia Pelaksana hanya dapat dilakukan oleh Pengusul Kegiatan yang bersangkutan (<strong>{detailProposal.createdBy}</strong>).
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                          <div className="font-bold text-slate-900 flex items-center justify-between">
+                            <span className="flex items-center gap-2">
+                              <Users className="w-4 h-4 text-dwp-burgundy" />
+                              <span>Susunan Panitia Pelaksana ({commList.length} Orang):</span>
+                            </span>
+
+                            {isProposer && (
+                              <button 
+                                onClick={() => setShowAddCommitteeModal(true)}
+                                className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all"
+                              >
+                                <Plus className="w-3.5 h-3.5 text-dwp-gold" />
+                                <span>Tambah Panitia</span>
+                              </button>
+                            )}
+                          </div>
+
+                          {commList.length === 0 ? (
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 text-center text-slate-500 text-xs space-y-1">
+                              <Users className="w-6 h-6 text-slate-400 mx-auto mb-1" />
+                              <p className="font-semibold text-slate-700">Belum ada panitia yang ditunjuk.</p>
+                              {isProposer ? (
+                                <p className="text-[11px] text-slate-500">Klik tombol "Tambah Panitia" di atas untuk menyusun panitia pelaksana kegiatan.</p>
+                              ) : (
+                                <p className="text-[11px] text-slate-500">Menunggu pengusul kegiatan ({detailProposal.createdBy}) menyusun panitia.</p>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="grid sm:grid-cols-2 gap-3 text-xs">
+                              {commList.map((comm) => (
+                                <div key={comm.id} className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between gap-2 shadow-sm">
+                                  <div className="space-y-0.5">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-dwp-burgundy/10 text-dwp-burgundy">
+                                      {comm.roleTitle}
+                                    </span>
+                                    <strong className="text-slate-900 block text-xs mt-1">{comm.memberName}</strong>
+                                    {comm.phone && <span className="text-[10px] text-slate-400 block">📞 {comm.phone}</span>}
+                                  </div>
+
+                                  {isProposer && (
+                                    <button
+                                      onClick={() => handleRemoveCommitteeMember(comm.id)}
+                                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                      title="Hapus dari Panitia"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* TAB 3: PERSURATAN & SK */}
               {activeTabWorkspace === 'sk' && (
@@ -1016,6 +1124,86 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
               >
                 <Send className="w-4 h-4" />
                 <span>Kirim Usulan Kegiatan</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Modal Tambah Anggota Panitia (Khusus Pengusul Kegiatan) */}
+      {showAddCommitteeModal && detailProposal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <form 
+            onSubmit={handleAddCommitteeMember}
+            className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-serif font-bold text-slate-900 text-base">
+                  Tambah Panitia Pelaksana
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Kegiatan: <strong>{detailProposal.title}</strong>
+                </p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowAddCommitteeModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Jabatan / Posisi Panitia *</label>
+                <select
+                  value={committeeRoleTitle}
+                  onChange={(e: any) => setCommitteeRoleTitle(e.target.value)}
+                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-semibold text-slate-900 bg-white"
+                >
+                  <option value="Ketua Panitia">👤 Ketua Panitia</option>
+                  <option value="Sekretaris Panitia">📜 Sekretaris Panitia</option>
+                  <option value="Bendahara Panitia">💰 Bendahara Panitia</option>
+                  <option value="Seksi Acara">🎤 Seksi Acara</option>
+                  <option value="Seksi Humas & Logistik">📢 Seksi Humas & Logistik</option>
+                  <option value="Anggota Panitia">👥 Anggota Panitia</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Pilih Anggota DWP *</label>
+                <select
+                  required
+                  value={committeeMemberId}
+                  onChange={(e) => setCommitteeMemberId(e.target.value)}
+                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-semibold text-slate-900 bg-white"
+                >
+                  <option value="">-- Pilih Nama Anggota DWP --</option>
+                  {members.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.jabatan} - {m.unitKerja || 'GTK Malut'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex justify-end gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setShowAddCommitteeModal(false)}
+                className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-bold px-4 py-2 rounded-xl shadow flex items-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5 text-dwp-gold" />
+                <span>Simpan Panitia</span>
               </button>
             </div>
           </form>

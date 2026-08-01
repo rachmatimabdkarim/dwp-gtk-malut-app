@@ -10,7 +10,8 @@ import {
   NewsArticle, 
   SiteConfig,
   ProposalStage,
-  AppNotification
+  AppNotification,
+  CommitteeMember
 } from '../types';
 import { apiService } from '../services/apiService';
 import { 
@@ -626,6 +627,7 @@ interface AppContextType {
   addProposal: (proposal: Omit<ActivityProposal, 'id' | 'currentStage' | 'stageProgress' | 'logs' | 'createdAt'>) => void;
   advanceApproval: (proposalId: string, decision: 'approved' | 'rejected' | 'revision', notes: string) => void;
   resubmitProposal: (proposalId: string, updated: Partial<ActivityProposal>) => void;
+  updateProposalCommittee: (proposalId: string, committeeMembers: CommitteeMember[]) => void;
   deleteProposal: (proposalId: string) => void;
   
   attendanceRecords: AttendanceRecord[];
@@ -1187,6 +1189,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const updateProposalCommittee = (proposalId: string, committeeMembers: CommitteeMember[]) => {
+    setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, committeeMembers } : p));
+  };
+
   const deleteProposal = (proposalId: string) => {
     setProposals(prev => {
       const updated = prev.filter(p => p.id !== proposalId);
@@ -1313,6 +1319,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addProposal,
       advanceApproval,
       resubmitProposal,
+      updateProposalCommittee,
       deleteProposal,
       attendanceRecords,
       addAttendanceRecord,
