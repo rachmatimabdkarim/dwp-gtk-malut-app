@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { NewsArticle } from '../../types';
+import { formatDateDDMMYYYY } from '../../utils/dateFormatter';
 import { Newspaper, Calendar, User, ArrowRight, X, CheckCircle, Tag } from 'lucide-react';
 
 export const NewsSection: React.FC = () => {
@@ -55,7 +56,7 @@ export const NewsSection: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-4 text-xs text-slate-500">
                       <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5 text-dwp-burgundy" /> {article.date}
+                        <Calendar className="w-3.5 h-3.5 text-dwp-burgundy" /> {formatDateDDMMYYYY(article.date)}
                       </span>
                       <span className="flex items-center gap-1">
                         <User className="w-3.5 h-3.5 text-dwp-burgundy" /> {article.author}

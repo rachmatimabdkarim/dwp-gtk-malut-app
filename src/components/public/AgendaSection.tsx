@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ActivityProposal } from '../../types';
+import { formatDateRangeDDMMYYYY } from '../../utils/dateFormatter';
 import { Calendar, MapPin, Clock, PenTool, CheckCircle, FileText, ArrowRight } from 'lucide-react';
 
 export const AgendaSection: React.FC = () => {
@@ -53,7 +54,7 @@ export const AgendaSection: React.FC = () => {
                   <div className="grid sm:grid-cols-2 gap-2 text-xs text-slate-600">
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-dwp-burgundy" />
-                      <span>{agenda.startDate} s.d {agenda.endDate}</span>
+                      <span>{formatDateRangeDDMMYYYY(agenda.startDate, agenda.endDate)}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-dwp-burgundy" />

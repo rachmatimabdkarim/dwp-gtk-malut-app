@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
 import { hasTabAccess } from '../../utils/RoleAccessControl';
+import { formatDateRangeDDMMYYYY } from '../../utils/dateFormatter';
 import { 
   Users, 
   UserCheck, 
@@ -186,7 +187,7 @@ export const DashboardOverview: React.FC = () => {
                   <span className="font-bold text-slate-900">{p.title}</span>
                 </div>
                 <div className="text-[11px] text-slate-500">
-                  Pengusul: <strong>{p.createdBy}</strong> | Pelaksanaan: <strong>{p.startDate} s.d. {p.endDate}</strong>
+                  Pengusul: <strong>{p.createdBy}</strong> | Pelaksanaan: <strong>{formatDateRangeDDMMYYYY(p.startDate, p.endDate)}</strong>
                 </div>
               </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ActivityProposal, ProposalStage } from '../../types';
+import { formatDateRangeDDMMYYYY, formatDateDDMMYYYY } from '../../utils/dateFormatter';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -259,7 +260,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     <span>•</span>
                     <span>Estimasi RAB: <strong className="text-emerald-700">Rp {proposal.estimatedBudget.toLocaleString('id-ID')}</strong></span>
                     <span>•</span>
-                    <span>Pelaksanaan: <strong className="text-slate-800">{proposal.startDate} s.d. {proposal.endDate}</strong></span>
+                    <span>Pelaksanaan: <strong className="text-slate-800">{formatDateRangeDDMMYYYY(proposal.startDate, proposal.endDate)}</strong></span>
                   </div>
                 </div>
 
@@ -452,7 +453,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-slate-500 block text-[10px]">Tanggal Pelaksanaan:</span>
-                      <strong className="text-slate-800">{detailProposal.startDate} s.d. {detailProposal.endDate}</strong>
+                      <strong className="text-slate-800">{formatDateRangeDDMMYYYY(detailProposal.startDate, detailProposal.endDate)}</strong>
                     </div>
                     <div>
                       <span className="text-slate-500 block text-[10px]">Lokasi Pelaksanaan:</span>

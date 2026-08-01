@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { formatDateDDMMYYYY } from '../../utils/dateFormatter';
 import { 
   ScrollText, 
   Search, 
@@ -321,7 +322,7 @@ export const SystemAuditLogs: React.FC = () => {
 
                   <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1.5 shrink-0">
                     <Clock className="w-3 h-3 text-slate-400" />
-                    <span>{log.timestamp}</span>
+                    <span>{formatDateDDMMYYYY(log.timestamp)}</span>
                   </div>
                 </div>
 
