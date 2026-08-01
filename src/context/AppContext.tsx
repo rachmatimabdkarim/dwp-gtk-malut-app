@@ -20,6 +20,7 @@ import {
   getDynamicPermissions, 
   saveDynamicPermissions, 
   resetDynamicPermissionsToDefault,
+  canViewProposalDetail,
   AdminSubTab
 } from '../utils/RoleAccessControl';
 
@@ -658,6 +659,12 @@ interface AppContextType {
   setActiveTab: (tab: 'public' | 'admin') => void;
   adminSubTab: AdminSubTab;
   setAdminSubTab: (tab: AdminSubTab) => void;
+
+  focusedProposalId: string | null;
+  setFocusedProposalId: (id: string | null) => void;
+  focusedWorkspaceTab: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj';
+  setFocusedWorkspaceTab: (tab: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj') => void;
+  openProposalWorkspace: (proposalId: string, workspaceTab?: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -826,12 +833,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('dwp_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
+  const [focusedProposalId, setFocusedProposalId] = useState<string | null>(null);
+  const [focusedWorkspaceTab, setFocusedWorkspaceTab] = useState<'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj'>('usulan');
+
   const markNotificationAsRead = (id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
   };
 
   const markAllNotificationsAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  const openProposalWorkspace = (proposalId: string, workspaceTab: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj' = 'usulan') => {
+    const targetProposal = proposals.find(p => p.id === proposalId);
+    if (!targetProposal) return;
+
+    const canView = canViewProposalDetail(currentRole, activePersona.name, targetProposal);
+    if (!canView) {
+      alert(`🔒 AKSES DETIL TERBATAS:\n\nSebagai Ketua Bidang, Anda hanya dapat membuka detil kegiatan yang Anda usulkan sendiri.\n\nDetil kegiatan "${targetProposal.title}" ini hanya dapat dibuka oleh Pengusul (${targetProposal.createdBy}) atau Pimpinan (Ketua, Wakil, Sekretaris).`);
+      return;
+    }
+
+    setAdminSubTab('proposals');
+    setFocusedProposalId(proposalId);
+    setFocusedWorkspaceTab(workspaceTab);
   };
 
 
@@ -1430,7 +1455,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setAdminSubTab,
       notifications,
       markNotificationAsRead,
-      markAllNotificationsAsRead
+      markAllNotificationsAsRead,
+      focusedProposalId,
+      setFocusedProposalId,
+      focusedWorkspaceTab,
+      setFocusedWorkspaceTab,
+      openProposalWorkspace
     }}>
       {children}
     </AppContext.Provider>

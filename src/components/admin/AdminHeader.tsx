@@ -13,7 +13,8 @@ export const AdminHeader: React.FC = () => {
     logout,
     notifications,
     markNotificationAsRead,
-    markAllNotificationsAsRead
+    markAllNotificationsAsRead,
+    openProposalWorkspace
   } = useApp();
 
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
@@ -97,8 +98,19 @@ export const AdminHeader: React.FC = () => {
                       key={n.id} 
                       onClick={() => {
                         markNotificationAsRead(n.id);
-                        setAdminSubTab('proposals');
                         setShowNotifDropdown(false);
+
+                        if (n.proposalId) {
+                          let targetTab: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj' = 'usulan';
+                          if (n.title.toLowerCase().includes('panitia')) {
+                            targetTab = 'panitia';
+                          } else if (n.type === 'sk_pengarsipan' || n.title.toLowerCase().includes('sk')) {
+                            targetTab = 'sk';
+                          }
+                          openProposalWorkspace(n.proposalId, targetTab);
+                        } else {
+                          setAdminSubTab('proposals');
+                        }
                       }}
                       className={`p-3.5 transition-colors cursor-pointer space-y-1 ${
                         !n.isRead ? 'bg-amber-50/60 border-l-4 border-dwp-burgundy' : 'hover:bg-slate-50'

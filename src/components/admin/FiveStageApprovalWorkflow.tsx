@@ -44,7 +44,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     activePersona, 
     currentRole,
     members, 
-    currentAccount 
+    currentAccount,
+    focusedProposalId,
+    setFocusedProposalId,
+    focusedWorkspaceTab
   } = useApp();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -55,6 +58,17 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
   // Activity Workspace Detail Modal State
   const [detailProposal, setDetailProposal] = useState<ActivityProposal | null>(null);
   const [activeTabWorkspace, setActiveTabWorkspace] = useState<'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj'>('usulan');
+
+  // Auto open proposal workspace when triggered by notification or global focus
+  React.useEffect(() => {
+    if (focusedProposalId) {
+      const targetP = proposals.find(p => p.id === focusedProposalId);
+      if (targetP) {
+        setDetailProposal(targetP);
+        setActiveTabWorkspace(focusedWorkspaceTab);
+      }
+    }
+  }, [focusedProposalId, focusedWorkspaceTab, proposals]);
 
   // Committee Modal State
   const [showAddCommitteeModal, setShowAddCommitteeModal] = useState(false);
@@ -478,7 +492,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
               </div>
 
               <button 
-                onClick={() => setDetailProposal(null)} 
+                onClick={() => {
+                  setDetailProposal(null);
+                  setFocusedProposalId(null);
+                }} 
                 className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors shrink-0"
               >
                 <X className="w-5 h-5" />
