@@ -12,10 +12,13 @@ import {
 } from 'lucide-react';
 
 export const AdminSidebar: React.FC = () => {
-  const { currentRole, activePersona, adminSubTab, setAdminSubTab, proposals, userAccounts } = useApp();
+  const { currentRole, activePersona, adminSubTab, setAdminSubTab, proposals, notifications } = useApp();
 
   const roleInfo = getRoleDescription(currentRole);
   const pendingApprovalCount = proposals.filter(p => p.currentStage !== 'approved' && p.currentStage !== 'rejected').length;
+  const unreadRoleNotifs = notifications.filter(n => (n.targetRole === currentRole || n.targetRole === 'all') && !n.isRead).length;
+
+  const activityBadge = unreadRoleNotifs > 0 ? unreadRoleNotifs : (pendingApprovalCount > 0 ? pendingApprovalCount : null);
 
   const rawNavItems = [
     {
@@ -28,7 +31,7 @@ export const AdminSidebar: React.FC = () => {
       id: 'proposals' as AdminSubTab,
       label: 'Kegiatan',
       icon: CheckSquare,
-      badge: pendingApprovalCount > 0 ? pendingApprovalCount : null
+      badge: activityBadge
     },
     {
       id: 'members' as AdminSubTab,

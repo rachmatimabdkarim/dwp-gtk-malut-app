@@ -9,7 +9,8 @@ import {
   ExecutionReport, 
   NewsArticle, 
   SiteConfig,
-  ProposalStage
+  ProposalStage,
+  AppNotification
 } from '../types';
 import { apiService } from '../services/apiService';
 import { 
@@ -410,6 +411,29 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
   }
 ];
 
+const INITIAL_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: 'notif-001',
+    targetRole: 'bendahara',
+    title: '💰 Pemberitahuan Pencairan Dana RAB',
+    message: 'Usulan Kegiatan "Bhakti Sosial Peringatan Hari Kartini & Penyerahan Beasiswa DWP" telah disetujui resmi oleh Ketua DWP. Anggaran Rp 25.000.000 siap diproses.',
+    timestamp: '05/07/2026 10:00',
+    isRead: false,
+    type: 'rab_pencairan',
+    proposalId: 'prop-003'
+  },
+  {
+    id: 'notif-002',
+    targetRole: 'sekretaris',
+    title: '📜 Pemberitahuan Persuratan & SK',
+    message: 'Usulan Kegiatan "Bhakti Sosial Peringatan Hari Kartini & Penyerahan Beasiswa DWP" telah disetujui resmi oleh Ketua DWP. Draf SK Panitia, Surat Tugas, & Undangan siap dibuat.',
+    timestamp: '05/07/2026 10:00',
+    isRead: false,
+    type: 'sk_pengarsipan',
+    proposalId: 'prop-003'
+  }
+];
+
 // Mock Signature Canvas Data URL
 const MOCK_SIGNATURE = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"><path d="M 20 40 Q 60 10 100 50 T 180 30" stroke="%230f172a" stroke-width="3" fill="none"/></svg>';
 
@@ -602,6 +626,10 @@ interface AppContextType {
   updatePermissionMatrix: (matrix: DynamicPermissionMatrix) => void;
   resetPermissionMatrix: () => void;
   
+  notifications: AppNotification[];
+  markNotificationAsRead: (id: string) => void;
+  markAllNotificationsAsRead: () => void;
+  
   activeTab: 'public' | 'admin';
   setActiveTab: (tab: 'public' | 'admin') => void;
   adminSubTab: AdminSubTab;
@@ -647,6 +675,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
     const saved = localStorage.getItem('dwp_site_config');
     return saved ? JSON.parse(saved) : INITIAL_SITE_CONFIG;
+  });
+
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
+    const saved = localStorage.getItem('dwp_notifications');
+    return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -764,6 +797,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       faviconLink.href = siteConfig.faviconUrl;
     }
   }, [siteConfig]);
+
+  useEffect(() => {
+    localStorage.setItem('dwp_notifications', JSON.stringify(notifications));
+  }, [notifications]);
+
+  const markNotificationAsRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+
+  const markAllNotificationsAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
 
 
   const basePersona = USER_PERSONAS[currentRole] || USER_PERSONAS.admin_master;
@@ -941,6 +986,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           notes: '📬 Tembusan otomatis dikirim ke Bendahara (Pencairan Dana) & Sekretaris (Pengarsipan & Agenda).',
           timestamp: new Date().toLocaleString('id-ID')
         });
+
+        // Trigger real-time notifications for Bendahara & Sekretaris
+        setTimeout(() => {
+          const timestampStr = new Date().toLocaleString('id-ID');
+          setNotifications(prevNotifs => [
+            {
+              id: `notif-bendahara-${Date.now()}`,
+              targetRole: 'bendahara',
+              title: '💰 Pemberitahuan Pencairan Dana RAB',
+              message: `Usulan Kegiatan "${p.title}" telah disetujui resmi oleh Ketua DWP. Anggaran Rp ${p.estimatedBudget.toLocaleString('id-ID')} siap diproses pencairan.`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'rab_pencairan',
+              proposalId: p.id
+            },
+            {
+              id: `notif-sekretaris-${Date.now() + 1}`,
+              targetRole: 'sekretaris',
+              title: '📜 Pemberitahuan Persuratan & SK',
+              message: `Usulan Kegiatan "${p.title}" telah disetujui resmi oleh Ketua DWP. Draf SK Panitia, Surat Tugas, & Undangan siap dibuat.`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'sk_pengarsipan',
+              proposalId: p.id
+            },
+            {
+              id: `notif-pengusul-${Date.now() + 2}`,
+              targetRole: p.creatorRole || 'admin_bidang',
+              title: '🎉 Proposal Disetujui Resmi!',
+              message: `Usulan Kegiatan "${p.title}" yang Anda ajukan telah disetujui resmi oleh Ketua DWP.`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'approved',
+              proposalId: p.id
+            },
+            ...prevNotifs
+          ]);
+        }, 50);
       }
 
       return {
@@ -1123,7 +1206,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       activeTab,
       setActiveTab,
       adminSubTab,
-      setAdminSubTab
+      setAdminSubTab,
+      notifications,
+      markNotificationAsRead,
+      markAllNotificationsAsRead
     }}>
       {children}
     </AppContext.Provider>

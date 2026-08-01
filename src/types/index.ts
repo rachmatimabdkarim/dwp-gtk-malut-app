@@ -118,6 +118,17 @@ export interface ExecutionReport {
   updatedAt: string;
 }
 
+export interface AppNotification {
+  id: string;
+  targetRole: UserRole | 'all';
+  title: string;
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+  type: 'approved' | 'revision' | 'rejected' | 'new_proposal' | 'rab_pencairan' | 'sk_pengarsipan';
+  proposalId?: string;
+}
+
 export interface NewsArticle {
   id: string;
   title: string;

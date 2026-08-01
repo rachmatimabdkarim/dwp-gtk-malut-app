@@ -10,7 +10,8 @@ import {
   Sparkles, 
   Lock,
   CheckSquare,
-  Calendar
+  Calendar,
+  BellRing
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
@@ -20,8 +21,15 @@ export const DashboardOverview: React.FC = () => {
     members, 
     userAccounts,
     proposals,
-    setAdminSubTab 
+    setAdminSubTab,
+    notifications,
+    markNotificationAsRead
   } = useApp();
+
+  const roleNotifs = notifications.filter(n => 
+    (n.targetRole === currentRole || n.targetRole === 'all')
+  );
+  const unreadNotifs = roleNotifs.filter(n => !n.isRead);
 
   const canAccessProposals = hasTabAccess(currentRole, 'proposals');
   const canAccessMembers = hasTabAccess(currentRole, 'members');
@@ -68,6 +76,56 @@ export const DashboardOverview: React.FC = () => {
           </button>
         )}
       </div>
+
+      {/* Role Notification Alert Banner (Especially for Bendahara & Sekretaris) */}
+      {roleNotifs.length > 0 && (
+        <div className="bg-gradient-to-r from-amber-50 via-sky-50 to-emerald-50 rounded-2xl p-4 border border-amber-200 shadow-sm space-y-3">
+          <div className="flex items-center justify-between border-b border-amber-200/60 pb-2">
+            <div className="flex items-center gap-2 font-serif font-bold text-slate-900 text-sm">
+              <BellRing className="w-4 h-4 text-dwp-burgundy" />
+              <span>Notifikasi Aksi Role: {activePersona.title}</span>
+            </div>
+            <span className="bg-dwp-burgundy text-dwp-gold font-bold text-[10px] px-2.5 py-0.5 rounded-full">
+              {unreadNotifs.length} Belum Dibaca
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {roleNotifs.slice(0, 3).map((n) => (
+              <div 
+                key={n.id}
+                onClick={() => {
+                  markNotificationAsRead(n.id);
+                  setAdminSubTab('proposals');
+                }}
+                className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                  !n.isRead 
+                    ? 'bg-white border-amber-300 shadow-sm hover:border-dwp-burgundy' 
+                    : 'bg-slate-50/80 border-slate-200 text-slate-600'
+                }`}
+              >
+                <div className="space-y-0.5">
+                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>{n.title}</span>
+                    {!n.isRead && (
+                      <span className="text-[9px] bg-rose-500 text-white font-bold px-1.5 py-0.2 rounded">
+                        BARU
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
+                    {n.message}
+                  </p>
+                </div>
+                <button className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-bold px-3 py-1.5 rounded-lg text-[10px] shadow flex items-center gap-1 shrink-0 self-start sm:self-auto">
+                  <span>Buka Kegiatan</span>
+                  <ArrowRight className="w-3 h-3 text-dwp-gold" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Clean 4 KPI Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
