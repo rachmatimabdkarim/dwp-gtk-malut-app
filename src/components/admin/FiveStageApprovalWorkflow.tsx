@@ -65,22 +65,41 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     setObjective('');
     setTargetAudience('');
     setEstimatedBudget(10000000);
+    setLocation('Aula Kantor GTK Prov. Maluku Utara, Ternate');
     setShowAddModal(true);
+  };
+
+  const validateAllFields = (): boolean => {
+    if (
+      !title.trim() ||
+      !background.trim() ||
+      !objective.trim() ||
+      !targetAudience.trim() ||
+      !location.trim() ||
+      !startDate ||
+      !endDate ||
+      !estimatedBudget ||
+      estimatedBudget <= 0
+    ) {
+      alert(`⚠️ SEMUA KOLOM ISIAN WAJIB DIISI:\n\nMohon lengkapi seluruh kolom isian usulan kegiatan (Judul, Bidang, RAB, Latar Belakang, Maksud & Tujuan, Sasaran, Tanggal Mulai/Selesai, dan Lokasi Pelaksanaan).\n\nTidak boleh ada kolom yang dikosongkan!`);
+      return false;
+    }
+    return true;
   };
 
   const handleCreateProposal = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !background) return;
+    if (!validateAllFields()) return;
 
     addProposal({
-      title,
+      title: title.trim(),
       bidang,
       organizer: `Bidang ${bidang} DWP GTK`,
-      background,
-      objective,
-      targetAudience,
+      background: background.trim(),
+      objective: objective.trim(),
+      targetAudience: targetAudience.trim(),
       estimatedBudget: Number(estimatedBudget),
-      location,
+      location: location.trim(),
       startDate,
       endDate,
       createdBy: activePersona.name
@@ -90,20 +109,22 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     setTitle('');
     setBackground('');
     setObjective('');
+    setTargetAudience('');
   };
 
   const handleResubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!revisingProposal) return;
+    if (!validateAllFields()) return;
 
     resubmitProposal(revisingProposal.id, {
-      title,
+      title: title.trim(),
       bidang,
-      background,
-      objective,
-      targetAudience,
+      background: background.trim(),
+      objective: objective.trim(),
+      targetAudience: targetAudience.trim(),
       estimatedBudget: Number(estimatedBudget),
-      location,
+      location: location.trim(),
       startDate,
       endDate
     });
@@ -514,8 +535,9 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Maksud & Tujuan Kegiatan</label>
+                <label className="font-bold text-slate-700 block mb-1">Maksud & Tujuan Kegiatan *</label>
                 <textarea
+                  required
                   rows={2}
                   value={objective}
                   onChange={(e) => setObjective(e.target.value)}
@@ -526,9 +548,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
 
               <div className="grid sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Sasaran / Peserta</label>
+                  <label className="font-bold text-slate-700 block mb-1">Sasaran / Peserta *</label>
                   <input
                     type="text"
+                    required
                     value={targetAudience}
                     onChange={(e) => setTargetAudience(e.target.value)}
                     placeholder="50 Orang Anggota"
@@ -537,9 +560,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Tanggal Mulai</label>
+                  <label className="font-bold text-slate-700 block mb-1">Tanggal Mulai *</label>
                   <input
                     type="date"
+                    required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
@@ -547,9 +571,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Tanggal Selesai</label>
+                  <label className="font-bold text-slate-700 block mb-1">Tanggal Selesai *</label>
                   <input
                     type="date"
+                    required
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
@@ -558,9 +583,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Lokasi Pelaksanaan</label>
+                <label className="font-bold text-slate-700 block mb-1">Lokasi Pelaksanaan *</label>
                 <input
                   type="text"
+                  required
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
@@ -688,8 +714,9 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Maksud & Tujuan Kegiatan</label>
+                <label className="font-bold text-slate-700 block mb-1">Maksud & Tujuan Kegiatan *</label>
                 <textarea
+                  required
                   rows={2}
                   value={objective}
                   onChange={(e) => setObjective(e.target.value)}
@@ -700,9 +727,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
 
               <div className="grid sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Sasaran / Peserta</label>
+                  <label className="font-bold text-slate-700 block mb-1">Sasaran / Peserta *</label>
                   <input
                     type="text"
+                    required
                     value={targetAudience}
                     onChange={(e) => setTargetAudience(e.target.value)}
                     placeholder="50 Orang Anggota"
@@ -711,9 +739,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Tanggal Mulai</label>
+                  <label className="font-bold text-slate-700 block mb-1">Tanggal Mulai *</label>
                   <input
                     type="date"
+                    required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
@@ -721,9 +750,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Tanggal Selesai</label>
+                  <label className="font-bold text-slate-700 block mb-1">Tanggal Selesai *</label>
                   <input
                     type="date"
+                    required
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
@@ -732,9 +762,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Lokasi Pelaksanaan</label>
+                <label className="font-bold text-slate-700 block mb-1">Lokasi Pelaksanaan *</label>
                 <input
                   type="text"
+                  required
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
