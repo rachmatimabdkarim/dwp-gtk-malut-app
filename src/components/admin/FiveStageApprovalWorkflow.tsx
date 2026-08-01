@@ -187,15 +187,37 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     }
 
     const targetMem = members.find(m => m.id === committeeMemberId);
+    const memberName = targetMem ? targetMem.name : 'Anggota DWP';
+    const currentComm = detailProposal.committeeMembers || [];
+    const coreRoles = ['Ketua Panitia', 'Sekretaris Panitia', 'Bendahara Panitia'];
+
+    // Check 1: Core roles (Ketua Panitia, Sekretaris, Bendahara) cannot be held by the same person (No Rangkap Jabatan)
+    if (coreRoles.includes(committeeRoleTitle)) {
+      const existingCoreHolding = currentComm.find(
+        c => (c.memberId === committeeMemberId || c.memberName === memberName) && coreRoles.includes(c.roleTitle)
+      );
+
+      if (existingCoreHolding) {
+        alert(`⚠️ JABATAN PANITIA INTI TIDAK BOLEH DIRANGKAP:\n\n${memberName} sudah ditunjuk sebagai "${existingCoreHolding.roleTitle}".\n\nKetua Panitia, Sekretaris Panitia, dan Bendahara Panitia tidak boleh dirangkap oleh pengurus yang sama.`);
+        return;
+      }
+
+      // Check 2: Core role slot can only be filled once (e.g. only 1 Ketua Panitia)
+      const existingRoleHolder = currentComm.find(c => c.roleTitle === committeeRoleTitle);
+      if (existingRoleHolder) {
+        alert(`⚠️ JABATAN POSISI TERISI:\n\nPosisi "${committeeRoleTitle}" sudah diisi oleh ${existingRoleHolder.memberName}.\n\nHapus posisi ${existingRoleHolder.memberName} terlebih dahulu jika ingin mengganti.`);
+        return;
+      }
+    }
+
     const newCommItem = {
       id: `comm-${Date.now()}`,
       roleTitle: committeeRoleTitle,
-      memberName: targetMem ? targetMem.name : 'Anggota DWP',
+      memberName,
       memberId: committeeMemberId,
       phone: targetMem ? targetMem.phone : undefined
     };
 
-    const currentComm = detailProposal.committeeMembers || [];
     const updatedComm = [...currentComm, newCommItem];
 
     updateProposalCommittee(detailProposal.id, updatedComm);
@@ -637,6 +659,12 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                             {isProposer && (commStatus === 'draft' || commStatus === 'revision_requested') && commList.length > 0 && (
                               <button
                                 onClick={() => {
+                                  const hasKetuaPanitia = commList.some(c => c.roleTitle === 'Ketua Panitia');
+                                  if (!hasKetuaPanitia) {
+                                    alert('⚠️ SUSUNAN PANITIA BELUM LENGKAP:\n\nSusunan panitia pelaksana minimal harus memiliki 1 orang yang ditunjuk sebagai "Ketua Panitia".\n\nMohon pilih dan tambahkan "Ketua Panitia" terlebih dahulu sebelum mengajukan verifikasi ke Wakil Ketua.');
+                                    return;
+                                  }
+
                                   updateCommitteeStatus(detailProposal.id, 'pending_waket_verification');
                                   setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'pending_waket_verification' } : null);
                                   alert('✅ Usulan Susunan Panitia berhasil dikirimkan ke Wakil Ketua untuk verifikasi awal!');
