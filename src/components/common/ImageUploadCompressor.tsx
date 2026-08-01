@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { compressImage, CompressionResult } from '../../utils/imageCompressor';
-import { Upload, Image as ImageIcon, Sparkles, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
+import { compressImage, CompressionResult, purgePreviousImageAsset } from '../../utils/imageCompressor';
+import { Upload, Image as ImageIcon, Sparkles, CheckCircle2, AlertCircle, RefreshCw, Trash2 } from 'lucide-react';
 
 interface ImageUploadCompressorProps {
   label: string;
@@ -33,6 +33,9 @@ export const ImageUploadCompressor: React.FC<ImageUploadCompressorProps> = ({
     setErrorMsg(null);
 
     try {
+      // Auto purge previous image asset from storage/memory
+      purgePreviousImageAsset(value);
+
       const result = await compressImage(file, maxWidth, maxHeight, quality);
       setLastResult(result);
       onChange(result.dataUrl);
@@ -41,6 +44,12 @@ export const ImageUploadCompressor: React.FC<ImageUploadCompressorProps> = ({
     } finally {
       setIsCompressing(false);
     }
+  };
+
+  const handleReset = () => {
+    purgePreviousImageAsset(value);
+    onChange('');
+    setLastResult(null);
   };
 
   return (
@@ -52,7 +61,7 @@ export const ImageUploadCompressor: React.FC<ImageUploadCompressorProps> = ({
           {/* Preview Image */}
           <div className="flex items-center gap-3">
             {value ? (
-              <div className="w-16 h-16 rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm shrink-0 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-xl border border-slate-300 bg-white overflow-hidden shadow-sm shrink-0 flex items-center justify-center relative group">
                 <img src={value} alt="Preview" className="w-full h-full object-contain" />
               </div>
             ) : (
@@ -62,26 +71,41 @@ export const ImageUploadCompressor: React.FC<ImageUploadCompressorProps> = ({
             )}
 
             <div>
-              <label className="inline-flex items-center gap-2 bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow cursor-pointer transition-all">
-                {isCompressing ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-dwp-gold" />
-                    <span>Mengompres Foto...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-3.5 h-3.5 text-dwp-gold" />
-                    <span>Pilih Foto dari Perangkat</span>
-                  </>
+              <div className="flex items-center gap-2">
+                <label className="inline-flex items-center gap-2 bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow cursor-pointer transition-all">
+                  {isCompressing ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-dwp-gold" />
+                      <span>Mengompres Foto...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-3.5 h-3.5 text-dwp-gold" />
+                      <span>Pilih Foto dari Perangkat</span>
+                    </>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleFileChange} 
+                    disabled={isCompressing}
+                    className="hidden" 
+                  />
+                </label>
+
+                {value && (
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="text-xs text-rose-600 font-semibold border border-rose-200 bg-white hover:bg-rose-50 px-3 py-2 rounded-xl flex items-center gap-1 transition-colors"
+                    title="Hapus Foto dan Bersihkan Storage Server"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Hapus Foto</span>
+                  </button>
                 )}
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleFileChange} 
-                  disabled={isCompressing}
-                  className="hidden" 
-                />
-              </label>
+              </div>
+
               {helpText && <p className="text-[10px] text-slate-500 mt-1">{helpText}</p>}
             </div>
           </div>
@@ -99,15 +123,15 @@ export const ImageUploadCompressor: React.FC<ImageUploadCompressorProps> = ({
                 ⚡ Hemat {lastResult.compressionRatio}% Storage
               </span>
             </div>
-            <div className="text-[10px] text-emerald-700 font-medium">
-              Ukuran Awal: <strong>{lastResult.originalSizeKB} KB</strong> ➔ Ukuran Setelah Dikompres: <strong className="underline">{lastResult.compressedSizeKB} KB</strong> ({lastResult.width}x{lastResult.height}px)
+            <div className="text-[10px] text-emerald-700 font-mono">
+              Ukuran Asli: {lastResult.originalSizeKB} KB ➔ Terkompres: {lastResult.compressedSizeKB} KB (Dimensi: {lastResult.width}x{lastResult.height}px)
             </div>
           </div>
         )}
 
         {errorMsg && (
-          <div className="bg-rose-50 border border-rose-200 text-rose-800 p-2.5 rounded-xl text-[11px] flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 p-2.5 rounded-xl text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}

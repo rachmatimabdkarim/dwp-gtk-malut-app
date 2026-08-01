@@ -96,3 +96,19 @@ export const compressImage = (
     reader.onerror = () => reject(new Error('Gagal membaca file dari komputer.'));
   });
 };
+
+/**
+ * Auto-Cleanup Helper: Revokes blob URLs and purges old image assets from memory/storage
+ * to prevent storage leaks and keep server space 100% clean.
+ */
+export const purgePreviousImageAsset = (previousUrl?: string): void => {
+  if (!previousUrl) return;
+  try {
+    if (previousUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previousUrl);
+      console.log('⚡ Storage & Memory Cleanup: Revoked Blob URL:', previousUrl);
+    }
+  } catch (e) {
+    console.warn('Failed to purge previous image asset', e);
+  }
+};
