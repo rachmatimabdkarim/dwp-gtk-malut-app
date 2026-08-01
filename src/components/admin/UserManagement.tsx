@@ -464,15 +464,12 @@ export const UserManagement: React.FC = () => {
       {activeTab === 'rbac_matrix' && (
         <div className="space-y-6">
           {/* Header Action Control Bar */}
-          <div className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="bg-slate-900 text-white p-4 rounded-2xl border border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <h3 className="font-serif font-bold text-base text-dwp-gold flex items-center gap-2">
-                <Sliders className="w-5 h-5" />
-                Matriks Hak Akses & Fitur Role (No-Code RBAC)
+                <Sliders className="w-4 h-4 text-dwp-gold" />
+                <span>Matriks Hak Akses Role</span>
               </h3>
-              <p className="text-slate-300 text-xs mt-1 max-w-2xl leading-relaxed">
-                Superadmin IT dapat mengaktifkan atau me-nonaktifkan akses menu, bagian CMS, dan wewenang aksi proposal untuk setiap jenis role tanpa perlu mengubah kode program.
-              </p>
             </div>
 
             <div className="flex items-center gap-2.5 shrink-0">
