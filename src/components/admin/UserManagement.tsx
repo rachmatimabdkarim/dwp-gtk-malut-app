@@ -269,15 +269,12 @@ export const UserManagement: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="font-serif text-lg md:text-xl font-bold text-slate-900">
-              Manajemen Akun User & Hak Akses Role
+              Akun User & Hak Akses
             </h2>
             <span className="bg-dwp-burgundy text-dwp-gold text-[10px] font-bold px-2.5 py-0.5 rounded-full">
               {userAccounts.length} Akun User
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Pengelolaan kredensial akun login sistem & konfigurasi dinamis matriks hak akses per role.
-          </p>
         </div>
 
         {/* Tab Navigation Switcher */}
@@ -291,7 +288,7 @@ export const UserManagement: React.FC = () => {
             }`}
           >
             <UserCheck className="w-3.5 h-3.5" />
-            <span>1. Daftar Akun User</span>
+            <span>Akun User</span>
           </button>
           <button
             onClick={() => setActiveTab('rbac_matrix')}
@@ -302,25 +299,14 @@ export const UserManagement: React.FC = () => {
             }`}
           >
             <Sliders className="w-3.5 h-3.5 text-dwp-gold" />
-            <span>2. Matriks Hak Akses Role</span>
+            <span>Matriks Hak Akses</span>
           </button>
         </div>
       </div>
 
       {/* TAB 1: DAFTAR AKUN USER SYSTEM */}
       {activeTab === 'users_list' && (
-        <div className="space-y-6">
-          {/* Integration Explanation Banner */}
-          <div className="bg-gradient-to-r from-slate-900 via-dwp-darkBurgundy to-slate-900 text-white p-4 rounded-2xl border border-dwp-gold/30 shadow-md text-xs space-y-1.5">
-            <div className="font-bold text-dwp-gold flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-dwp-gold" />
-              Aturan Integrasi Akun User & Data Anggota:
-            </div>
-            <p className="text-slate-300 text-[11px] leading-relaxed">
-              - <strong>User dari Anggota DWP</strong>: Saat akun dihubungkan ke <strong>Data Anggota</strong>, Role Sistem otomatis ditata sesuai <strong>Jabatan Resmi DWP</strong> (Ketua ➔ role <i>ketua</i>, Waket ➔ role <i>wakil_ketua</i>, dsb).<br />
-              - <strong>User Non-Anggota</strong>: Akun tanpa tautan anggota (misal: Tim Support IT) secara khusus memegang role <strong>Superadmin IT (`admin_master`)</strong>.
-            </p>
-          </div>
+        <div className="space-y-4">
 
           {/* Search & Filter Bar */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">

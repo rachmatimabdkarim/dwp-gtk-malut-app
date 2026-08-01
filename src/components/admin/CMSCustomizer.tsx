@@ -214,20 +214,17 @@ export const CMSCustomizer: React.FC = () => {
   return (
     <div className="space-y-6">
       
-      {/* Top Header Bar */}
+      {/* Main Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="font-serif text-lg md:text-xl font-bold text-slate-900">
-              Live Customizer CMS Website
+              CMS Customizer Website
             </h2>
             <span className="bg-dwp-burgundy text-dwp-gold text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-dwp-gold/40">
               Role: {roleDesc.label}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Pengelolaan tampilan & konten website publik resmi DWP Kantor GTK Provinsi Maluku Utara.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -240,19 +237,6 @@ export const CMSCustomizer: React.FC = () => {
             <span>Simpan & Lihat Web</span>
           </button>
         </div>
-      </div>
-
-      {/* Role Notice Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-dwp-darkBurgundy to-slate-900 text-white p-4 rounded-2xl border border-dwp-gold/30 shadow-md text-xs space-y-1">
-        <div className="font-bold text-dwp-gold flex items-center gap-1.5">
-          <ShieldCheck className="w-4 h-4 text-dwp-gold" />
-          Hak Akses Penyuntingan CMS - Role: {roleDesc.label}
-        </div>
-        <p className="text-slate-300 text-[11px] leading-relaxed">
-          {currentRole === 'ketua' && '👑 Sebagai Ketua DWP, Anda berwenang menyunting Bagian 3 (Kata Sambutan) dan Bagian 4 (Visi & Misi Organisasi). Bagian lainnya terkunci dalam mode Read-Only.'}
-          {currentRole === 'sekretaris' && '📜 Sebagai Sekretaris DWP, Anda berwenang menyunting Bagian Identitas, Hero Banner, Tagline Section, serta Kontak Footer. Bagian Sambutan & Visi Misi dikelola khusus oleh Ketua DWP.'}
-          {currentRole === 'admin_master' && '⚡ Sebagai Superadmin IT, Anda memegang akses penuh untuk menyunting seluruh bagian CMS demi pemeliharaan teknis.'}
-        </p>
       </div>
 
       {savedSuccess && (
