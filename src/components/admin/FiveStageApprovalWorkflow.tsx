@@ -216,34 +216,6 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
         </button>
       </div>
 
-      {/* Dynamic Hierarchy Explanation Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-dwp-darkBurgundy to-slate-900 text-white p-5 rounded-2xl border border-dwp-gold/30 shadow-md space-y-2">
-        <div className="flex items-center gap-2 text-dwp-gold font-bold text-xs">
-          <Sparkles className="w-4 h-4 text-dwp-gold" />
-          <span>Aturan Alur Verifikasi Usulan Kegiatan DWP:</span>
-        </div>
-        <div className="grid md:grid-cols-3 gap-3 text-[11px] text-slate-300 pt-1">
-          <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-1">
-            <span className="font-bold text-white block">1. Usulan Ketua Bidang & Sekretaris</span>
-            <p className="text-slate-400 leading-relaxed">
-              Memulai dari <strong>Stage 4 (Verifikasi Waket)</strong> ➔ Diteruskan ke <strong>Stage 5 (Persetujuan Ketua DWP)</strong>.
-            </p>
-          </div>
-          <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-1">
-            <span className="font-bold text-dwp-gold block">2. Usulan Wakil Ketua DWP</span>
-            <p className="text-slate-400 leading-relaxed">
-              Verifikasi awal otomatis dilompati (⏩ <i>Auto-Skipped</i>). Usulan <strong>langsung dikirim ke Ketua DWP</strong>.
-            </p>
-          </div>
-          <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-1">
-            <span className="font-bold text-emerald-400 block">3. Usulan Ketua DWP</span>
-            <p className="text-slate-400 leading-relaxed">
-              Usulan yang diajukan oleh Ketua DWP <strong>langsung disetujui resmi (⏩ Direct Approved)</strong> & notifikasi otomatis terkirim.
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* List Activities */}
       <div className="space-y-4">
         {proposals.map((proposal) => {
@@ -316,22 +288,6 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     <span>Detail & Workspace</span>
                     <ArrowRight className="w-3 h-3 text-dwp-gold" />
                   </button>
-                </div>
-              </div>
-
-              {/* Proposal Content Body Preview */}
-              <div className="grid md:grid-cols-2 gap-4 text-xs">
-                <div className="space-y-1">
-                  <span className="font-bold text-slate-700 block">Latar Belakang & Urgensi:</span>
-                  <p className="text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 line-clamp-2">
-                    {proposal.background}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <span className="font-bold text-slate-700 block">Maksud & Tujuan:</span>
-                  <p className="text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 line-clamp-2">
-                    {proposal.objective || 'Meningkatkan partisipasi dan kualitas kegiatan DWP GTK Maluku Utara.'}
-                  </p>
                 </div>
               </div>
 
