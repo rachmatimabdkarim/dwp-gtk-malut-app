@@ -11,7 +11,8 @@ import {
   SiteConfig,
   ProposalStage,
   AppNotification,
-  CommitteeMember
+  CommitteeMember,
+  CommitteeStatus
 } from '../types';
 import { apiService } from '../services/apiService';
 import { 
@@ -628,6 +629,7 @@ interface AppContextType {
   advanceApproval: (proposalId: string, decision: 'approved' | 'rejected' | 'revision', notes: string) => void;
   resubmitProposal: (proposalId: string, updated: Partial<ActivityProposal>) => void;
   updateProposalCommittee: (proposalId: string, committeeMembers: CommitteeMember[]) => void;
+  updateCommitteeStatus: (proposalId: string, status: CommitteeStatus, notes?: string) => void;
   deleteProposal: (proposalId: string) => void;
   
   attendanceRecords: AttendanceRecord[];
@@ -1193,6 +1195,93 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, committeeMembers } : p));
   };
 
+  const updateCommitteeStatus = (proposalId: string, status: CommitteeStatus, notes?: string) => {
+    let targetProposalTitle = '';
+    let creatorRole: UserRole = 'admin_bidang';
+
+    setProposals(prev => prev.map(p => {
+      if (p.id !== proposalId) return p;
+      targetProposalTitle = p.title;
+      creatorRole = p.creatorRole || 'admin_bidang';
+      return {
+        ...p,
+        committeeStatus: status,
+        committeeNotes: notes
+      };
+    }));
+
+    setTimeout(() => {
+      const timestampStr = new Date().toLocaleString('id-ID');
+      if (status === 'pending_waket_verification') {
+        setNotifications(prevNotifs => [
+          {
+            id: `notif-comm-waket-${Date.now()}`,
+            targetRole: 'wakil_ketua',
+            title: '🛡️ Susunan Panitia Perlu Verifikasi',
+            message: `Susunan Panitia Pelaksana untuk kegiatan "${targetProposalTitle}" telah diajukan dan membutuhkan Verifikasi awal dari Anda.`,
+            timestamp: timestampStr,
+            isRead: false,
+            type: 'new_proposal',
+            proposalId
+          },
+          ...prevNotifs
+        ]);
+      } else if (status === 'pending_ketua_approval') {
+        setNotifications(prevNotifs => [
+          {
+            id: `notif-comm-ketua-${Date.now()}`,
+            targetRole: 'ketua',
+            title: '👑 Susunan Panitia Perlu Persetujuan Akhir',
+            message: `Susunan Panitia Pelaksana untuk kegiatan "${targetProposalTitle}" telah diverifikasi oleh Wakil Ketua dan membutuhkan Persetujuan Akhir dari Anda.`,
+            timestamp: timestampStr,
+            isRead: false,
+            type: 'new_proposal',
+            proposalId
+          },
+          ...prevNotifs
+        ]);
+      } else if (status === 'approved_by_ketua') {
+        setNotifications(prevNotifs => [
+          {
+            id: `notif-comm-sekretaris-${Date.now()}`,
+            targetRole: 'sekretaris',
+            title: '📜 SK Panitia Siap Diterbitkan',
+            message: `Susunan Panitia Pelaksana untuk kegiatan "${targetProposalTitle}" telah disetujui resmi oleh Ketua DWP. Draf SK Panitia siap dicetak.`,
+            timestamp: timestampStr,
+            isRead: false,
+            type: 'sk_pengarsipan',
+            proposalId
+          },
+          {
+            id: `notif-comm-pengusul-${Date.now() + 1}`,
+            targetRole: creatorRole,
+            title: '🎉 Susunan Panitia Disetujui Resmi!',
+            message: `Susunan Panitia Pelaksana yang Anda ajukan untuk kegiatan "${targetProposalTitle}" telah disetujui resmi oleh Ketua DWP.`,
+            timestamp: timestampStr,
+            isRead: false,
+            type: 'approved',
+            proposalId
+          },
+          ...prevNotifs
+        ]);
+      } else if (status === 'revision_requested') {
+        setNotifications(prevNotifs => [
+          {
+            id: `notif-comm-revisi-${Date.now()}`,
+            targetRole: creatorRole,
+            title: '⚠️ Susunan Panitia Memerlukan Revisi',
+            message: `Susunan Panitia Pelaksana untuk kegiatan "${targetProposalTitle}" memerlukan revisi: "${notes || 'Perlu penyesuaian susunan.'}"`,
+            timestamp: timestampStr,
+            isRead: false,
+            type: 'revision',
+            proposalId
+          },
+          ...prevNotifs
+        ]);
+      }
+    }, 50);
+  };
+
   const deleteProposal = (proposalId: string) => {
     setProposals(prev => {
       const updated = prev.filter(p => p.id !== proposalId);
@@ -1320,6 +1409,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       advanceApproval,
       resubmitProposal,
       updateProposalCommittee,
+      updateCommitteeStatus,
       deleteProposal,
       attendanceRecords,
       addAttendanceRecord,

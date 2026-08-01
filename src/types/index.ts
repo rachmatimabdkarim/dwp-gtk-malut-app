@@ -73,6 +73,13 @@ export interface CommitteeMember {
   phone?: string;
 }
 
+export type CommitteeStatus = 
+  | 'draft' 
+  | 'pending_waket_verification' 
+  | 'pending_ketua_approval' 
+  | 'approved_by_ketua' 
+  | 'revision_requested';
+
 export interface ActivityProposal {
   id: string;
   title: string;
@@ -93,6 +100,8 @@ export interface ActivityProposal {
   createdAt: string;
   revisionComment?: string;
   committeeMembers?: CommitteeMember[];
+  committeeStatus?: CommitteeStatus;
+  committeeNotes?: string;
 }
 
 export interface AttendanceRecord {

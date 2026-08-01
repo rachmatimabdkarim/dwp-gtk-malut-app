@@ -39,6 +39,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     advanceApproval, 
     resubmitProposal, 
     updateProposalCommittee,
+    updateCommitteeStatus,
     deleteProposal, 
     activePersona, 
     currentRole,
@@ -578,6 +579,9 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                    detailProposal.creatorRole === currentRole || 
                                    currentRole === 'admin_master';
                 const commList = detailProposal.committeeMembers || [];
+                const commStatus = detailProposal.committeeStatus || 'draft';
+                const canWaketAct = (currentRole === 'wakil_ketua' || currentRole === 'admin_master') && commStatus === 'pending_waket_verification';
+                const canKetuaAct = (currentRole === 'ketua' || currentRole === 'admin_master') && commStatus === 'pending_ketua_approval';
 
                 return (
                   <div className="space-y-4">
@@ -592,7 +596,131 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
+                        {/* Status Header Bar for Committee Approval Workflow */}
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Status Persetujuan Panitia:</span>
+                            <div className="flex items-center gap-2">
+                              {commStatus === 'approved_by_ketua' ? (
+                                <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-300 flex items-center gap-1.5">
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                  <span>Disetujui Resmi Ketua DWP</span>
+                                </span>
+                              ) : commStatus === 'pending_ketua_approval' ? (
+                                <span className="bg-amber-100 text-amber-900 text-xs font-bold px-3 py-1 rounded-full border border-amber-300 flex items-center gap-1.5">
+                                  <Clock className="w-4 h-4 text-amber-600" />
+                                  <span>Menunggu Persetujuan Ketua DWP</span>
+                                </span>
+                              ) : commStatus === 'pending_waket_verification' ? (
+                                <span className="bg-sky-100 text-sky-900 text-xs font-bold px-3 py-1 rounded-full border border-sky-300 flex items-center gap-1.5">
+                                  <ShieldCheck className="w-4 h-4 text-sky-600" />
+                                  <span>Menunggu Verifikasi Wakil Ketua</span>
+                                </span>
+                              ) : commStatus === 'revision_requested' ? (
+                                <span className="bg-rose-100 text-rose-800 text-xs font-bold px-3 py-1 rounded-full border border-rose-300 flex items-center gap-1.5">
+                                  <AlertTriangle className="w-4 h-4 text-rose-600" />
+                                  <span>Perlu Revisi Panitia</span>
+                                </span>
+                              ) : (
+                                <span className="bg-slate-200 text-slate-700 text-xs font-bold px-3 py-1 rounded-full border border-slate-300 flex items-center gap-1.5">
+                                  <FileText className="w-4 h-4 text-slate-500" />
+                                  <span>Draf Susunan Panitia</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Committee Workflow Action Buttons */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Proposer Submit Button */}
+                            {isProposer && (commStatus === 'draft' || commStatus === 'revision_requested') && commList.length > 0 && (
+                              <button
+                                onClick={() => {
+                                  updateCommitteeStatus(detailProposal.id, 'pending_waket_verification');
+                                  setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'pending_waket_verification' } : null);
+                                  alert('✅ Usulan Susunan Panitia berhasil dikirimkan ke Wakil Ketua untuk verifikasi awal!');
+                                }}
+                                className="bg-sky-700 hover:bg-sky-800 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all"
+                              >
+                                <Send className="w-3.5 h-3.5" />
+                                <span>Kirim Ajuan Panitia ke Wakil Ketua</span>
+                              </button>
+                            )}
+
+                            {/* Wakil Ketua Verification Buttons */}
+                            {canWaketAct && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    const notes = prompt('Masukkan Catatan Verifikasi Panitia (Opsional):', 'Susunan panitia sesuai dan diverifikasi.');
+                                    if (notes === null) return;
+                                    updateCommitteeStatus(detailProposal.id, 'pending_ketua_approval', notes);
+                                    setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'pending_ketua_approval', committeeNotes: notes } : null);
+                                    alert('🛡️ Susunan Panitia Berhasil Diverifikasi! Diteruskan ke Ketua DWP untuk persetujuan akhir.');
+                                  }}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all"
+                                >
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                  <span>Verifikasi Panitia (Wakil Ketua)</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const notes = prompt('Masukkan Alasan Revisi Susunan Panitia:');
+                                    if (!notes) return;
+                                    updateCommitteeStatus(detailProposal.id, 'revision_requested', notes);
+                                    setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'revision_requested', committeeNotes: notes } : null);
+                                    alert('⚠️ Permintaan revisi susunan panitia telah dikirimkan ke pengusul kegiatan.');
+                                  }}
+                                  className="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all"
+                                >
+                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                  <span>Minta Revisi Panitia</span>
+                                </button>
+                              </>
+                            )}
+
+                            {/* Ketua DWP Approval Buttons */}
+                            {canKetuaAct && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    const notes = prompt('Masukkan Catatan Persetujuan Ketua DWP (Opsional):', 'Disetujui resmi susunan panitia pelaksana.');
+                                    if (notes === null) return;
+                                    updateCommitteeStatus(detailProposal.id, 'approved_by_ketua', notes);
+                                    setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'approved_by_ketua', committeeNotes: notes } : null);
+                                    alert('👑 Susunan Panitia Pelaksana Berhasil Disetujui Resmi oleh Ketua DWP! Draf SK Panitia dapat dicetak oleh Sekretaris.');
+                                  }}
+                                  className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-dwp-gold" />
+                                  <span>Setujui Resmi Panitia (Ketua DWP)</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    const notes = prompt('Masukkan Alasan Revisi Susunan Panitia dari Ketua DWP:');
+                                    if (!notes) return;
+                                    updateCommitteeStatus(detailProposal.id, 'revision_requested', notes);
+                                    setDetailProposal(prev => prev ? { ...prev, committeeStatus: 'revision_requested', committeeNotes: notes } : null);
+                                    alert('⚠️ Catatan revisi panitia telah dikirimkan ke pengusul kegiatan.');
+                                  }}
+                                  className="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all"
+                                >
+                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                  <span>Minta Revisi Panitia</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {detailProposal.committeeNotes && (
+                          <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 text-xs space-y-0.5">
+                            <span className="font-bold text-slate-700 block">Catatan Verifikasi / Approver Panitia:</span>
+                            <p className="italic text-slate-800">"{detailProposal.committeeNotes}"</p>
+                          </div>
+                        )}
+
                         {!isProposer && (
                           <div className="bg-sky-50 border border-sky-200 p-3.5 rounded-2xl text-sky-900 flex items-start gap-2.5">
                             <Lock className="w-4 h-4 text-sky-700 shrink-0 mt-0.5" />
@@ -612,7 +740,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                               <span>Susunan Panitia Pelaksana ({commList.length} Orang):</span>
                             </span>
 
-                            {isProposer && (
+                            {isProposer && (commStatus === 'draft' || commStatus === 'revision_requested') && (
                               <button 
                                 onClick={() => setShowAddCommitteeModal(true)}
                                 className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all"
@@ -645,7 +773,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                     {comm.phone && <span className="text-[10px] text-slate-400 block">📞 {comm.phone}</span>}
                                   </div>
 
-                                  {isProposer && (
+                                  {isProposer && (commStatus === 'draft' || commStatus === 'revision_requested') && (
                                     <button
                                       onClick={() => handleRemoveCommitteeMember(comm.id)}
                                       className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
