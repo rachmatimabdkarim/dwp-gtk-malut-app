@@ -38,7 +38,7 @@ export const AdminSidebar: React.FC = () => {
       id: 'users' as AdminSubTab,
       label: 'Akun User & Hak Akses',
       icon: UserCheck,
-      badge: userAccounts.length
+      badge: null
     },
     {
       id: 'cms' as AdminSubTab,
