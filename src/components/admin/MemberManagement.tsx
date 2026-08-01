@@ -379,33 +379,16 @@ export const MemberManagement: React.FC = () => {
 
             {/* Modal Body - Scrollable */}
             <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-3.5 text-xs">
-              {/* Foto Profil Upload */}
-              <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <label className="font-bold text-slate-800 block">Foto Profil Resmi Anggota / Pengurus</label>
-                <div className="flex flex-wrap items-center gap-3">
-                  <label className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-bold px-3.5 py-2 rounded-xl cursor-pointer flex items-center gap-1.5 text-xs shadow">
-                    <Upload className="w-3.5 h-3.5 text-dwp-gold" />
-                    <span>📁 Unggah Foto Profil</span>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])} 
-                      className="hidden" 
-                    />
-                  </label>
-                  {avatar && (
-                    <button type="button" onClick={() => setAvatar('')} className="text-xs text-rose-600 font-semibold underline">
-                      Reset Foto
-                    </button>
-                  )}
-                </div>
-                {avatar && (
-                  <div className="flex items-center gap-2.5 bg-white p-2 rounded-lg border border-slate-200 mt-1">
-                    <img src={avatar} alt="Foto Profil" className="w-9 h-9 rounded-full object-cover border border-dwp-gold" />
-                    <span className="text-[11px] text-emerald-700 font-bold">✓ Foto Profil Siap Disimpan</span>
-                  </div>
-                )}
-              </div>
+              {/* Foto Profil Anggota Upload (Dikompres Otomatis ke WebP HD) */}
+              <ImageUploadCompressor
+                label="Foto Pas Profil Resmi Anggota / Pengurus"
+                value={avatar}
+                onChange={(compressedUrl) => setAvatar(compressedUrl)}
+                maxWidth={600}
+                maxHeight={600}
+                quality={0.85}
+                helpText="Foto profil anggota. Otomatis dikompres cerdas (format WebP HD super hemat storage)."
+              />
 
               {/* Nama Lengkap */}
               <div>
@@ -564,17 +547,6 @@ export const MemberManagement: React.FC = () => {
                   className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                 />
               </div>
-
-              {/* Foto Profil Anggota */}
-              <ImageUploadCompressor
-                label="Foto Pas Profil Anggota"
-                value={avatar}
-                onChange={(compressedUrl) => setAvatar(compressedUrl)}
-                maxWidth={600}
-                maxHeight={600}
-                quality={0.85}
-                helpText="Foto profil anggota. Otomatis dikompres cerdas (WebP format HD)."
-              />
 
               {/* No HP & Email */}
               <div className="grid sm:grid-cols-2 gap-3 pt-1">
