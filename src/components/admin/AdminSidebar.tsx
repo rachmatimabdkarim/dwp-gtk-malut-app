@@ -6,10 +6,7 @@ import {
   CheckSquare,
   Users, 
   UserCheck,
-  Globe, 
-  Sparkles,
-  Info,
-  FileText
+  Globe
 } from 'lucide-react';
 
 export const AdminSidebar: React.FC = () => {
@@ -106,15 +103,10 @@ export const AdminSidebar: React.FC = () => {
         })}
       </div>
 
-      {/* Fase 0 Info Card */}
-      <div className="mt-auto bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-xs space-y-1.5">
-        <div className="flex items-center gap-1.5 text-dwp-gold font-bold text-[11px]">
-          <Info className="w-3.5 h-3.5" />
-          <span>Fase 0: Modul Fondasi</span>
-        </div>
-        <p className="text-[10px] text-slate-400 leading-relaxed">
-          Sistem difokuskan pada Data Anggota, Akun User & CMS. Modul proposal akan dirancang ulang tuntas satu per satu pada fase berikutnya.
-        </p>
+      {/* Official Footer Note */}
+      <div className="mt-auto pt-3 border-t border-slate-800/80 text-[10px] text-slate-500 text-center space-y-0.5">
+        <div className="font-bold text-slate-400">DWP GTK Maluku Utara</div>
+        <div>Sistem Informasi Organisasi V1.0</div>
       </div>
     </aside>
   );

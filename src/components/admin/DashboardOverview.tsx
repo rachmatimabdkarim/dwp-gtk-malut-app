@@ -10,7 +10,8 @@ import {
   Sparkles, 
   Lock,
   CheckSquare,
-  BellRing
+  BellRing,
+  FileText
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
@@ -44,7 +45,7 @@ export const DashboardOverview: React.FC = () => {
               {activePersona.name}
             </h2>
             <p className="text-slate-300 text-xs md:text-sm max-w-xl">
-              Workflow Usulan Kegiatan DWP (Digital Form & Dynamic Approval), Data Anggota Resmi, Akun User & Hak Akses, serta Live Customizer Web DWP.
+              Portal Pengelolaan Workflow Usulan Kegiatan DWP, Data Keanggotaan Resmi, Manajemen Hak Akses User, dan Live Customizer Web DWP GTK Maluku Utara.
             </p>
           </div>
 
@@ -73,7 +74,7 @@ export const DashboardOverview: React.FC = () => {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* KPI 1: Usulan Kegiatan (Fitur 1) */}
+        {/* KPI 1: Usulan Kegiatan */}
         <div 
           onClick={canAccessProposals ? () => setAdminSubTab('proposals') : undefined}
           className={`bg-white rounded-3xl p-6 border border-slate-200 shadow-sm transition-all ${
@@ -96,7 +97,7 @@ export const DashboardOverview: React.FC = () => {
           </div>
           <div className="text-3xl font-serif font-bold text-slate-900">{proposals.length}</div>
           <div className="text-xs text-slate-500 font-semibold mt-1">Total Usulan Kegiatan</div>
-          <p className="text-[10px] text-slate-400 mt-2">Dynamic Approval: Pengusul ➔ Waket ➔ Ketua DWP.</p>
+          <p className="text-[10px] text-slate-400 mt-2">Alur Verifikasi: Pengusul ➔ Waket ➔ Ketua DWP.</p>
         </div>
 
         {/* KPI 2: Data Anggota */}
@@ -178,7 +179,7 @@ export const DashboardOverview: React.FC = () => {
         </div>
       </div>
 
-      {/* Info Card Fitur 1 Workflow Proposal */}
+      {/* Info Card Hirarki Verifikasi Organisasi */}
       <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-4">
         <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
           <div className="w-10 h-10 rounded-xl bg-dwp-burgundy text-dwp-gold flex items-center justify-center font-bold">
@@ -186,10 +187,10 @@ export const DashboardOverview: React.FC = () => {
           </div>
           <div>
             <h3 className="font-serif font-bold text-lg text-slate-900">
-              Alur Workflow Usulan Kegiatan DWP (Fitur 1 Tuntas)
+              Hirarki Verifikasi Usulan & Tata Kelola Organisasi DWP
             </h3>
             <p className="text-xs text-slate-500">
-              Pengusulan melalui form digital dengan alur verifikasi dynamic hierarchy & notifikasi otomatis Sekretaris/Bendahara.
+              Panduan alur pengusulan kegiatan dan wewenang verifikasi berjenjang pengurus DWP.
             </p>
           </div>
         </div>
@@ -198,20 +199,20 @@ export const DashboardOverview: React.FC = () => {
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1.5">
             <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
               <CheckSquare className="w-4 h-4 text-dwp-burgundy" />
-              <span>1. Form Usulan Digital</span>
+              <span>1. Form Pengusulan Digital</span>
             </div>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              Pengusulan oleh Ketua Bidang, Sekretaris, Waket, atau Ketua DWP via input form lengkap (tanpa perlu upload dokumen).
+              Pengusulan dilakukan oleh Ketua Bidang, Sekretaris, Waket, atau Ketua DWP via pengisian formulir digital interaktif.
             </p>
           </div>
 
           <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-1.5">
             <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-sky-600" />
-              <span>2. Verifikasi Dynamic Hierarchy</span>
+              <span>2. Verifikasi Berjenjang</span>
             </div>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              Tahapan otomatis menyesuaikan role pengusul (`⏩ Auto-Skipped` untuk usulan Waket, `⏩ Direct Approved` untuk usulan Ketua DWP).
+              Usulan diperiksa terlebih dahulu oleh Wakil Ketua DWP sebelum diteruskan untuk Persetujuan Akhir Ketua DWP.
             </p>
           </div>
 
@@ -221,7 +222,7 @@ export const DashboardOverview: React.FC = () => {
               <span>3. Notifikasi Pasca-Approval</span>
             </div>
             <p className="text-[11px] text-slate-500 leading-relaxed">
-              Setelah disetujui, Sekretaris menerima notifikasi pengarsipan agenda/surat & Bendahara menerima notifikasi verifikasi RAB.
+              Saat disetujui, Sekretaris menerima notifikasi agenda/surat & Bendahara menerima notifikasi pencairan dana RAB.
             </p>
           </div>
         </div>
