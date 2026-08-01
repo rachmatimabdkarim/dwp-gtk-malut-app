@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ActivityProposal, ProposalStage } from '../../types';
 import { formatDateRangeDDMMYYYY, formatDateDDMMYYYY } from '../../utils/dateFormatter';
+import { canViewProposalDetail } from '../../utils/RoleAccessControl';
 import { CustomDateInput } from '../common/CustomDateInput';
 import { 
   CheckCircle2, 
@@ -279,6 +280,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
           const isRevision = proposal.currentStage === 'revision_requested';
           const userCanAct = canPersonaActOnStage(proposal);
           const isMyProposal = proposal.createdBy === activePersona.name;
+          const userCanViewDetail = canViewProposalDetail(currentRole, activePersona.name, proposal);
 
           return (
             <div 
@@ -300,10 +302,16 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     {/* Clickable Title to open Workspace Detail */}
                     <button
                       onClick={() => {
+                        if (!userCanViewDetail) {
+                          alert(`🔒 AKSES DETIL TERBATAS:\n\nSebagai Ketua Bidang, Anda hanya dapat membuka detil kegiatan yang Anda usulkan sendiri.\n\nSesuai aturan hak akses, detil kegiatan "${proposal.title}" ini hanya dapat dibuka oleh Pengusul (${proposal.createdBy}) atau Pimpinan Harian (Ketua DWP, Wakil Ketua, Sekretaris).`);
+                          return;
+                        }
                         setDetailProposal(proposal);
                         setActiveTabWorkspace('usulan');
                       }}
-                      className="text-xs font-serif font-bold text-slate-900 hover:text-dwp-burgundy text-left underline decoration-dotted underline-offset-4 transition-colors"
+                      className={`text-xs font-serif font-bold text-left underline decoration-dotted underline-offset-4 transition-colors ${
+                        userCanViewDetail ? 'text-slate-900 hover:text-dwp-burgundy' : 'text-slate-600 hover:text-slate-800'
+                      }`}
                     >
                       {proposal.title}
                     </button>
@@ -318,7 +326,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Status Badge */}
+                {/* Status Badge & Detail Button */}
                 <div className="shrink-0 flex items-center gap-2">
                   <span className={`text-xs font-bold px-3 py-1.5 rounded-full border flex items-center gap-1.5 w-fit ${
                     isApproved ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
@@ -333,16 +341,29 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     <span>{getStageBadgeLabel(proposal)}</span>
                   </span>
 
-                  <button
-                    onClick={() => {
-                      setDetailProposal(proposal);
-                      setActiveTabWorkspace('usulan');
-                    }}
-                    className="bg-slate-900 hover:bg-dwp-burgundy text-dwp-gold text-xs font-bold px-3 py-1.5 rounded-full shadow flex items-center gap-1 transition-all"
-                  >
-                    <span>Detail & Workspace</span>
-                    <ArrowRight className="w-3 h-3 text-dwp-gold" />
-                  </button>
+                  {userCanViewDetail ? (
+                    <button
+                      onClick={() => {
+                        setDetailProposal(proposal);
+                        setActiveTabWorkspace('usulan');
+                      }}
+                      className="bg-slate-900 hover:bg-dwp-burgundy text-dwp-gold text-xs font-bold px-3 py-1.5 rounded-full shadow flex items-center gap-1 transition-all"
+                    >
+                      <span>Detail & Workspace</span>
+                      <ArrowRight className="w-3 h-3 text-dwp-gold" />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        alert(`🔒 AKSES DETIL TERBATAS:\n\nSebagai Ketua Bidang, Anda hanya dapat membuka detil kegiatan yang Anda usulkan sendiri.\n\nDetil kegiatan "${proposal.title}" ini hanya dapat dibuka oleh Pengusul (${proposal.createdBy}) atau Pimpinan (Ketua, Wakil Ketua, Sekretaris).`);
+                      }}
+                      className="bg-slate-100 hover:bg-slate-200 text-slate-500 text-[11px] font-semibold px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-1 transition-colors cursor-pointer"
+                      title="Hanya Pengusul Kegiatan atau Pimpinan yang dapat membuka detil"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Detil Terbatas</span>
+                    </button>
+                  )}
                 </div>
               </div>
 

@@ -157,3 +157,27 @@ export const getRoleDescription = (role: UserRole): { label: string; icon: strin
       return { label: 'Anggota DWP', icon: '👤', description: 'Akses informasi statistik & profil anggota.' };
   }
 };
+
+/**
+  * Hak Akses Membuka Detil & Workspace Kegiatan:
+  * - Ketua Bidang (admin_bidang): Detil HANYA bisa dilihat oleh yang mengusulkan kegiatan tersebut.
+  * - Ketua, Wakil Ketua, Sekretaris, Bendahara, Super Admin: Dapat melihat detil SEMUA kegiatan.
+  */
+export const canViewProposalDetail = (
+  role: UserRole,
+  activePersonaName: string,
+  proposal: { createdBy: string; creatorRole?: UserRole }
+): boolean => {
+  if (
+    role === 'ketua' || 
+    role === 'wakil_ketua' || 
+    role === 'sekretaris' || 
+    role === 'bendahara' || 
+    role === 'admin_master'
+  ) {
+    return true;
+  }
+
+  const isCreator = proposal.createdBy === activePersonaName || proposal.creatorRole === role;
+  return isCreator;
+};
