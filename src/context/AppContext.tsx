@@ -581,6 +581,7 @@ interface AppContextType {
   addProposal: (proposal: Omit<ActivityProposal, 'id' | 'currentStage' | 'stageProgress' | 'logs' | 'createdAt'>) => void;
   advanceApproval: (proposalId: string, decision: 'approved' | 'rejected' | 'revision', notes: string) => void;
   resubmitProposal: (proposalId: string, updated: Partial<ActivityProposal>) => void;
+  deleteProposal: (proposalId: string) => void;
   
   attendanceRecords: AttendanceRecord[];
   addAttendanceRecord: (record: Omit<AttendanceRecord, 'id' | 'status'>) => void;
@@ -977,6 +978,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const deleteProposal = (proposalId: string) => {
+    setProposals(prev => {
+      const updated = prev.filter(p => p.id !== proposalId);
+      localStorage.setItem('dwp_proposals', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const addAttendanceRecord = (rec: Omit<AttendanceRecord, 'id' | 'status'>) => {
     const newRecord: AttendanceRecord = {
       ...rec,
@@ -1095,6 +1104,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addProposal,
       advanceApproval,
       resubmitProposal,
+      deleteProposal,
       attendanceRecords,
       addAttendanceRecord,
       verifyAttendanceRecord,

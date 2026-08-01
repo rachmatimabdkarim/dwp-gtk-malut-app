@@ -17,11 +17,12 @@ import {
   ArrowRight,
   Send,
   Edit3,
-  BellRing
+  BellRing,
+  Trash2
 } from 'lucide-react';
 
 export const FiveStageApprovalWorkflow: React.FC = () => {
-  const { proposals, addProposal, advanceApproval, resubmitProposal, activePersona, members, currentAccount } = useApp();
+  const { proposals, addProposal, advanceApproval, resubmitProposal, deleteProposal, activePersona, members, currentAccount } = useApp();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<ActivityProposal | null>(null);
@@ -341,8 +342,8 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
               )}
 
               {/* Actions Row */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                <div>
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-3">
+                <div className="flex items-center gap-2">
                   {isRevision && isMyProposal && (
                     <button
                       onClick={() => {
@@ -361,6 +362,22 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     >
                       <Edit3 className="w-4 h-4" />
                       <span>Perbaiki Draf & Ajukan Ulang</span>
+                    </button>
+                  )}
+
+                  {/* Superadmin IT Delete Button */}
+                  {activePersona.role === 'admin_master' && (
+                    <button
+                      onClick={() => {
+                        if (confirm(`⚠️ KONFIRMASI HAPUS PROPOSAL (KHUSUS SUPERADMIN):\n\nApakah Anda yakin ingin menghapus usulan kegiatan:\n👉 "${proposal.title}"?\n\nTindakan ini tidak dapat dibatalkan.`)) {
+                          deleteProposal(proposal.id);
+                        }
+                      }}
+                      className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-colors"
+                      title="Hapus Usulan Kegiatan (Wewenang Khusus Superadmin IT)"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Hapus Proposal</span>
                     </button>
                   )}
                 </div>
