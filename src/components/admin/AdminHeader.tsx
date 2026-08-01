@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { UserRole } from '../../types';
-import { Shield, Eye, UserCheck, LogOut, Sparkles, Bell, CheckCheck, X } from 'lucide-react';
+import { Shield, Eye, UserCheck, LogOut, Sparkles, Bell, CheckCheck, X, Trash2 } from 'lucide-react';
 
 export const AdminHeader: React.FC = () => {
   const { 
@@ -14,128 +14,152 @@ export const AdminHeader: React.FC = () => {
     notifications,
     markNotificationAsRead,
     markAllNotificationsAsRead,
+    clearReadNotifications,
     openProposalWorkspace
   } = useApp();
 
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
   const roleNotifs = notifications.filter(n => 
-    n.targetRole === currentRole || 
-    n.targetRole === 'all' || 
-    currentRole === 'admin_master'
+    n.targetRole === currentRole || n.targetRole === 'all'
   );
   const unreadCount = roleNotifs.filter(n => !n.isRead).length;
+  const hasReadNotifs = roleNotifs.some(n => n.isRead);
 
   return (
-    <header className="bg-slate-900 text-white border-b border-slate-800 px-5 py-2.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-40 shadow-sm">
-      {/* Brand & Persona badge */}
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-dwp-burgundy to-dwp-darkBurgundy p-1 border border-dwp-gold/50 flex items-center justify-center font-serif font-bold text-dwp-gold text-sm shadow">
-          DWP
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="font-serif font-bold text-xs md:text-sm text-white">
-              Portal Admin & Workflow DWP
-            </h2>
-            <span className="bg-dwp-gold/20 text-dwp-lightGold text-[9px] uppercase font-bold px-1.5 py-0.5 rounded border border-dwp-gold/30">
-              GTK Malut
-            </span>
+    <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+        
+        {/* Left Side: Brand & Role Identity */}
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-dwp-burgundy border border-dwp-gold flex items-center justify-center text-dwp-gold shadow-sm font-bold text-sm shrink-0">
+            DWP
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="font-serif font-bold text-sm sm:text-base text-white leading-tight">
+                Dharma Wanita Persatuan
+              </h1>
+              <span className="bg-dwp-gold text-slate-950 text-[10px] font-bold px-2 py-0.5 rounded-full hidden md:inline-block">
+                GTK Malut
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 font-medium">
+              Sistem Informasi Manajemen Terpadu
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Role Switcher & Action Widgets */}
-      <div className="flex items-center gap-3">
-        
-        {/* Notification Bell Dropdown Widget */}
-        <div className="relative">
-          <button
-            onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-            className="relative p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl transition-all"
-            title="Pemberitahuan & Notifikasi Otomatis"
-          >
-            <Bell className="w-4 h-4 text-dwp-gold" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center animate-pulse shadow">
-                {unreadCount}
-              </span>
-            )}
-          </button>
+        {/* Right Side: Role Selector & Controls */}
+        <div className="flex items-center gap-3">
+          
+          {/* Notification Bell Widget */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+              className="relative p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              title="Notifikasi Sistem"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full border-2 border-slate-900 animate-pulse">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
 
-          {/* Dropdown Menu */}
-          {showNotifDropdown && (
-            <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white text-slate-900 rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden text-xs animate-in fade-in slide-in-from-top-2">
-              <div className="bg-slate-900 text-white p-3.5 flex items-center justify-between border-b border-slate-800">
-                <div className="flex items-center gap-2 font-serif font-bold text-sm">
-                  <Bell className="w-4 h-4 text-dwp-gold" />
-                  <span>Notifikasi ({unreadCount} Baru)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={() => markAllNotificationsAsRead()}
-                      className="text-[10px] text-dwp-gold hover:underline font-bold flex items-center gap-1"
-                    >
-                      <CheckCheck className="w-3 h-3" /> Tandai Dibaca
-                    </button>
-                  )}
-                  <button onClick={() => setShowNotifDropdown(false)} className="text-slate-400 hover:text-white">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
-                {roleNotifs.length === 0 ? (
-                  <div className="p-6 text-center text-slate-400 space-y-1">
-                    <p className="font-semibold text-slate-600">Belum ada notifikasi baru.</p>
-                    <p className="text-[11px]">Notifikasi otomatis akan muncul saat usulan kegiatan disetujui.</p>
+            {/* Notification Dropdown Panel */}
+            {showNotifDropdown && (
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in fade-in zoom-in-95">
+                <div className="bg-slate-900 text-white p-3.5 flex items-center justify-between border-b border-slate-800">
+                  <div className="flex items-center gap-2 font-serif font-bold text-xs sm:text-sm">
+                    <Bell className="w-4 h-4 text-dwp-gold" />
+                    <span>Notifikasi ({unreadCount} Baru)</span>
                   </div>
-                ) : (
-                  roleNotifs.map((n) => (
-                    <div 
-                      key={n.id} 
-                      onClick={() => {
-                        markNotificationAsRead(n.id);
-                        setShowNotifDropdown(false);
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={() => markAllNotificationsAsRead()}
+                        className="text-[10px] text-dwp-gold hover:underline font-bold flex items-center gap-1"
+                        title="Tandai semua notifikasi telah dibaca"
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" /> Tandai Dibaca
+                      </button>
+                    )}
+                    {hasReadNotifs && (
+                      <button
+                        onClick={() => clearReadNotifications()}
+                        className="text-[10px] text-rose-300 hover:text-white font-bold flex items-center gap-1 bg-rose-950/50 hover:bg-rose-900/80 px-2 py-0.5 rounded-lg border border-rose-700/50 transition-all"
+                        title="Bersihkan semua notifikasi yang sudah dibaca"
+                      >
+                        <Trash2 className="w-3 h-3 text-rose-300" />
+                        <span>Bersihkan Terbaca</span>
+                      </button>
+                    )}
+                    <button onClick={() => setShowNotifDropdown(false)} className="text-slate-400 hover:text-white p-0.5">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
 
-                        if (n.proposalId) {
-                          let targetTab: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj' = 'usulan';
-                          if (n.title.toLowerCase().includes('panitia')) {
-                            targetTab = 'panitia';
-                          } else if (n.type === 'sk_pengarsipan' || n.title.toLowerCase().includes('sk')) {
-                            targetTab = 'sk';
-                          }
-                          openProposalWorkspace(n.proposalId, targetTab);
-                        } else {
-                          setAdminSubTab('proposals');
-                        }
-                      }}
-                      className={`p-3.5 transition-colors cursor-pointer space-y-1 ${
-                        !n.isRead ? 'bg-amber-50/60 border-l-4 border-dwp-burgundy' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between font-bold text-slate-900 text-xs">
-                        <span>{n.title}</span>
-                        <span className="text-[9px] font-mono text-slate-400">{n.timestamp}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-600 leading-relaxed">
-                        {n.message}
-                      </p>
+                <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                  {roleNotifs.length === 0 ? (
+                    <div className="p-6 text-center text-slate-400 space-y-1">
+                      <p className="font-semibold text-slate-600">Belum ada notifikasi.</p>
+                      <p className="text-[11px]">Notifikasi otomatis akan muncul saat ada pengajuan atau verifikasi.</p>
                     </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+                  ) : (
+                    roleNotifs.map((n) => (
+                      <div 
+                        key={n.id} 
+                        onClick={() => {
+                          markNotificationAsRead(n.id);
+                          setShowNotifDropdown(false);
 
-        {/* Role Switcher Widget */}
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-1.5 flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-1 border-r border-slate-700">
-            <UserCheck className="w-3.5 h-3.5 text-dwp-gold" />
-            <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">Role:</span>
+                          if (n.proposalId) {
+                            let targetTab: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj' = 'usulan';
+                            if (n.title.toLowerCase().includes('panitia')) {
+                              targetTab = 'panitia';
+                            } else if (n.type === 'sk_pengarsipan' || n.title.toLowerCase().includes('sk')) {
+                              targetTab = 'sk';
+                            }
+                            openProposalWorkspace(n.proposalId, targetTab);
+                          } else {
+                            setAdminSubTab('proposals');
+                          }
+                        }}
+                        className={`p-3.5 transition-all cursor-pointer space-y-1.5 border-l-4 ${
+                          !n.isRead 
+                            ? 'bg-amber-100/90 border-dwp-burgundy hover:bg-amber-100 shadow-sm' 
+                            : 'bg-slate-50/50 border-slate-200 opacity-60 hover:opacity-100 hover:bg-slate-100/80'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between font-bold text-xs gap-2">
+                          <span className={!n.isRead ? 'text-slate-950 font-extrabold' : 'text-slate-600 font-semibold'}>
+                            {n.title}
+                          </span>
+                          {!n.isRead ? (
+                            <span className="bg-dwp-burgundy text-dwp-gold text-[9px] font-black px-2 py-0.5 rounded-full shrink-0 shadow-sm animate-pulse">
+                              🔴 BARU
+                            </span>
+                          ) : (
+                            <span className="text-[9px] text-slate-400 font-semibold bg-slate-200/70 px-1.5 py-0.5 rounded shrink-0">
+                              ✓ Dibaca
+                            </span>
+                          )}
+                        </div>
+                        <p className={`text-[11px] leading-relaxed ${!n.isRead ? 'text-slate-900 font-medium' : 'text-slate-500'}`}>
+                          {n.message}
+                        </p>
+                        <div className="text-[9px] font-mono text-slate-400 text-right">
+                          {n.timestamp}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="relative">

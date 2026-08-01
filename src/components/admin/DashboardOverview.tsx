@@ -11,7 +11,8 @@ import {
   Lock,
   CheckSquare,
   Calendar,
-  BellRing
+  BellRing,
+  Trash2
 } from 'lucide-react';
 
 export const DashboardOverview: React.FC = () => {
@@ -24,6 +25,7 @@ export const DashboardOverview: React.FC = () => {
     setAdminSubTab,
     notifications,
     markNotificationAsRead,
+    clearReadNotifications,
     openProposalWorkspace
   } = useApp();
 
@@ -31,6 +33,7 @@ export const DashboardOverview: React.FC = () => {
     (n.targetRole === currentRole || n.targetRole === 'all')
   );
   const unreadNotifs = roleNotifs.filter(n => !n.isRead);
+  const hasReadNotifs = roleNotifs.some(n => n.isRead);
 
   const canAccessMembers = hasTabAccess(currentRole, 'members');
   const canAccessUsers = hasTabAccess(currentRole, 'users');
@@ -86,13 +89,25 @@ export const DashboardOverview: React.FC = () => {
               <BellRing className="w-4 h-4 text-dwp-burgundy" />
               <span>Notifikasi Aksi Role: {activePersona.title}</span>
             </div>
-            <span className="bg-dwp-burgundy text-dwp-gold font-bold text-[10px] px-2.5 py-0.5 rounded-full">
-              {unreadNotifs.length} Belum Dibaca
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="bg-dwp-burgundy text-dwp-gold font-bold text-[10px] px-2.5 py-0.5 rounded-full">
+                {unreadNotifs.length} Belum Dibaca
+              </span>
+              {hasReadNotifs && (
+                <button
+                  onClick={() => clearReadNotifications()}
+                  className="bg-rose-50 hover:bg-rose-100 text-rose-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-rose-200 flex items-center gap-1 transition-colors"
+                  title="Hapus semua notifikasi yang sudah dibaca"
+                >
+                  <Trash2 className="w-3 h-3 text-rose-600" />
+                  <span>Bersihkan Terbaca</span>
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
-            {roleNotifs.slice(0, 3).map((n) => (
+            {roleNotifs.slice(0, 4).map((n) => (
               <div 
                 key={n.id}
                 onClick={() => {
@@ -109,20 +124,30 @@ export const DashboardOverview: React.FC = () => {
                     setAdminSubTab('proposals');
                   }
                 }}
-                className={`p-3 rounded-xl border text-xs cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+                className={`p-3.5 rounded-xl border text-xs cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-l-4 ${
                   !n.isRead 
-                    ? 'bg-white border-amber-300 shadow-sm hover:border-dwp-burgundy' 
-                    : 'bg-slate-50/80 border-slate-200 text-slate-600'
+                    ? 'bg-amber-100/90 border-dwp-burgundy border-t-amber-300 border-r-amber-300 border-b-amber-300 shadow-sm hover:bg-amber-100' 
+                    : 'bg-slate-50/60 border-slate-200 text-slate-500 opacity-65 hover:opacity-100 hover:bg-slate-100'
                 }`}
               >
                 <div className="space-y-0.5">
-                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <span>{n.title}</span>
-                    {!n.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-dwp-burgundy animate-pulse shrink-0" />
+                  <div className="font-bold flex items-center gap-2">
+                    <span className={!n.isRead ? 'text-slate-950 font-extrabold' : 'text-slate-600 font-semibold'}>
+                      {n.title}
+                    </span>
+                    {!n.isRead ? (
+                      <span className="bg-dwp-burgundy text-dwp-gold font-black text-[9px] px-2 py-0.5 rounded-full animate-pulse shadow-sm">
+                        🔴 BARU
+                      </span>
+                    ) : (
+                      <span className="text-[9px] text-slate-400 font-semibold bg-slate-200/70 px-1.5 py-0.5 rounded">
+                        ✓ Dibaca
+                      </span>
                     )}
                   </div>
-                  <p className="text-slate-600 text-[11px] leading-relaxed">{n.message}</p>
+                  <p className={`text-[11px] leading-relaxed ${!n.isRead ? 'text-slate-900 font-medium' : 'text-slate-500'}`}>
+                    {n.message}
+                  </p>
                 </div>
                 <span className="text-[10px] text-slate-400 shrink-0 font-mono self-end sm:self-center">{n.timestamp}</span>
               </div>

@@ -655,6 +655,7 @@ interface AppContextType {
   notifications: AppNotification[];
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
+  clearReadNotifications: () => void;
   
   activeTab: 'public' | 'admin';
   setActiveTab: (tab: 'public' | 'admin') => void;
@@ -843,6 +844,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const markAllNotificationsAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  const clearReadNotifications = () => {
+    setNotifications(prev => prev.filter(n => !(n.isRead && (n.targetRole === currentRole || n.targetRole === 'all'))));
   };
 
   const openProposalWorkspace = (proposalId: string, workspaceTab: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj' = 'usulan') => {
@@ -1488,6 +1493,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       notifications,
       markNotificationAsRead,
       markAllNotificationsAsRead,
+      clearReadNotifications,
       focusedProposalId,
       setFocusedProposalId,
       focusedWorkspaceTab,
