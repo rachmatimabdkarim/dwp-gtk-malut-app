@@ -48,7 +48,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
   const [objective, setObjective] = useState('');
   const [targetAudience, setTargetAudience] = useState('');
   const [estimatedBudget, setEstimatedBudget] = useState(10000000);
-  const [location, setLocation] = useState('Aula Kantor GTK Prov. Maluku Utara, Ternate');
+  const [location, setLocation] = useState('');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -78,7 +78,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     setObjective('');
     setTargetAudience('');
     setEstimatedBudget(10000000);
-    setLocation('Aula Kantor GTK Prov. Maluku Utara, Ternate');
+    setLocation('');
     setShowAddModal(true);
   };
 
@@ -1006,6 +1006,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                   required
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Contoh: Aula Kantor GTK / Hotel Grand Dafam Ternate"
                   className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                 />
               </div>
