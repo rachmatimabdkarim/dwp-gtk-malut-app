@@ -799,25 +799,43 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Tanggal Mulai *</label>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Tanggal Mulai * <span className="text-[10px] text-dwp-burgundy font-semibold">(tgl/bln/thn)</span>
+                  </label>
                   <input
                     type="date"
+                    lang="id-ID"
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                   />
+                  {startDate && (
+                    <div className="text-[11px] font-semibold text-emerald-700 mt-1 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Format Terpilih: <strong>{formatDateDDMMYYYY(startDate)}</strong> (dd/mm/yyyy)</span>
+                    </div>
+                  )}
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Tanggal Selesai *</label>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Tanggal Selesai * <span className="text-[10px] text-dwp-burgundy font-semibold">(tgl/bln/thn)</span>
+                  </label>
                   <input
                     type="date"
+                    lang="id-ID"
                     required
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                   />
+                  {endDate && (
+                    <div className="text-[11px] font-semibold text-emerald-700 mt-1 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Format Terpilih: <strong>{formatDateDDMMYYYY(endDate)}</strong> (dd/mm/yyyy)</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -978,25 +996,43 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Tanggal Mulai *</label>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Tanggal Mulai * <span className="text-[10px] text-dwp-burgundy font-semibold">(tgl/bln/thn)</span>
+                  </label>
                   <input
                     type="date"
+                    lang="id-ID"
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                   />
+                  {startDate && (
+                    <div className="text-[11px] font-semibold text-emerald-700 mt-1 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Format Terpilih: <strong>{formatDateDDMMYYYY(startDate)}</strong> (dd/mm/yyyy)</span>
+                    </div>
+                  )}
                 </div>
 
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Tanggal Selesai *</label>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Tanggal Selesai * <span className="text-[10px] text-dwp-burgundy font-semibold">(tgl/bln/thn)</span>
+                  </label>
                   <input
                     type="date"
+                    lang="id-ID"
                     required
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                   />
+                  {endDate && (
+                    <div className="text-[11px] font-semibold text-emerald-700 mt-1 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Format Terpilih: <strong>{formatDateDDMMYYYY(endDate)}</strong> (dd/mm/yyyy)</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
