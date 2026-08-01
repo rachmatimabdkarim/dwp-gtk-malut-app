@@ -219,9 +219,9 @@ export const UserManagement: React.FC = () => {
     });
   };
 
-  const toggleProposalActionPermission = (role: UserRole, actionKey: 'canSubmit' | 'canVerifyWaket' | 'canApproveKetua' | 'canReceiveRab') => {
+  const toggleProposalActionPermission = (role: UserRole, actionKey: 'canSubmit' | 'canVerifyWaket' | 'canApproveKetua' | 'canReceiveSekretarisNotif' | 'canReceiveRab') => {
     setMatrixState(prev => {
-      const currentActions = prev.proposalActions[role] || { canSubmit: false, canVerifyWaket: false, canApproveKetua: false, canReceiveRab: false };
+      const currentActions = prev.proposalActions[role] || { canSubmit: false, canVerifyWaket: false, canApproveKetua: false, canReceiveSekretarisNotif: false, canReceiveRab: false };
       return {
         ...prev,
         proposalActions: {
@@ -671,6 +671,22 @@ export const UserManagement: React.FC = () => {
                           type="checkbox"
                           checked={matrixState.proposalActions[r.role]?.canApproveKetua ?? false}
                           onChange={() => toggleProposalActionPermission(r.role, 'canApproveKetua')}
+                          className="w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500 cursor-pointer"
+                        />
+                      </td>
+                    ))}
+                  </tr>
+
+                  <tr className="hover:bg-slate-50/80 transition-colors">
+                    <td className="p-3 border border-slate-200 font-bold text-slate-900 bg-slate-50/50">
+                      Hak Notifikasi Pengarsipan Agenda (Sekretaris DWP)
+                    </td>
+                    {rolesList.map(r => (
+                      <td key={r.role} className="p-3 border border-slate-200 text-center">
+                        <input
+                          type="checkbox"
+                          checked={matrixState.proposalActions[r.role]?.canReceiveSekretarisNotif ?? false}
+                          onChange={() => toggleProposalActionPermission(r.role, 'canReceiveSekretarisNotif')}
                           className="w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500 cursor-pointer"
                         />
                       </td>

@@ -22,6 +22,7 @@ export interface DynamicPermissionMatrix {
     canSubmit: boolean;
     canVerifyWaket: boolean;
     canApproveKetua: boolean;
+    canReceiveSekretarisNotif: boolean;
     canReceiveRab: boolean;
   }>;
 }
@@ -47,14 +48,20 @@ export const DEFAULT_ROLE_CMS_SECTIONS: Record<UserRole, CMSSection[]> = {
   anggota: []
 };
 
-export const DEFAULT_PROPOSAL_ACTIONS: Record<UserRole, { canSubmit: boolean; canVerifyWaket: boolean; canApproveKetua: boolean; canReceiveRab: boolean }> = {
-  admin_master: { canSubmit: true, canVerifyWaket: true, canApproveKetua: true, canReceiveRab: true },
-  ketua: { canSubmit: true, canVerifyWaket: false, canApproveKetua: true, canReceiveRab: false },
-  wakil_ketua: { canSubmit: true, canVerifyWaket: true, canApproveKetua: false, canReceiveRab: false },
-  sekretaris: { canSubmit: true, canVerifyWaket: false, canApproveKetua: false, canReceiveRab: false },
-  bendahara: { canSubmit: false, canVerifyWaket: false, canApproveKetua: false, canReceiveRab: true },
-  admin_bidang: { canSubmit: true, canVerifyWaket: false, canApproveKetua: false, canReceiveRab: false },
-  anggota: { canSubmit: false, canVerifyWaket: false, canApproveKetua: false, canReceiveRab: false }
+export const DEFAULT_PROPOSAL_ACTIONS: Record<UserRole, { 
+  canSubmit: boolean; 
+  canVerifyWaket: boolean; 
+  canApproveKetua: boolean; 
+  canReceiveSekretarisNotif: boolean;
+  canReceiveRab: boolean;
+}> = {
+  admin_master: { canSubmit: true, canVerifyWaket: true, canApproveKetua: true, canReceiveSekretarisNotif: true, canReceiveRab: true },
+  ketua: { canSubmit: true, canVerifyWaket: false, canApproveKetua: true, canReceiveSekretarisNotif: true, canReceiveRab: false },
+  wakil_ketua: { canSubmit: true, canVerifyWaket: true, canApproveKetua: false, canReceiveSekretarisNotif: false, canReceiveRab: false },
+  sekretaris: { canSubmit: true, canVerifyWaket: false, canApproveKetua: false, canReceiveSekretarisNotif: true, canReceiveRab: false },
+  bendahara: { canSubmit: false, canVerifyWaket: false, canApproveKetua: false, canReceiveSekretarisNotif: false, canReceiveRab: true },
+  admin_bidang: { canSubmit: true, canVerifyWaket: false, canApproveKetua: false, canReceiveSekretarisNotif: false, canReceiveRab: false },
+  anggota: { canSubmit: false, canVerifyWaket: false, canApproveKetua: false, canReceiveSekretarisNotif: false, canReceiveRab: false }
 };
 
 export const DEFAULT_PERMISSION_MATRIX: DynamicPermissionMatrix = {
@@ -103,7 +110,7 @@ export const resetDynamicPermissionsToDefault = (): DynamicPermissionMatrix => {
 };
 
 export const hasTabAccess = (role: UserRole, tab: AdminSubTab): boolean => {
-  if (role === 'admin_master') return true; // Superadmin master always full access
+  if (role === 'admin_master') return true;
   const matrix = getDynamicPermissions();
   const allowedTabs = matrix.tabs[role] || ['dashboard', 'members'];
   return allowedTabs.includes(tab);
