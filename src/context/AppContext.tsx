@@ -12,6 +12,12 @@ import {
   ProposalStage
 } from '../types';
 import { apiService } from '../services/apiService';
+import { 
+  DynamicPermissionMatrix, 
+  getDynamicPermissions, 
+  saveDynamicPermissions, 
+  resetDynamicPermissionsToDefault 
+} from '../utils/RoleAccessControl';
 
 export const getEffectiveRole = (user: UserAccount, membersList: Member[]): UserRole => {
   if (!user.memberId) return user.role;
@@ -589,6 +595,10 @@ interface AppContextType {
   
   siteConfig: SiteConfig;
   updateSiteConfig: (newConfig: Partial<SiteConfig>) => void;
+
+  permissionMatrix: DynamicPermissionMatrix;
+  updatePermissionMatrix: (matrix: DynamicPermissionMatrix) => void;
+  resetPermissionMatrix: () => void;
   
   activeTab: 'public' | 'admin';
   setActiveTab: (tab: 'public' | 'admin') => void;
@@ -1044,6 +1054,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNews(prev => [{ ...art, id: `news-${Date.now()}` }, ...prev]);
   };
 
+  const [permissionMatrix, setPermissionMatrix] = useState<DynamicPermissionMatrix>(() => getDynamicPermissions());
+
+  const updatePermissionMatrix = (matrix: DynamicPermissionMatrix) => {
+    saveDynamicPermissions(matrix);
+    setPermissionMatrix(matrix);
+  };
+
+  const resetPermissionMatrix = () => {
+    const defaultMatrix = resetDynamicPermissionsToDefault();
+    setPermissionMatrix(defaultMatrix);
+  };
+
   const updateSiteConfig = (newCfg: Partial<SiteConfig>) => {
     setSiteConfig(prev => {
       const updated = { ...prev, ...newCfg };
@@ -1083,6 +1105,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addNewsArticle,
       siteConfig,
       updateSiteConfig,
+      permissionMatrix,
+      updatePermissionMatrix,
+      resetPermissionMatrix,
       activeTab,
       setActiveTab,
       adminSubTab,
