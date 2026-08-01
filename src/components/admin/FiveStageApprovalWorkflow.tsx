@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export const FiveStageApprovalWorkflow: React.FC = () => {
-  const { proposals, addProposal, advanceApproval, resubmitProposal, activePersona } = useApp();
+  const { proposals, addProposal, advanceApproval, resubmitProposal, activePersona, members, currentAccount } = useApp();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<ActivityProposal | null>(null);
@@ -38,6 +38,35 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
   const [location, setLocation] = useState('Aula Kantor GTK Prov. Maluku Utara, Ternate');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Helper function to detect active persona's assigned Bidang
+  const getActivePersonaBidang = (): 'Pendidikan' | 'Ekonomi' | 'Sosial Budaya' | 'Sekretariat' => {
+    if (currentAccount && currentAccount.memberId) {
+      const m = members.find(mem => mem.id === currentAccount.memberId);
+      if (m && ['Pendidikan', 'Ekonomi', 'Sosial Budaya'].includes(m.bidang)) {
+        return m.bidang as 'Pendidikan' | 'Ekonomi' | 'Sosial Budaya';
+      }
+    }
+
+    const titleLower = activePersona.title.toLowerCase();
+    if (titleLower.includes('pendidikan')) return 'Pendidikan';
+    if (titleLower.includes('ekonomi')) return 'Ekonomi';
+    if (titleLower.includes('sosial')) return 'Sosial Budaya';
+    if (activePersona.role === 'sekretaris') return 'Sekretariat';
+
+    return 'Pendidikan';
+  };
+
+  const handleOpenAddModal = () => {
+    const userBidang = getActivePersonaBidang();
+    setBidang(userBidang);
+    setTitle('');
+    setBackground('');
+    setObjective('');
+    setTargetAudience('');
+    setEstimatedBudget(10000000);
+    setShowAddModal(true);
+  };
 
   const handleCreateProposal = (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +87,6 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     });
 
     setShowAddModal(false);
-    // Reset
     setTitle('');
     setBackground('');
     setObjective('');
@@ -96,7 +124,6 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     setDecisionNotes('');
   };
 
-  // Helper check if current persona can act on a proposal stage
   const canPersonaActOnStage = (proposal: ActivityProposal) => {
     const role = activePersona.role;
     if (role === 'admin_master') return true;
@@ -111,283 +138,191 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
   };
 
   const getStageBadgeLabel = (proposal: ActivityProposal) => {
-    if (proposal.currentStage === 'approved') return '✅ Disetujui Final';
-    if (proposal.currentStage === 'rejected') return '❌ Ditolak';
-    if (proposal.currentStage === 'revision_requested') return '⚠️ Minta Revisi';
-    if (proposal.currentStage === 'stage_4_wakil_ketua') return '🛡️ Verifikasi Wakil Ketua';
-    if (proposal.currentStage === 'stage_5_ketua') return '👑 Persetujuan Ketua DWP';
-    return 'Draf';
+    switch (proposal.currentStage) {
+      case 'stage_4_wakil_ketua':
+        return 'Verifikasi Wakil Ketua';
+      case 'stage_5_ketua':
+        return 'Persetujuan Ketua DWP';
+      case 'approved':
+        return 'Disetujui Resmi (Approved)';
+      case 'rejected':
+        return 'Ditolak';
+      case 'revision_requested':
+        return 'Perlu Revisi Pengusul';
+      default:
+        return 'Peninjauan';
+    }
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="font-serif text-2xl font-bold text-slate-900">
-              Workflow Approval Usulan Kegiatan DWP
+            <h2 className="font-serif text-xl font-bold text-slate-900">
+              Workflow Usulan Kegiatan DWP
             </h2>
-            <span className="bg-dwp-burgundy text-dwp-gold text-xs font-bold px-3 py-0.5 rounded-full">
-              Hirarki Resmi DWP
+            <span className="bg-dwp-gold text-slate-950 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+              Dynamic Approval Hierarchy
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Alur Usulan: <strong>Ketua Bidang & Sekretaris</strong> ➔ Verifikasi Waket ➔ Persetujuan Ketua | <strong>Wakil Ketua</strong> ➔ Persetujuan Ketua | <strong>Ketua DWP</strong> ➔ Direct Auto-Approve.
+            Pengusulan kegiatan oleh Ketua Bidang, Sekretaris, Waket, atau Ketua DWP via formulir digital berjenjang.
           </p>
         </div>
 
         <button
-          onClick={() => {
-            setTitle('');
-            setBackground('');
-            setObjective('');
-            setShowAddModal(true);
-          }}
-          className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-semibold px-5 py-3 rounded-2xl text-xs shadow-md flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shrink-0"
+          onClick={handleOpenAddModal}
+          className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-semibold px-4 py-2.5 rounded-xl text-xs shadow flex items-center gap-2 transition-all hover:scale-105 shrink-0"
         >
           <Plus className="w-4 h-4 text-dwp-gold" />
-          <span>Usulkan Kegiatan Baru</span>
+          <span>Buat Usulan Kegiatan Baru</span>
         </button>
       </div>
 
-      {/* Role Active Persona Bar */}
-      <div className="bg-slate-900 text-white p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-3">
-          <img src={activePersona.avatar} alt={activePersona.name} className="w-8 h-8 rounded-full border border-dwp-gold object-cover" />
-          <div>
-            <span className="text-slate-400 text-[10px] block">Login Sebagai Persona:</span>
-            <span className="font-bold text-dwp-gold">{activePersona.name} ({activePersona.title})</span>
-          </div>
+      {/* Dynamic Hierarchy Explanation Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-dwp-darkBurgundy to-slate-900 text-white p-5 rounded-2xl border border-dwp-gold/30 shadow-md space-y-2">
+        <div className="flex items-center gap-2 text-dwp-gold font-bold text-xs">
+          <Sparkles className="w-4 h-4 text-dwp-gold" />
+          <span>Aturan Dynamic Hierarchy Verifikasi Usulan Kegiatan DWP:</span>
         </div>
-        <div className="bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-[11px] text-slate-300">
-          Role Hak Akses: <strong className="text-white capitalize">{activePersona.role.replace('_', ' ')}</strong>
+        <div className="grid md:grid-cols-3 gap-3 text-[11px] text-slate-300 pt-1">
+          <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-1">
+            <span className="font-bold text-white block">1. Usulan Ketua Bidang & Sekretaris</span>
+            <p className="text-slate-400 leading-relaxed">
+              Memulai dari <strong>Stage 4 (Verifikasi Waket)</strong> ➔ Diteruskan ke <strong>Stage 5 (Persetujuan Ketua DWP)</strong>.
+            </p>
+          </div>
+          <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-1">
+            <span className="font-bold text-dwp-gold block">2. Usulan Wakil Ketua DWP</span>
+            <p className="text-slate-400 leading-relaxed">
+              Verifikasi awal otomatis dilompati (⏩ <i>Auto-Skipped</i>). Usulan <strong>langsung dikirim ke Ketua DWP</strong>.
+            </p>
+          </div>
+          <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-1">
+            <span className="font-bold text-emerald-400 block">3. Usulan Ketua DWP</span>
+            <p className="text-slate-400 leading-relaxed">
+              Usulan yang diajukan oleh Ketua DWP <strong>langsung disetujui resmi (⏩ Direct Approved)</strong> & notifikasi otomatis terkirim.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Proposals List */}
-      <div className="space-y-6">
-        {proposals.map(proposal => {
+      {/* List Proposals */}
+      <div className="space-y-4">
+        {proposals.map((proposal) => {
           const isApproved = proposal.currentStage === 'approved';
           const isRejected = proposal.currentStage === 'rejected';
           const isRevision = proposal.currentStage === 'revision_requested';
-
-          const creatorRole = proposal.creatorRole || 'admin_bidang';
-          const isCreatedByWaket = creatorRole === 'wakil_ketua';
-          const isCreatedByKetua = creatorRole === 'ketua';
-
           const userCanAct = canPersonaActOnStage(proposal);
+          const isMyProposal = proposal.createdBy === activePersona.name;
 
           return (
             <div 
               key={proposal.id}
-              className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all space-y-6"
+              className={`bg-white rounded-2xl p-5 border transition-all space-y-4 shadow-sm ${
+                isApproved ? 'border-emerald-200 bg-emerald-50/20' : 
+                isRejected ? 'border-rose-200 bg-rose-50/20' : 
+                isRevision ? 'border-amber-200 bg-amber-50/20' : 'border-slate-200 hover:border-dwp-burgundy/40'
+              }`}
             >
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                <div className="space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="bg-dwp-burgundy text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+              {/* Proposal Header */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-dwp-burgundy/10 text-dwp-burgundy border border-dwp-burgundy/20">
                       Bidang {proposal.bidang}
                     </span>
-                    <span className="text-xs text-slate-500">
-                      ID: {proposal.id} | Dibuat: {proposal.createdAt} oleh <strong>{proposal.createdBy}</strong>
+                    <span className="text-xs font-serif font-bold text-slate-900">
+                      {proposal.title}
                     </span>
                   </div>
-
-                  <h3 className="font-serif font-bold text-slate-900 text-xl">
-                    {proposal.title}
-                  </h3>
+                  <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-3 flex-wrap">
+                    <span>Pengusul: <strong className="text-slate-800">{proposal.createdBy}</strong></span>
+                    <span>•</span>
+                    <span>Estimasi RAB: <strong className="text-emerald-700">Rp {proposal.estimatedBudget.toLocaleString('id-ID')}</strong></span>
+                    <span>•</span>
+                    <span>Tanggal Pelaksanaan: <strong className="text-slate-800">{proposal.startDate} s.d. {proposal.endDate}</strong></span>
+                  </div>
                 </div>
 
                 {/* Status Badge */}
-                <div>
-                  {isApproved && (
-                    <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      Disetujui Ketua DWP
-                    </span>
-                  )}
-                  {isRejected && (
-                    <span className="bg-rose-100 text-rose-800 border border-rose-300 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                      <XCircle className="w-4 h-4 text-rose-600" />
-                      Ditolak
-                    </span>
-                  )}
-                  {isRevision && (
-                    <span className="bg-amber-100 text-amber-800 border border-amber-300 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                      <AlertTriangle className="w-4 h-4 text-amber-600" />
-                      Minta Revisi
-                    </span>
-                  )}
-                  {!isApproved && !isRejected && !isRevision && (
-                    <span className="bg-sky-100 text-sky-800 border border-sky-300 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                      <Clock className="w-4 h-4 text-sky-600 animate-spin" />
-                      {getStageBadgeLabel(proposal)}
-                    </span>
-                  )}
+                <div className="shrink-0">
+                  <span className={`text-xs font-bold px-3 py-1.5 rounded-full border flex items-center gap-1.5 w-fit ${
+                    isApproved ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
+                    isRejected ? 'bg-rose-100 text-rose-800 border-rose-300' :
+                    isRevision ? 'bg-amber-100 text-amber-900 border-amber-300' :
+                    'bg-sky-100 text-sky-900 border-sky-300'
+                  }`}>
+                    {isApproved ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> :
+                     isRejected ? <XCircle className="w-3.5 h-3.5 text-rose-600" /> :
+                     isRevision ? <AlertTriangle className="w-3.5 h-3.5 text-amber-600" /> :
+                     <Clock className="w-3.5 h-3.5 text-sky-600" />}
+                    <span>{getStageBadgeLabel(proposal)}</span>
+                  </span>
                 </div>
               </div>
 
-              {/* Revision Alert Notification */}
-              {isRevision && proposal.revisionComment && (
-                <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-xs space-y-1.5">
-                  <div className="font-bold text-amber-900 flex items-center gap-1.5">
-                    <AlertTriangle className="w-4 h-4 text-amber-600" />
-                    Catatan Revisi Verifikator:
-                  </div>
-                  <p className="text-amber-800 italic bg-white p-2.5 rounded-xl border border-amber-200">
-                    "{proposal.revisionComment}"
+              {/* Proposal Content Body */}
+              <div className="grid md:grid-cols-2 gap-4 text-xs">
+                <div className="space-y-1">
+                  <span className="font-bold text-slate-700 block">Latar Belakang & Urgensi:</span>
+                  <p className="text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    {proposal.background}
                   </p>
                 </div>
-              )}
-
-              {/* Proposal Key Details */}
-              <div className="grid sm:grid-cols-3 gap-4 text-xs text-slate-700 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <div>
-                  <span className="text-slate-400 block font-semibold mb-0.5">Estimasi Anggaran (RAB)</span>
-                  <span className="font-bold text-slate-900 text-sm">
-                    Rp {proposal.estimatedBudget.toLocaleString('id-ID')}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-semibold mb-0.5">Jadwal & Tempat</span>
-                  <span className="font-semibold text-slate-900">
-                    {proposal.startDate} | {proposal.location}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-semibold mb-0.5">Sasaran Peserta</span>
-                  <span className="font-semibold text-slate-900">
-                    {proposal.targetAudience}
-                  </span>
+                <div className="space-y-1">
+                  <span className="font-bold text-slate-700 block">Maksud & Tujuan:</span>
+                  <p className="text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    {proposal.objective || 'Meningkatkan partisipasi dan kualitas kegiatan DWP GTK Maluku Utara.'}
+                  </p>
                 </div>
               </div>
 
-              {/* Dynamic Approval Workflow Stepper */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold uppercase tracking-wider text-slate-500">
-                    Alur Verification Stepper (Sesuai Role Pengusul)
-                  </span>
-                  <span className="text-[11px] text-dwp-burgundy font-semibold">
-                    {isCreatedByKetua ? '⚡ Auto-Approved oleh Ketua DWP' : isCreatedByWaket ? '⏩ Skip Verifikasi Waket' : '📋 Verifikasi 2 Tahap'}
-                  </span>
+              {/* Approval History Logs */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                <div className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-dwp-burgundy" />
+                  <span>Riwayat Verifikasi & Log Keputusan:</span>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
-                  {/* Step 1: Pengusulan */}
-                  <div className="p-3 rounded-2xl border bg-emerald-50 border-emerald-300 text-emerald-900 flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                      <Check className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <div className="font-bold text-[11px]">1. Draf Diusulkan</div>
-                      <div className="text-[9px] text-emerald-700">Oleh {proposal.createdBy}</div>
-                    </div>
-                  </div>
-
-                  {/* Step 2: Verifikasi Wakil Ketua */}
-                  <div className={`p-3 rounded-2xl border flex items-center gap-2 ${
-                    isCreatedByKetua || isCreatedByWaket
-                      ? 'bg-slate-100 border-slate-200 text-slate-400 opacity-65'
-                      : proposal.currentStage === 'stage_5_ketua' || isApproved
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                      : proposal.currentStage === 'stage_4_wakil_ketua'
-                      ? 'bg-dwp-burgundy text-white border-dwp-gold shadow-md'
-                      : 'bg-slate-50 border-slate-200 text-slate-400'
-                  }`}>
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                      isCreatedByKetua || isCreatedByWaket
-                        ? 'bg-slate-200 text-slate-400'
-                        : proposal.currentStage === 'stage_5_ketua' || isApproved
-                        ? 'bg-emerald-600 text-white'
-                        : proposal.currentStage === 'stage_4_wakil_ketua'
-                        ? 'bg-dwp-gold text-slate-950'
-                        : 'bg-slate-200 text-slate-600'
-                    }`}>
-                      {isCreatedByKetua || isCreatedByWaket ? '⏩' : (proposal.currentStage === 'stage_5_ketua' || isApproved) ? <Check className="w-3.5 h-3.5" /> : '2'}
-                    </div>
-                    <div>
-                      <div className="font-bold text-[11px]">2. Verifikasi Waket</div>
-                      <div className="text-[9px]">
-                        {isCreatedByKetua || isCreatedByWaket ? '(Auto-Skipped)' : proposal.currentStage === 'stage_4_wakil_ketua' ? 'Menunggu Review' : 'Wakil Ketua'}
+                <div className="space-y-1.5 divide-y divide-slate-200/60">
+                  {proposal.logs.map((log) => (
+                    <div key={log.id} className="pt-1.5 first:pt-0 flex items-start justify-between text-[11px] gap-2">
+                      <div>
+                        <span className="font-bold text-slate-800">{log.actorName}</span>
+                        <span className="text-slate-500"> ({log.stageName}): </span>
+                        <span className="italic text-slate-700">"{log.notes}"</span>
                       </div>
+                      <span className="text-[10px] text-slate-400 shrink-0 font-mono">{log.timestamp}</span>
                     </div>
-                  </div>
-
-                  {/* Step 3: Persetujuan Ketua DWP */}
-                  <div className={`p-3 rounded-2xl border flex items-center gap-2 ${
-                    isCreatedByKetua
-                      ? 'bg-slate-100 border-slate-200 text-slate-400 opacity-65'
-                      : isApproved
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                      : proposal.currentStage === 'stage_5_ketua'
-                      ? 'bg-dwp-burgundy text-white border-dwp-gold shadow-md'
-                      : 'bg-slate-50 border-slate-200 text-slate-400'
-                  }`}>
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                      isCreatedByKetua
-                        ? 'bg-slate-200 text-slate-400'
-                        : isApproved
-                        ? 'bg-emerald-600 text-white'
-                        : proposal.currentStage === 'stage_5_ketua'
-                        ? 'bg-dwp-gold text-slate-950'
-                        : 'bg-slate-200 text-slate-600'
-                    }`}>
-                      {isCreatedByKetua ? '⚡' : isApproved ? <Check className="w-3.5 h-3.5" /> : '3'}
-                    </div>
-                    <div>
-                      <div className="font-bold text-[11px]">3. Persetujuan Ketua</div>
-                      <div className="text-[9px]">
-                        {isCreatedByKetua ? '(Auto-Approved)' : proposal.currentStage === 'stage_5_ketua' ? 'Menunggu Ketua DWP' : 'Ketua DWP'}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step 4: Disetujui & Tembusan */}
-                  <div className={`p-3 rounded-2xl border flex items-center gap-2 ${
-                    isApproved
-                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                      : 'bg-slate-50 border-slate-200 text-slate-400'
-                  }`}>
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                      isApproved ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
-                    }`}>
-                      {isApproved ? <Check className="w-3.5 h-3.5" /> : '4'}
-                    </div>
-                    <div>
-                      <div className="font-bold text-[11px]">4. Disetujui & Tembusan</div>
-                      <div className="text-[9px]">{isApproved ? 'Tembusan Dikirimkan' : 'Selesai'}</div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Log Timeline */}
-              {proposal.logs.length > 0 && (
-                <div className="border-t border-slate-100 pt-4 space-y-2">
-                  <span className="text-xs font-bold text-slate-500">Riwayat Catatan Review & Verifikasi:</span>
-                  <div className="space-y-2">
-                    {proposal.logs.map((log) => (
-                      <div key={log.id} className={`p-3 rounded-xl border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
-                        log.stageName === 'Tembusan Otomatis' ? 'bg-sky-50/80 border-sky-200 text-sky-900' : 'bg-slate-50 border-slate-200'
-                      }`}>
-                        <div className="space-y-0.5">
-                          <span className="font-bold text-slate-900">{log.actorName} ({log.stageName})</span>
-                          <p className="text-slate-600 italic">"{log.notes}"</p>
-                        </div>
-                        <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{log.timestamp}</span>
-                      </div>
-                    ))}
+              {/* Dual Role Auto-Notification Alert (Secretaris & Bendahara) */}
+              {isApproved && (
+                <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl text-xs space-y-1">
+                  <div className="font-bold text-emerald-950 flex items-center gap-1.5">
+                    <BellRing className="w-4 h-4 text-emerald-700" />
+                    <span>Notifikasi Otomatis Pasca-Approval Disertai Tembusan Dua Peran:</span>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 text-[11px] text-emerald-900 pt-1">
+                    <div className="bg-white p-2 rounded-lg border border-emerald-200">
+                      <strong>📜 Notifikasi Sekretaris DWP:</strong> Agenda kegiatan resmi diterbitkan & diarsipkan dalam sistem.
+                    </div>
+                    <div className="bg-white p-2 rounded-lg border border-emerald-200">
+                      <strong>💰 Notifikasi Bendahara DWP:</strong> Pencairan dana RAB sebesar <strong>Rp {proposal.estimatedBudget.toLocaleString('id-ID')}</strong> disiapkan.
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100">
+              {/* Actions Row */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                 <div>
-                  {isRevision && (
+                  {isRevision && isMyProposal && (
                     <button
                       onClick={() => {
                         setRevisingProposal(proposal);
@@ -401,7 +336,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                         setStartDate(proposal.startDate);
                         setEndDate(proposal.endDate);
                       }}
-                      className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-colors"
+                      className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5"
                     >
                       <Edit3 className="w-4 h-4" />
                       <span>Perbaiki Draf & Ajukan Ulang</span>
@@ -541,8 +476,11 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                   <label className="font-bold text-slate-700 block mb-1">Bidang Penyelenggara *</label>
                   <select
                     value={bidang}
+                    disabled={activePersona.role === 'admin_bidang'}
                     onChange={(e) => setBidang(e.target.value as any)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                    className={`w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-bold ${
+                      activePersona.role === 'admin_bidang' ? 'bg-slate-100 text-slate-700 cursor-not-allowed' : 'bg-white text-slate-900 cursor-pointer'
+                    }`}
                   >
                     <option value="Pendidikan">Bidang Pendidikan</option>
                     <option value="Ekonomi">Bidang Ekonomi</option>
@@ -642,17 +580,32 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Bidang Penyelenggara *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-slate-700 block">Bidang Penyelenggara *</label>
+                    {activePersona.role === 'admin_bidang' && (
+                      <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.5 rounded">
+                        🔒 Disesuaikan Role
+                      </span>
+                    )}
+                  </div>
                   <select
                     value={bidang}
+                    disabled={activePersona.role === 'admin_bidang'}
                     onChange={(e) => setBidang(e.target.value as any)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                    className={`w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-bold ${
+                      activePersona.role === 'admin_bidang' ? 'bg-slate-100 text-slate-700 cursor-not-allowed' : 'bg-white text-slate-900 cursor-pointer'
+                    }`}
                   >
                     <option value="Pendidikan">Bidang Pendidikan</option>
                     <option value="Ekonomi">Bidang Ekonomi</option>
                     <option value="Sosial Budaya">Bidang Sosial Budaya</option>
                     <option value="Sekretariat">Sekretariat Inti</option>
                   </select>
+                  {activePersona.role === 'admin_bidang' && (
+                    <p className="text-[10px] text-slate-400 italic mt-1">
+                      Otomatis terkunci ke Bidang {bidang} sesuai posisi pengusul.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -662,37 +615,37 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     required
                     value={estimatedBudget}
                     onChange={(e) => setEstimatedBudget(Number(e.target.value))}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Latar Belakang & Urgensi *</label>
+                <label className="font-bold text-slate-700 block mb-1">Latar Belakang & Urgensi Kegiatan *</label>
                 <textarea
                   required
                   rows={3}
                   value={background}
                   onChange={(e) => setBackground(e.target.value)}
-                  placeholder="Jelaskan alasan dan latar belakang pelaksanaan kegiatan..."
+                  placeholder="Jelaskan dasar pertimbangan dan urgensi dilaksanakannya kegiatan ini..."
                   className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Tujuan & Hasil Yang Diharapkan</label>
-                <input
-                  type="text"
+                <label className="font-bold text-slate-700 block mb-1">Maksud & Tujuan Kegiatan</label>
+                <textarea
+                  rows={2}
                   value={objective}
                   onChange={(e) => setObjective(e.target.value)}
-                  placeholder="Contoh: Meningkatkan wawasan pengasuhan digital anggota DWP"
+                  placeholder="Jelaskan tujuan dan hasil yang ingin dicapai..."
                   className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
                 />
               </div>
 
-              <div className="grid sm:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">Target Peserta</label>
+                  <label className="font-bold text-slate-700 block mb-1">Sasaran / Peserta</label>
                   <input
                     type="text"
                     value={targetAudience}
