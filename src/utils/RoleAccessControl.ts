@@ -80,8 +80,15 @@ export const getDynamicPermissions = (): DynamicPermissionMatrix => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
+      const tabs = { ...DEFAULT_ROLE_PERMISSIONS, ...parsed.tabs };
+      // Ensure 'profile' tab is always present for every role
+      (Object.keys(tabs) as UserRole[]).forEach(r => {
+        if (tabs[r] && !tabs[r].includes('profile')) {
+          tabs[r] = [...tabs[r], 'profile'];
+        }
+      });
       return {
-        tabs: { ...DEFAULT_ROLE_PERMISSIONS, ...parsed.tabs },
+        tabs,
         cmsSections: { ...DEFAULT_ROLE_CMS_SECTIONS, ...parsed.cmsSections },
         proposalActions: { ...DEFAULT_PROPOSAL_ACTIONS, ...parsed.proposalActions }
       };
@@ -112,9 +119,10 @@ export const resetDynamicPermissionsToDefault = (): DynamicPermissionMatrix => {
 };
 
 export const hasTabAccess = (role: UserRole, tab: AdminSubTab): boolean => {
+  if (tab === 'profile') return true; // Profile is universal for ALL roles
   if (role === 'admin_master') return true;
   const matrix = getDynamicPermissions();
-  const allowedTabs = matrix.tabs[role] || ['dashboard', 'members'];
+  const allowedTabs = matrix.tabs[role] || ['dashboard', 'members', 'profile'];
   return allowedTabs.includes(tab);
 };
 

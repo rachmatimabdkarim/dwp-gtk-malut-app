@@ -54,7 +54,7 @@ export const AdminHeader: React.FC = () => {
         {/* Current Active Persona Info */}
         <div 
           onClick={() => setAdminSubTab('profile')}
-          className="hidden lg:flex items-center gap-2 pl-2 border-l border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2 pl-2 border-l border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
           title="Klik untuk Pengaturan Profil Saya & Ganti Password"
         >
           <img 
