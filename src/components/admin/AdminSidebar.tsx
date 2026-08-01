@@ -25,7 +25,7 @@ export const AdminSidebar: React.FC = () => {
     },
     {
       id: 'proposals' as AdminSubTab,
-      label: 'Workflow Proposal',
+      label: 'Kegiatan',
       icon: CheckSquare,
       badge: pendingApprovalCount > 0 ? pendingApprovalCount : null
     },

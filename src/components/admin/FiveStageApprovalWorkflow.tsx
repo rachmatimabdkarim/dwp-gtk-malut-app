@@ -18,7 +18,15 @@ import {
   Send,
   Edit3,
   BellRing,
-  Trash2
+  Trash2,
+  Users,
+  FileSpreadsheet,
+  QrCode,
+  Newspaper,
+  Calendar,
+  Layers,
+  Link,
+  Lock
 } from 'lucide-react';
 
 export const FiveStageApprovalWorkflow: React.FC = () => {
@@ -28,6 +36,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
   const [selectedProposal, setSelectedProposal] = useState<ActivityProposal | null>(null);
   const [revisingProposal, setRevisingProposal] = useState<ActivityProposal | null>(null);
   const [decisionNotes, setDecisionNotes] = useState('');
+
+  // Activity Workspace Detail Modal State
+  const [detailProposal, setDetailProposal] = useState<ActivityProposal | null>(null);
+  const [activeTabWorkspace, setActiveTabWorkspace] = useState<'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj'>('usulan');
 
   // Form State
   const [title, setTitle] = useState('');
@@ -184,14 +196,14 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="font-serif text-xl font-bold text-slate-900">
-              Workflow Usulan Kegiatan DWP
+              Kegiatan DWP
             </h2>
             <span className="bg-dwp-gold text-slate-950 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-              Dynamic Approval Hierarchy
+              Manajemen Terpadu Kegiatan
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Pengusulan kegiatan oleh Ketua Bidang, Sekretaris, Waket, atau Ketua DWP via formulir digital berjenjang.
+            Pengusulan, verifikasi berjenjang, penunjukan panitia, persuratan SK, hingga presensi online kegiatan.
           </p>
         </div>
 
@@ -208,7 +220,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
       <div className="bg-gradient-to-r from-slate-900 via-dwp-darkBurgundy to-slate-900 text-white p-5 rounded-2xl border border-dwp-gold/30 shadow-md space-y-2">
         <div className="flex items-center gap-2 text-dwp-gold font-bold text-xs">
           <Sparkles className="w-4 h-4 text-dwp-gold" />
-          <span>Aturan Dynamic Hierarchy Verifikasi Usulan Kegiatan DWP:</span>
+          <span>Aturan Alur Verifikasi Usulan Kegiatan DWP:</span>
         </div>
         <div className="grid md:grid-cols-3 gap-3 text-[11px] text-slate-300 pt-1">
           <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-1">
@@ -232,7 +244,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
         </div>
       </div>
 
-      {/* List Proposals */}
+      {/* List Activities */}
       <div className="space-y-4">
         {proposals.map((proposal) => {
           const isApproved = proposal.currentStage === 'approved';
@@ -257,21 +269,30 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-dwp-burgundy/10 text-dwp-burgundy border border-dwp-burgundy/20">
                       Bidang {proposal.bidang}
                     </span>
-                    <span className="text-xs font-serif font-bold text-slate-900">
+                    
+                    {/* Clickable Title to open Workspace Detail */}
+                    <button
+                      onClick={() => {
+                        setDetailProposal(proposal);
+                        setActiveTabWorkspace('usulan');
+                      }}
+                      className="text-xs font-serif font-bold text-slate-900 hover:text-dwp-burgundy text-left underline decoration-dotted underline-offset-4 transition-colors"
+                    >
                       {proposal.title}
-                    </span>
+                    </button>
                   </div>
+
                   <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-3 flex-wrap">
                     <span>Pengusul: <strong className="text-slate-800">{proposal.createdBy}</strong></span>
                     <span>•</span>
                     <span>Estimasi RAB: <strong className="text-emerald-700">Rp {proposal.estimatedBudget.toLocaleString('id-ID')}</strong></span>
                     <span>•</span>
-                    <span>Tanggal Pelaksanaan: <strong className="text-slate-800">{proposal.startDate} s.d. {proposal.endDate}</strong></span>
+                    <span>Pelaksanaan: <strong className="text-slate-800">{proposal.startDate} s.d. {proposal.endDate}</strong></span>
                   </div>
                 </div>
 
                 {/* Status Badge */}
-                <div className="shrink-0">
+                <div className="shrink-0 flex items-center gap-2">
                   <span className={`text-xs font-bold px-3 py-1.5 rounded-full border flex items-center gap-1.5 w-fit ${
                     isApproved ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
                     isRejected ? 'bg-rose-100 text-rose-800 border-rose-300' :
@@ -284,62 +305,35 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                      <Clock className="w-3.5 h-3.5 text-sky-600" />}
                     <span>{getStageBadgeLabel(proposal)}</span>
                   </span>
+
+                  <button
+                    onClick={() => {
+                      setDetailProposal(proposal);
+                      setActiveTabWorkspace('usulan');
+                    }}
+                    className="bg-slate-900 hover:bg-dwp-burgundy text-dwp-gold text-xs font-bold px-3 py-1.5 rounded-full shadow flex items-center gap-1 transition-all"
+                  >
+                    <span>Detail & Workspace</span>
+                    <ArrowRight className="w-3 h-3 text-dwp-gold" />
+                  </button>
                 </div>
               </div>
 
-              {/* Proposal Content Body */}
+              {/* Proposal Content Body Preview */}
               <div className="grid md:grid-cols-2 gap-4 text-xs">
                 <div className="space-y-1">
                   <span className="font-bold text-slate-700 block">Latar Belakang & Urgensi:</span>
-                  <p className="text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 line-clamp-2">
                     {proposal.background}
                   </p>
                 </div>
                 <div className="space-y-1">
                   <span className="font-bold text-slate-700 block">Maksud & Tujuan:</span>
-                  <p className="text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100 line-clamp-2">
                     {proposal.objective || 'Meningkatkan partisipasi dan kualitas kegiatan DWP GTK Maluku Utara.'}
                   </p>
                 </div>
               </div>
-
-              {/* Approval History Logs */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-                <div className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-dwp-burgundy" />
-                  <span>Riwayat Verifikasi & Log Keputusan:</span>
-                </div>
-                <div className="space-y-1.5 divide-y divide-slate-200/60">
-                  {proposal.logs.map((log) => (
-                    <div key={log.id} className="pt-1.5 first:pt-0 flex items-start justify-between text-[11px] gap-2">
-                      <div>
-                        <span className="font-bold text-slate-800">{log.actorName}</span>
-                        <span className="text-slate-500"> ({log.stageName}): </span>
-                        <span className="italic text-slate-700">"{log.notes}"</span>
-                      </div>
-                      <span className="text-[10px] text-slate-400 shrink-0 font-mono">{log.timestamp}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dual Role Auto-Notification Alert (Secretaris & Bendahara) */}
-              {isApproved && (
-                <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl text-xs space-y-1">
-                  <div className="font-bold text-emerald-950 flex items-center gap-1.5">
-                    <BellRing className="w-4 h-4 text-emerald-700" />
-                    <span>Notifikasi Otomatis Pasca-Approval Disertai Tembusan Dua Peran:</span>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-2 text-[11px] text-emerald-900 pt-1">
-                    <div className="bg-white p-2 rounded-lg border border-emerald-200">
-                      <strong>📜 Notifikasi Sekretaris DWP:</strong> Agenda kegiatan resmi diterbitkan & diarsipkan dalam sistem.
-                    </div>
-                    <div className="bg-white p-2 rounded-lg border border-emerald-200">
-                      <strong>💰 Notifikasi Bendahara DWP:</strong> Pencairan dana RAB sebesar <strong>Rp {proposal.estimatedBudget.toLocaleString('id-ID')}</strong> disiapkan.
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Actions Row */}
               <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-3">
@@ -404,6 +398,277 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
           );
         })}
       </div>
+
+      {/* ========================================================================= */}
+      {/* MODAL 1: WORKSPACE DETAIL KEGIATAN (5 TABS PROCESS) */}
+      {/* ========================================================================= */}
+      {detailProposal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full p-6 md:p-8 space-y-6 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col">
+            
+            {/* Header Modal Workspace */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 shrink-0">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-dwp-burgundy text-dwp-gold">
+                    Bidang {detailProposal.bidang}
+                  </span>
+                  <h3 className="font-serif font-bold text-slate-900 text-lg md:text-xl">
+                    {detailProposal.title}
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Pengusul: <strong>{detailProposal.createdBy}</strong> | Status: <strong className="text-emerald-700">{getStageBadgeLabel(detailProposal)}</strong>
+                </p>
+              </div>
+
+              <button 
+                onClick={() => setDetailProposal(null)} 
+                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Tab Navigation Workspace */}
+            <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto shrink-0 text-xs font-bold">
+              <button
+                onClick={() => setActiveTabWorkspace('usulan')}
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shrink-0 ${
+                  activeTabWorkspace === 'usulan' ? 'bg-dwp-burgundy text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <FileText className="w-4 h-4 text-dwp-gold" />
+                <span>📌 Usulan & Verifikasi</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTabWorkspace('panitia')}
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shrink-0 ${
+                  activeTabWorkspace === 'panitia' ? 'bg-dwp-burgundy text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                <span>👥 Kepanitiaan Pelaksana</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTabWorkspace('sk')}
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shrink-0 ${
+                  activeTabWorkspace === 'sk' ? 'bg-dwp-burgundy text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>📜 Persuratan & SK</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTabWorkspace('absensi')}
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shrink-0 ${
+                  activeTabWorkspace === 'absensi' ? 'bg-dwp-burgundy text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <QrCode className="w-4 h-4" />
+                <span>📝 Absensi Digital</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTabWorkspace('lpj')}
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shrink-0 ${
+                  activeTabWorkspace === 'lpj' ? 'bg-dwp-burgundy text-white shadow' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <Newspaper className="w-4 h-4" />
+                <span>📊 LPJ & Berita</span>
+              </button>
+            </div>
+
+            {/* Tab Body Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto space-y-4 text-xs pr-1">
+              
+              {/* TAB 1: USULAN & VERIFIKASI */}
+              {activeTabWorkspace === 'usulan' && (
+                <div className="space-y-4">
+                  <div className="grid md:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">Estimasi RAB:</span>
+                      <strong className="text-emerald-700 text-sm font-serif">Rp {detailProposal.estimatedBudget.toLocaleString('id-ID')}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">Tanggal Pelaksanaan:</span>
+                      <strong className="text-slate-800">{detailProposal.startDate} s.d. {detailProposal.endDate}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">Lokasi Pelaksanaan:</span>
+                      <strong className="text-slate-800">{detailProposal.location}</strong>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-800 block text-xs">Latar Belakang & Urgensi:</span>
+                    <p className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-slate-700 leading-relaxed">
+                      {detailProposal.background}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <span className="font-bold text-slate-800 block text-xs">Maksud & Tujuan Kegiatan:</span>
+                    <p className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-slate-700 leading-relaxed">
+                      {detailProposal.objective || 'Meningkatkan partisipasi dan kualitas kegiatan DWP GTK Maluku Utara.'}
+                    </p>
+                  </div>
+
+                  {/* Logs */}
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                    <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-dwp-burgundy" />
+                      <span>Riwayat Verifikasi Berjenjang:</span>
+                    </div>
+                    <div className="space-y-2 divide-y divide-slate-200">
+                      {detailProposal.logs.map((log) => (
+                        <div key={log.id} className="pt-2 first:pt-0 flex items-start justify-between text-xs gap-2">
+                          <div>
+                            <span className="font-bold text-slate-800">{log.actorName}</span>
+                            <span className="text-slate-500"> ({log.stageName}): </span>
+                            <span className="italic text-slate-700">"{log.notes}"</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 shrink-0 font-mono">{log.timestamp}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: KEPANITIAAN PELAKSANA */}
+              {activeTabWorkspace === 'panitia' && (
+                <div className="space-y-4">
+                  {detailProposal.currentStage !== 'approved' ? (
+                    <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-amber-900 space-y-1">
+                      <div className="font-bold flex items-center gap-2 text-xs">
+                        <Lock className="w-4 h-4 text-amber-700" />
+                        <span>Pembentukan Panitia Terkunci (Menunggu Approval)</span>
+                      </div>
+                      <p className="text-[11px] text-amber-800">
+                        Penunjukan Panitia Pelaksana dapat dilakukan setelah kegiatan ini resmi disetujui oleh <strong>Ketua DWP</strong>.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                      <div className="font-bold text-slate-900 flex items-center justify-between">
+                        <span>Panitia Pelaksana Kegiatan:</span>
+                        <button className="bg-dwp-burgundy text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow flex items-center gap-1">
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Pilih Anggota Panitia</span>
+                        </button>
+                      </div>
+
+                      <div className="grid sm:grid-cols-2 gap-3 text-xs">
+                        <div className="bg-white p-3 rounded-xl border border-slate-200">
+                          <span className="text-slate-400 block text-[10px]">Ketua Panitia:</span>
+                          <strong className="text-slate-800 text-sm">Ny. Mariam Syaiful, S.Sos</strong>
+                        </div>
+                        <div className="bg-white p-3 rounded-xl border border-slate-200">
+                          <span className="text-slate-400 block text-[10px]">Sekretaris Panitia:</span>
+                          <strong className="text-slate-800 text-sm">Ny. Salmawati, SE</strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: PERSURATAN & SK */}
+              {activeTabWorkspace === 'sk' && (
+                <div className="space-y-4">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="font-bold text-slate-900">Dokumen Resmi DWP untuk Kegiatan Ini:</div>
+                    <div className="grid sm:grid-cols-3 gap-3">
+                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                        <span className="font-bold text-slate-800 block">📄 SK Panitia DWP</span>
+                        <p className="text-[10px] text-slate-500">SK Penetapan Susunan Panitia Pelaksana Resmi DWP GTK.</p>
+                        <button className="w-full bg-slate-900 hover:bg-dwp-burgundy text-dwp-gold text-[11px] font-bold py-1.5 rounded-lg">
+                          Cetak Draf SK
+                        </button>
+                      </div>
+                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                        <span className="font-bold text-slate-800 block">📄 Surat Tugas Panitia</span>
+                        <p className="text-[10px] text-slate-500">Surat Tugas Resmi untuk Anggota Panitia Kegiatan.</p>
+                        <button className="w-full bg-slate-900 hover:bg-dwp-burgundy text-dwp-gold text-[11px] font-bold py-1.5 rounded-lg">
+                          Cetak Surat Tugas
+                        </button>
+                      </div>
+                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                        <span className="font-bold text-slate-800 block">✉️ Surat Undangan</span>
+                        <p className="text-[10px] text-slate-500">Undangan Digital / Fisik Kegiatan DWP GTK.</p>
+                        <button className="w-full bg-slate-900 hover:bg-dwp-burgundy text-dwp-gold text-[11px] font-bold py-1.5 rounded-lg">
+                          Cetak Undangan
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: ABSENSI DIGITAL */}
+              {activeTabWorkspace === 'absensi' && (
+                <div className="space-y-4">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="font-bold text-slate-900 flex items-center justify-between">
+                      <span>Presensi Online & QR Code Absensi:</span>
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
+                        🟢 Sistem Absensi Ready
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center gap-4">
+                      <div className="w-24 h-24 bg-slate-900 text-dwp-gold p-2 rounded-xl flex items-center justify-center shrink-0">
+                        <QrCode className="w-16 h-16 text-dwp-gold" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="font-bold text-slate-900">Link Absensi Online Kegiatan:</div>
+                        <div className="bg-slate-100 p-2 rounded-lg text-[11px] font-mono text-slate-700 flex items-center gap-2">
+                          <Link className="w-3.5 h-3.5 text-dwp-burgundy shrink-0" />
+                          <span>https://dwp-gtkmalut.org/absensi/{detailProposal.id}</span>
+                        </div>
+                        <p className="text-[10px] text-slate-500">
+                          Peserta dapat memindai QR Code di lokasi atau mengisi daftar hadir online melalui link resmi di atas.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: LPJ & BERITA */}
+              {activeTabWorkspace === 'lpj' && (
+                <div className="space-y-4">
+                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="font-bold text-slate-900">Laporan Pelaksanaan & Publikasi Berita Website:</div>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                        <span className="font-bold text-slate-800 block">📊 Upload LPJ & RAB Akhir</span>
+                        <p className="text-[10px] text-slate-500">Upload laporan pertanggungjawaban kegiatan & realisasi anggaran.</p>
+                        <button className="bg-dwp-burgundy text-white text-[11px] font-bold px-3 py-2 rounded-lg w-full">
+                          Upload Dokumen LPJ
+                        </button>
+                      </div>
+                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                        <span className="font-bold text-slate-800 block">📰 Terbitkan Berita Kegiatan</span>
+                        <p className="text-[10px] text-slate-500">Publikasikan dokumentasi & narasi berita ke Halaman Depan Website.</p>
+                        <button className="bg-emerald-700 text-white text-[11px] font-bold px-3 py-2 rounded-lg w-full">
+                          Publish ke Berita Publik
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal Action Sheet Approval */}
       {selectedProposal && (
@@ -672,7 +937,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Contoh: Pelatihan Literasi Digital Anggota DWP GTK Maluku Utara"
-                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                 />
               </div>
 
@@ -726,7 +991,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                   value={background}
                   onChange={(e) => setBackground(e.target.value)}
                   placeholder="Jelaskan dasar pertimbangan dan urgensi dilaksanakannya kegiatan ini..."
-                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                 />
               </div>
 
@@ -738,7 +1003,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                   value={objective}
                   onChange={(e) => setObjective(e.target.value)}
                   placeholder="Jelaskan tujuan dan hasil yang ingin dicapai..."
-                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                 />
               </div>
 
@@ -751,7 +1016,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     value={targetAudience}
                     onChange={(e) => setTargetAudience(e.target.value)}
                     placeholder="50 Orang Anggota"
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                   />
                 </div>
 
@@ -762,7 +1027,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     required
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                   />
                 </div>
 
@@ -773,7 +1038,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     required
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                    className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                   />
                 </div>
               </div>
@@ -785,7 +1050,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                   required
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                 />
               </div>
             </div>
