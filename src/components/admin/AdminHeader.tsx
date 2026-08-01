@@ -4,7 +4,7 @@ import { UserRole } from '../../types';
 import { Shield, Eye, UserCheck, LogOut, Sparkles } from 'lucide-react';
 
 export const AdminHeader: React.FC = () => {
-  const { currentRole, setCurrentRole, activePersona, setActiveTab, logout } = useApp();
+  const { currentRole, setCurrentRole, activePersona, setActiveTab, setAdminSubTab, logout } = useApp();
 
   return (
     <header className="bg-slate-900 text-white border-b border-slate-800 px-5 py-2.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-40 shadow-sm">
@@ -52,14 +52,21 @@ export const AdminHeader: React.FC = () => {
         </div>
 
         {/* Current Active Persona Info */}
-        <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-slate-800">
+        <div 
+          onClick={() => setAdminSubTab('profile')}
+          className="hidden lg:flex items-center gap-2 pl-2 border-l border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
+          title="Klik untuk Pengaturan Profil Saya & Ganti Password"
+        >
           <img 
             src={activePersona.avatar} 
             alt={activePersona.name} 
             className="w-7 h-7 rounded-full object-cover border border-dwp-gold"
           />
           <div className="text-[11px]">
-            <div className="font-bold text-white leading-tight">{activePersona.name}</div>
+            <div className="font-bold text-white leading-tight flex items-center gap-1">
+              <span>{activePersona.name}</span>
+              <span className="text-[9px] bg-dwp-gold/20 text-dwp-gold px-1 rounded">Profil</span>
+            </div>
             <div className="text-[10px] text-dwp-gold font-medium">{activePersona.title}</div>
           </div>
         </div>

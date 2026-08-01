@@ -7,7 +7,8 @@ import {
   Users, 
   UserCheck, 
   Globe,
-  ScrollText
+  ScrollText,
+  UserCog
 } from 'lucide-react';
 
 export const AdminSidebar: React.FC = () => {
@@ -51,6 +52,12 @@ export const AdminSidebar: React.FC = () => {
       id: 'logs' as AdminSubTab,
       label: 'Log Audit & Aktivitas',
       icon: ScrollText,
+      badge: null
+    },
+    {
+      id: 'profile' as AdminSubTab,
+      label: 'Profil Saya',
+      icon: UserCog,
       badge: null
     }
   ];

@@ -20,6 +20,7 @@ import { MemberManagement } from './components/admin/MemberManagement';
 import { UserManagement } from './components/admin/UserManagement';
 import { CMSCustomizer } from './components/admin/CMSCustomizer';
 import { SystemAuditLogs } from './components/admin/SystemAuditLogs';
+import { UserProfilePage } from './components/admin/UserProfilePage';
 
 // Auth & Security Components
 import { LoginPage } from './components/auth/LoginPage';
@@ -93,6 +94,7 @@ const MainLayout: React.FC = () => {
               {adminSubTab === 'users' && <UserManagement />}
               {adminSubTab === 'cms' && <CMSCustomizer />}
               {adminSubTab === 'logs' && <SystemAuditLogs />}
+              {adminSubTab === 'profile' && <UserProfilePage />}
             </>
           )}
         </main>

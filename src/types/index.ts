@@ -18,6 +18,7 @@ export interface UserPersona {
 export interface UserAccount {
   id: string;
   username: string;
+  password?: string;
   email: string;
   role: UserRole;          // Role fallback jika non-anggota, atau role otomatis jika terhubung ke memberId
   memberId?: string;       // Optional link to Member. Null for non-member IT Admins.
