@@ -413,6 +413,26 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
 
 const INITIAL_NOTIFICATIONS: AppNotification[] = [
   {
+    id: 'notif-waket-001',
+    targetRole: 'wakil_ketua',
+    title: '🛡️ Usulan Kegiatan Baru Perlu Verifikasi',
+    message: 'Usulan Kegiatan "Pelatihan Literasi Digital Anggota DWP GTK Maluku Utara" dari Ny. Hj. Siti Aminah, S.Pd (Bidang Pendidikan) memerlukan Verifikasi awal dari Anda.',
+    timestamp: '20/07/2026 09:00',
+    isRead: false,
+    type: 'new_proposal',
+    proposalId: 'prop-001'
+  },
+  {
+    id: 'notif-ketua-001',
+    targetRole: 'ketua',
+    title: '👑 Usulan Kegiatan Perlu Persetujuan Akhir',
+    message: 'Usulan Kegiatan "Bazaar Usaha Mikro DWP & Pelatihan Kewirausahaan Produk Lokal Maluku Utara" telah diverifikasi oleh Wakil Ketua dan membutuhkan Persetujuan Akhir dari Anda.',
+    timestamp: '19/07/2026 16:20',
+    isRead: false,
+    type: 'new_proposal',
+    proposalId: 'prop-002'
+  },
+  {
     id: 'notif-001',
     targetRole: 'bendahara',
     title: '💰 Pemberitahuan Pencairan Dana RAB',
@@ -932,6 +952,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setProposals(prev => [newProp, ...prev]);
+
+    // Dispatch real-time notification based on initial stage
+    setTimeout(() => {
+      const timestampStr = new Date().toLocaleString('id-ID');
+      if (initialStage === 'stage_4_wakil_ketua') {
+        setNotifications(prevNotifs => [
+          {
+            id: `notif-waket-${Date.now()}`,
+            targetRole: 'wakil_ketua',
+            title: '🛡️ Usulan Kegiatan Baru Perlu Verifikasi',
+            message: `Usulan Kegiatan "${newProp.title}" dari ${newProp.createdBy} (Bidang ${newProp.bidang}) membutuhkan Verifikasi awal dari Anda.`,
+            timestamp: timestampStr,
+            isRead: false,
+            type: 'new_proposal',
+            proposalId: newProp.id
+          },
+          ...prevNotifs
+        ]);
+      } else if (initialStage === 'stage_5_ketua') {
+        setNotifications(prevNotifs => [
+          {
+            id: `notif-ketua-${Date.now()}`,
+            targetRole: 'ketua',
+            title: '👑 Usulan Kegiatan Perlu Persetujuan Akhir',
+            message: `Usulan Kegiatan "${newProp.title}" dari ${newProp.createdBy} (Bidang ${newProp.bidang}) membutuhkan Persetujuan Akhir dari Anda.`,
+            timestamp: timestampStr,
+            isRead: false,
+            type: 'new_proposal',
+            proposalId: newProp.id
+          },
+          ...prevNotifs
+        ]);
+      }
+    }, 50);
   };
 
   const advanceApproval = (proposalId: string, decision: 'approved' | 'rejected' | 'revision', notes: string) => {
@@ -975,21 +1029,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const updatedLogs = [...p.logs, newLog];
 
-      // If finally approved by Ketua, add automatic notification log to Bendahara & Sekretaris
-      if (decision === 'approved' && nextStage === 'approved') {
-        updatedLogs.push({
-          id: `log-notif-${Date.now() + 1}`,
-          stageName: 'Tembusan Otomatis',
-          actorRole: 'ketua',
-          actorName: 'Sistem Organisasi DWP',
-          decision: 'approved',
-          notes: '📬 Tembusan otomatis dikirim ke Bendahara (Pencairan Dana) & Sekretaris (Pengarsipan & Agenda).',
-          timestamp: new Date().toLocaleString('id-ID')
-        });
+      // Trigger real-time notifications based on stage transition
+      setTimeout(() => {
+        const timestampStr = new Date().toLocaleString('id-ID');
 
-        // Trigger real-time notifications for Bendahara & Sekretaris
-        setTimeout(() => {
-          const timestampStr = new Date().toLocaleString('id-ID');
+        // Case 1: Approved by Wakil Ketua -> Moves to Persetujuan Ketua DWP
+        if (decision === 'approved' && nextStage === 'stage_5_ketua') {
+          setNotifications(prevNotifs => [
+            {
+              id: `notif-ketua-${Date.now()}`,
+              targetRole: 'ketua',
+              title: '👑 Usulan Kegiatan Perlu Persetujuan Akhir',
+              message: `Usulan Kegiatan "${p.title}" telah diverifikasi oleh Wakil Ketua dan membutuhkan Persetujuan Akhir dari Anda.`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'new_proposal',
+              proposalId: p.id
+            },
+            ...prevNotifs
+          ]);
+        }
+        // Case 2: Final Approved by Ketua DWP -> Send to Bendahara, Sekretaris, & Pengusul
+        else if (decision === 'approved' && nextStage === 'approved') {
           setNotifications(prevNotifs => [
             {
               id: `notif-bendahara-${Date.now()}`,
@@ -1023,7 +1084,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             },
             ...prevNotifs
           ]);
-        }, 50);
+        }
+        // Case 3: Revision Requested -> Send to Pengusul
+        else if (decision === 'revision') {
+          setNotifications(prevNotifs => [
+            {
+              id: `notif-revisi-${Date.now()}`,
+              targetRole: p.creatorRole || 'admin_bidang',
+              title: '⚠️ Usulan Kegiatan Memerlukan Revisi',
+              message: `Usulan Kegiatan "${p.title}" memerlukan revisi: "${notes || 'Perlu penyesuaian data.'}"`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'revision',
+              proposalId: p.id
+            },
+            ...prevNotifs
+          ]);
+        }
+        // Case 4: Rejected -> Send to Pengusul
+        else if (decision === 'rejected') {
+          setNotifications(prevNotifs => [
+            {
+              id: `notif-ditolak-${Date.now()}`,
+              targetRole: p.creatorRole || 'admin_bidang',
+              title: '🔴 Usulan Kegiatan Ditolak',
+              message: `Usulan Kegiatan "${p.title}" ditolak: "${notes || 'Tidak disetujui.'}"`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'rejected',
+              proposalId: p.id
+            },
+            ...prevNotifs
+          ]);
+        }
+      }, 50);
+
+      // If finally approved by Ketua, add automatic notification log to Bendahara & Sekretaris
+      if (decision === 'approved' && nextStage === 'approved') {
+        updatedLogs.push({
+          id: `log-notif-${Date.now() + 1}`,
+          stageName: 'Tembusan Otomatis',
+          actorRole: 'ketua',
+          actorName: 'Sistem Organisasi DWP',
+          decision: 'approved',
+          notes: '📬 Tembusan otomatis dikirim ke Bendahara (Pencairan Dana) & Sekretaris (Pengarsipan & Agenda).',
+          timestamp: new Date().toLocaleString('id-ID')
+        });
       }
 
       return {
@@ -1052,6 +1158,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         notes: 'Proposal telah diperbaiki dan diajukan ulang untuk verifikasi.',
         timestamp: new Date().toLocaleString('id-ID')
       };
+
+      setTimeout(() => {
+        const timestampStr = new Date().toLocaleString('id-ID');
+        const targetNotifRole = targetStage === 'stage_5_ketua' ? 'ketua' : 'wakil_ketua';
+        setNotifications(prevNotifs => [
+          {
+            id: `notif-resubmit-${Date.now()}`,
+            targetRole: targetNotifRole,
+            title: '📝 Proposal Revisi Diajukan Kembali',
+            message: `Usulan Kegiatan "${p.title}" yang sebelumnya direvisi telah diperbaiki dan diajukan kembali untuk peninjauan Anda.`,
+            timestamp: timestampStr,
+            isRead: false,
+            type: 'new_proposal',
+            proposalId: p.id
+          },
+          ...prevNotifs
+        ]);
+      }, 50);
 
       return {
         ...p,
