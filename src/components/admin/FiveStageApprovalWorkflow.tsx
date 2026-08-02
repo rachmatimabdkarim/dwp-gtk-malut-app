@@ -445,27 +445,6 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     </button>
                   )}
                 </div>
-
-                {!isApproved && !isRejected && !isRevision && (
-                  <div className="flex items-center gap-2">
-                    {userCanAct ? (
-                      <button
-                        onClick={() => {
-                          setDetailProposal(proposal);
-                          setActiveTabWorkspace('usulan');
-                        }}
-                        className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow flex items-center gap-2"
-                      >
-                        <ShieldCheck className="w-4 h-4 text-dwp-gold" />
-                        <span>Tinjau & Berikan Keputusan ({activePersona.title})</span>
-                      </button>
-                    ) : (
-                      <span className="text-xs bg-slate-100 text-slate-500 border border-slate-200 font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-                        🔒 Menunggu Akses: {getStageBadgeLabel(proposal)}
-                      </span>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           );
@@ -573,133 +552,124 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
 
                 return (
                   <div className="space-y-4">
-                    {/* PANEL PENINJAUAN & KEPUTUSAN UNIFIED */}
+                    {/* MINIMALIST & COMPACT PANEL PENINJAUAN */}
                     {canReview && (
-                      <div className="bg-gradient-to-r from-dwp-burgundy via-slate-900 to-dwp-burgundy p-5 rounded-2xl text-white shadow-xl space-y-4 border border-dwp-gold/40 animate-in fade-in-50">
-                        <div className="flex items-center justify-between border-b border-white/20 pb-3">
+                      <div className="bg-amber-500/10 border border-amber-300/60 p-3.5 rounded-2xl space-y-3 shadow-sm">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200/50 pb-2">
                           <div className="flex items-center gap-2">
-                            <ShieldCheck className="w-5 h-5 text-dwp-gold" />
-                            <div>
-                              <h4 className="font-serif font-bold text-dwp-gold text-sm md:text-base">
-                                Form Peninjauan & Persetujuan Usulan ({activePersona.title})
-                              </h4>
-                              <p className="text-[11px] text-slate-300">
-                                Cermati seluruh detil usulan, RAB, dan latar belakang di bawah sebelum memberikan keputusan.
-                              </p>
-                            </div>
+                            <ShieldCheck className="w-4 h-4 text-dwp-burgundy shrink-0" />
+                            <span className="font-bold text-slate-900 text-xs">
+                              Peninjauan Usulan — Role Akses: <strong className="text-dwp-burgundy">{activePersona.title}</strong>
+                            </span>
                           </div>
-                          <span className="text-[10px] bg-dwp-gold/20 text-dwp-gold font-mono px-3 py-1 rounded-full border border-dwp-gold/30 shrink-0 font-bold">
+                          <span className="text-[10px] bg-dwp-burgundy text-white font-semibold px-2.5 py-0.5 rounded-full w-fit">
                             Tahap: {getStageBadgeLabel(detailProposal)}
                           </span>
                         </div>
 
-                        {/* Opsi Keputusan */}
-                        <div className="space-y-2">
-                          <label className="font-bold text-xs text-dwp-gold block">1. Pilih Keputusan Peninjauan:</label>
-                          <div className="grid grid-cols-3 gap-2.5">
+                        {/* Compact Action Controls */}
+                        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+                          {/* 3 Compact Decision Badges */}
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               type="button"
                               onClick={() => setDecisionType('approved')}
-                              className={`p-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                              className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition-all ${
                                 decisionType === 'approved'
-                                  ? 'bg-emerald-600 text-white ring-2 ring-emerald-300 shadow-lg scale-[1.02]'
-                                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                                  ? 'bg-emerald-700 text-white shadow-sm border border-emerald-800'
+                                  : 'bg-white text-emerald-800 border border-slate-200 hover:bg-emerald-50'
                               }`}
                             >
-                              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                              <span>✓ Setujui Usulan</span>
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Setujui</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => setDecisionType('revision')}
-                              className={`p-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                              className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition-all ${
                                 decisionType === 'revision'
-                                  ? 'bg-amber-600 text-white ring-2 ring-amber-300 shadow-lg scale-[1.02]'
-                                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                                  ? 'bg-amber-600 text-white shadow-sm border border-amber-700'
+                                  : 'bg-white text-amber-800 border border-slate-200 hover:bg-amber-50'
                               }`}
                             >
-                              <AlertTriangle className="w-4 h-4 text-amber-400" />
-                              <span>⚠️ Minta Revisi</span>
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                              <span>Revisi</span>
                             </button>
 
                             <button
                               type="button"
                               onClick={() => setDecisionType('rejected')}
-                              className={`p-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                              className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition-all ${
                                 decisionType === 'rejected'
-                                  ? 'bg-rose-600 text-white ring-2 ring-rose-300 shadow-lg scale-[1.02]'
-                                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                                  ? 'bg-rose-700 text-white shadow-sm border border-rose-800'
+                                  : 'bg-white text-rose-800 border border-slate-200 hover:bg-rose-50'
                               }`}
                             >
-                              <XCircle className="w-4 h-4 text-rose-400" />
-                              <span>🔴 Tolak Usulan</span>
+                              <XCircle className="w-3.5 h-3.5" />
+                              <span>Tolak</span>
+                            </button>
+                          </div>
+
+                          {/* Inline Catatan Input & Submit */}
+                          <div className="flex-1 flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={decisionNotes}
+                              onChange={(e) => setDecisionNotes(e.target.value)}
+                              placeholder={
+                                decisionType === 'approved'
+                                  ? "Catatan persetujuan (Opsional)..."
+                                  : decisionType === 'revision'
+                                  ? "Catatan instruksi revisi (Wajib)..."
+                                  : "Alasan penolakan usulan (Wajib)..."
+                              }
+                              className="flex-1 px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-medium focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (decisionType !== 'approved' && !decisionNotes.trim()) {
+                                  alert('⚠️ Catatan Peninjauan Wajib Diisi untuk keputusan Revisi atau Penolakan.');
+                                  return;
+                                }
+                                advanceApproval(detailProposal.id, decisionType, decisionNotes);
+                                
+                                let newStage: ProposalStage = detailProposal.currentStage;
+                                if (decisionType === 'rejected') newStage = 'rejected';
+                                else if (decisionType === 'revision') newStage = 'revision_requested';
+                                else {
+                                  if (detailProposal.currentStage === 'stage_4_wakil_ketua') newStage = 'stage_5_ketua';
+                                  else if (detailProposal.currentStage === 'stage_5_ketua') newStage = 'approved';
+                                }
+
+                                const newLog = {
+                                  id: `log-${Date.now()}`,
+                                  stageName: getStageBadgeLabel(detailProposal),
+                                  actorRole: currentRole,
+                                  actorName: activePersona.name,
+                                  decision: decisionType,
+                                  notes: decisionNotes || (decisionType === 'approved' ? 'Telah diverifikasi dan disetujui.' : decisionType === 'revision' ? 'Perlu revisi penyesuaian.' : 'Ditolak.'),
+                                  timestamp: new Date().toLocaleString('id-ID')
+                                };
+
+                                setDetailProposal(prev => prev ? {
+                                  ...prev,
+                                  currentStage: newStage,
+                                  logs: [...prev.logs, newLog]
+                                } : null);
+
+                                setDecisionNotes('');
+                                alert(`✅ Keputusan "${decisionType.toUpperCase()}" berhasil disimpan!`);
+                              }}
+                              className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-bold px-4 py-1.5 rounded-xl text-xs shadow flex items-center gap-1.5 shrink-0 transition-all cursor-pointer"
+                            >
+                              <Send className="w-3.5 h-3.5 text-dwp-gold" />
+                              <span>Kirim</span>
                             </button>
                           </div>
                         </div>
-
-                        {/* Catatan / Instruksi */}
-                        <div className="space-y-1.5">
-                          <label className="font-bold text-xs text-dwp-gold block">
-                            2. Catatan / Instruksi Peninjauan {decisionType !== 'approved' && <span className="text-rose-300">(Wajib diisi)</span>}:
-                          </label>
-                          <textarea
-                            rows={2}
-                            value={decisionNotes}
-                            onChange={(e) => setDecisionNotes(e.target.value)}
-                            placeholder={
-                              decisionType === 'approved'
-                                ? "Masukkan catatan persetujuan atau instruksi pelaksanaan (Opsional)..."
-                                : decisionType === 'revision'
-                                ? "Jelaskan bagian mana dari proposal/RAB yang perlu diperbaiki oleh pengusul..."
-                                : "Jelaskan alasan penolakan usulan kegiatan..."
-                            }
-                            className="w-full p-3 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-dwp-gold font-medium"
-                          />
-                        </div>
-
-                        {/* Submit Action Button */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (decisionType !== 'approved' && !decisionNotes.trim()) {
-                              alert('⚠️ Catatan Peninjauan Wajib Diisi untuk keputusan Revisi atau Penolakan.');
-                              return;
-                            }
-                            advanceApproval(detailProposal.id, decisionType, decisionNotes);
-                            
-                            let newStage: ProposalStage = detailProposal.currentStage;
-                            if (decisionType === 'rejected') newStage = 'rejected';
-                            else if (decisionType === 'revision') newStage = 'revision_requested';
-                            else {
-                              if (detailProposal.currentStage === 'stage_4_wakil_ketua') newStage = 'stage_5_ketua';
-                              else if (detailProposal.currentStage === 'stage_5_ketua') newStage = 'approved';
-                            }
-
-                            const newLog = {
-                              id: `log-${Date.now()}`,
-                              stageName: getStageBadgeLabel(detailProposal),
-                              actorRole: currentRole,
-                              actorName: activePersona.name,
-                              decision: decisionType,
-                              notes: decisionNotes || (decisionType === 'approved' ? 'Telah diverifikasi dan disetujui.' : decisionType === 'revision' ? 'Perlu revisi penyesuaian.' : 'Ditolak.'),
-                              timestamp: new Date().toLocaleString('id-ID')
-                            };
-
-                            setDetailProposal(prev => prev ? {
-                              ...prev,
-                              currentStage: newStage,
-                              logs: [...prev.logs, newLog]
-                            } : null);
-
-                            setDecisionNotes('');
-                            alert(`✅ Keputusan Peninjauan "${decisionType.toUpperCase()}" berhasil disimpan dan dikirimkan!`);
-                          }}
-                          className="w-full bg-dwp-gold hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
-                        >
-                          <Send className="w-4 h-4 text-slate-950" />
-                          <span>Kirim Keputusan Peninjauan ({decisionType.toUpperCase()})</span>
-                        </button>
                       </div>
                     )}
 
