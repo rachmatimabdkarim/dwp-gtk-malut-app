@@ -19,7 +19,9 @@ import {
   ActivityDocument,
   DocumentType,
   DocumentStatus,
-  DocumentLog
+  DocumentLog,
+  DocumentJobDesk,
+  JobDeskLog
 } from '../types';
 import { apiService } from '../services/apiService';
 import { 
@@ -707,6 +709,7 @@ interface AppContextType {
   resubmitProposal: (proposalId: string, updated: Partial<ActivityProposal>) => void;
   updateProposalCommittee: (proposalId: string, committeeMembers: CommitteeMember[]) => void;
   updateCommitteeStatus: (proposalId: string, status: CommitteeStatus, notes?: string, actorName?: string) => void;
+  setDocumentJobDesks: (proposalId: string, jobDesks: DocumentJobDesk[], changedBy: string, previousJobDesks?: DocumentJobDesk[]) => void;
   deleteProposal: (proposalId: string) => void;
   
   attendanceRecords: AttendanceRecord[];
@@ -1492,7 +1495,93 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const setDocumentJobDesks = (
+    proposalId: string,
+    jobDesks: DocumentJobDesk[],
+    changedBy: string,
+    previousJobDesks?: DocumentJobDesk[]
+  ) => {
+    const changedAt = new Date().toLocaleString('id-ID');
+    const newLogs: JobDeskLog[] = [];
+
+    // Build audit log: detect what changed vs. previous jobdesks
+    if (previousJobDesks && previousJobDesks.length > 0) {
+      jobDesks.forEach(newJD => {
+        const prevJD = previousJobDesks.find(pjd =>
+          pjd.documentType === newJD.documentType &&
+          (newJD.documentType !== 'custom' || pjd.customTitle === newJD.customTitle)
+        );
+        if (prevJD && prevJD.assignedMemberId !== newJD.assignedMemberId) {
+          newLogs.push({
+            id: `jdlog-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+            documentType: newJD.documentType,
+            customTitle: newJD.customTitle,
+            previousMemberId: prevJD.assignedMemberId,
+            previousMemberName: prevJD.assignedMemberName,
+            newMemberId: newJD.assignedMemberId,
+            newMemberName: newJD.assignedMemberName,
+            changedBy,
+            changedAt
+          });
+        }
+      });
+
+      // Handle newly added custom docs (no previous entry)
+      jobDesks.forEach(newJD => {
+        const prevJD = previousJobDesks.find(pjd =>
+          pjd.documentType === newJD.documentType &&
+          (newJD.documentType !== 'custom' || pjd.customTitle === newJD.customTitle)
+        );
+        if (!prevJD) {
+          newLogs.push({
+            id: `jdlog-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+            documentType: newJD.documentType,
+            customTitle: newJD.customTitle,
+            previousMemberId: undefined,
+            previousMemberName: undefined,
+            newMemberId: newJD.assignedMemberId,
+            newMemberName: newJD.assignedMemberName,
+            changedBy,
+            changedAt
+          });
+        }
+      });
+    } else {
+      // First-time assignment — log all as new
+      jobDesks.forEach(jd => {
+        newLogs.push({
+          id: `jdlog-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,
+          documentType: jd.documentType,
+          customTitle: jd.customTitle,
+          newMemberId: jd.assignedMemberId,
+          newMemberName: jd.assignedMemberName,
+          changedBy,
+          changedAt
+        });
+      });
+    }
+
+    setProposals(prev => prev.map(p => {
+      if (p.id !== proposalId) return p;
+      return {
+        ...p,
+        documentJobDesks: jobDesks,
+        jobDeskLogs: [...(p.jobDeskLogs || []), ...newLogs]
+      };
+    }));
+
+    addSystemAuditLog({
+      category: 'proposal',
+      severity: 'info',
+      actorName: changedBy,
+      actorRole: currentRole,
+      action: 'Penetapan/Perubahan Jobdesk Dokumen Kegiatan',
+      details: `Jobdesk dokumen ditetapkan/diperbarui oleh ${changedBy} untuk ${jobDesks.length} dokumen. Perubahan tercatat: ${newLogs.length} entri.`
+    });
+  };
+
   const updateCommitteeStatus = (proposalId: string, status: CommitteeStatus, notes?: string, actorName?: string) => {
+
     let targetProposalTitle = '';
     let creatorRole: UserRole = 'admin_bidang';
     const timestampStr = new Date().toLocaleString('id-ID');
@@ -1580,27 +1669,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else if (status === 'approved_by_ketua') {
         setNotifications(prevNotifs => [
           {
-            id: `notif-comm-sekretaris-${Date.now()}`,
-            targetRole: 'sekretaris',
-            title: '📜 SK Panitia Siap Diterbitkan',
-            message: `Susunan Panitia Pelaksana untuk kegiatan "${targetProposalTitle}" telah disetujui resmi oleh Ketua DWP. Draf SK Panitia siap dicetak.`,
-            timestamp: timestampStr,
-            isRead: false,
-            type: 'sk_pengarsipan',
-            proposalId
-          },
-          {
-            id: `notif-comm-pengusul-${Date.now() + 1}`,
+            id: `notif-comm-ketua-panitia-${Date.now()}`,
             targetRole: creatorRole,
-            title: '🎉 Susunan Panitia Disetujui Resmi!',
-            message: `Susunan Panitia Pelaksana yang Anda ajukan untuk kegiatan "${targetProposalTitle}" telah disetujui resmi oleh Ketua DWP.`,
+            title: '📋 Panitia Disetujui — Tetapkan Jobdesk Dokumen',
+            message: `Susunan Panitia Pelaksana untuk kegiatan "${targetProposalTitle}" telah disetujui resmi oleh Ketua DWP. Ketua Panitia segera menetapkan Jobdesk Dokumen.`,
             timestamp: timestampStr,
             isRead: false,
             type: 'approved',
-            proposalId
+            proposalId,
+            nextStepAction: '👉 Langkah Selanjutnya: Ketua Panitia segera menetapkan Jobdesk Dokumen (siapa mengerjakan apa) di Tab Panitia sebelum pembuatan dokumen dimulai.',
+            targetTab: 'panitia',
+            actionButtonText: 'Tetapkan Jobdesk ➔'
+          },
+          {
+            id: `notif-comm-sekretaris-${Date.now() + 1}`,
+            targetRole: 'sekretaris',
+            title: '📜 Informasi: Panitia Disetujui Ketua DWP',
+            message: `Informasi: Susunan Panitia Pelaksana untuk kegiatan "${targetProposalTitle}" telah disetujui resmi oleh Ketua DWP. Ketua Panitia sedang menetapkan jobdesk dokumen. Anda akan mendapat notifikasi selanjutnya saat draf dokumen siap untuk penomoran.`,
+            timestamp: timestampStr,
+            isRead: false,
+            type: 'sk_pengarsipan',
+            proposalId,
+            nextStepAction: '👉 Informasi: Panitia telah disetujui. Menunggu Ketua Panitia menetapkan jobdesk dan mulai menyusun draf dokumen.',
+            targetTab: 'panitia',
+            actionButtonText: 'Lihat Status Panitia ➔'
           },
           ...prevNotifs
         ]);
+
       } else if (status === 'revision_requested') {
         setNotifications(prevNotifs => [
           {
@@ -2041,6 +2137,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       resubmitProposal,
       updateProposalCommittee,
       updateCommitteeStatus,
+      setDocumentJobDesks,
       deleteProposal,
       attendanceRecords,
       addAttendanceRecord,

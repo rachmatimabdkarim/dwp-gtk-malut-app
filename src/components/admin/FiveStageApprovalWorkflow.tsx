@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { ActivityProposal, ProposalStage } from '../../types';
+import { ActivityProposal, ProposalStage, DocumentJobDesk, DocumentType } from '../../types';
 import { formatDateRangeDDMMYYYY, formatDateDDMMYYYY } from '../../utils/dateFormatter';
 import { canViewProposalDetail } from '../../utils/RoleAccessControl';
 import { CustomDateInput } from '../common/CustomDateInput';
@@ -29,7 +29,9 @@ import {
   Calendar,
   Layers,
   Link,
-  Lock
+  Lock,
+  ClipboardList,
+  History
 } from 'lucide-react';
 
 export const FiveStageApprovalWorkflow: React.FC = () => {
@@ -40,6 +42,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     resubmitProposal, 
     updateProposalCommittee,
     updateCommitteeStatus,
+    setDocumentJobDesks,
     deleteProposal, 
     activePersona, 
     currentRole,
@@ -110,6 +113,12 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
   const [showAddCommitteeModal, setShowAddCommitteeModal] = useState(false);
   const [committeeMemberId, setCommitteeMemberId] = useState('');
   const [committeeRoleTitle, setCommitteeRoleTitle] = useState<'Ketua Panitia' | 'Sekretaris Panitia' | 'Bendahara Panitia' | 'Seksi Acara' | 'Seksi Humas & Logistik' | 'Anggota Panitia'>('Anggota Panitia');
+
+  // Jobdesk State
+  const [draftJobDesks, setDraftJobDesks] = useState<DocumentJobDesk[]>([]);
+  const [showJobDeskLogs, setShowJobDeskLogs] = useState(false);
+  const [newCustomDocTitle, setNewCustomDocTitle] = useState('');
+  const [newCustomDocAssignee, setNewCustomDocAssignee] = useState('');
 
   // Form State
   const [title, setTitle] = useState('');
@@ -1170,6 +1179,292 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                           )}
                         </div>
 
+                        {/* ========== PANEL JOBDESK DOKUMEN ========== */}
+                        {commStatus === 'approved_by_ketua' && (() => {
+                          const ketuaPanitiaItem = commList.find(c => c.roleTitle === 'Ketua Panitia');
+                          const isSinglePanitia = commList.length === 1 && ketuaPanitiaItem;
+                          const isKetuaPanitia = currentRole === 'admin_master' || (
+                            ketuaPanitiaItem &&
+                            currentAccount?.memberId &&
+                            ketuaPanitiaItem.memberId === currentAccount.memberId
+                          );
+                          const savedJobDesks = detailProposal.documentJobDesks || [];
+
+                          // On first render or when detailProposal changes: sync draft from saved
+                          const currentDraft = draftJobDesks.length === 0 && savedJobDesks.length > 0
+                            ? savedJobDesks
+                            : draftJobDesks;
+
+                          const getAssignee = (docType: DocumentType, customTitle?: string) => {
+                            const jd = currentDraft.find(j =>
+                              j.documentType === docType &&
+                              (docType !== 'custom' || j.customTitle === customTitle)
+                            );
+                            return jd?.assignedMemberId || '';
+                          };
+
+                          const updateAssignee = (docType: DocumentType, memberId: string, customTitle?: string) => {
+                            const targetMember = commList.find(c => c.memberId === memberId);
+                            const now = new Date().toLocaleString('id-ID');
+                            const existing = currentDraft.find(j =>
+                              j.documentType === docType &&
+                              (docType !== 'custom' || j.customTitle === customTitle)
+                            );
+                            if (existing) {
+                              setDraftJobDesks(currentDraft.map(j => {
+                                if (j.documentType === docType && (docType !== 'custom' || j.customTitle === customTitle)) {
+                                  return { ...j, assignedMemberId: memberId, assignedMemberName: targetMember?.memberName || memberId, assignedAt: now };
+                                }
+                                return j;
+                              }));
+                            } else {
+                              setDraftJobDesks([...currentDraft, {
+                                id: `jd-${Date.now()}`,
+                                documentType: docType,
+                                customTitle,
+                                assignedMemberId: memberId,
+                                assignedMemberName: targetMember?.memberName || memberId,
+                                assignedAt: now,
+                                assignedBy: activePersona.name
+                              }]);
+                            }
+                          };
+
+                          const customJobDesks = currentDraft.filter(j => j.documentType === 'custom');
+
+                          const getDocLabel = (docType: DocumentType) => {
+                            if (docType === 'sk_panitia') return '📜 SK Penetapan Panitia';
+                            if (docType === 'surat_tugas') return '📑 Surat Tugas Panitia';
+                            if (docType === 'surat_undangan') return '✉️ Surat Undangan';
+                            return '📄 Dokumen Kustom';
+                          };
+
+                          const handleSaveJobDesks = () => {
+                            const allStandard: DocumentType[] = ['sk_panitia', 'surat_tugas', 'surat_undangan'];
+                            const missingStd = allStandard.filter(dt =>
+                              !currentDraft.some(j => j.documentType === dt)
+                            );
+                            if (missingStd.length > 0 && !isSinglePanitia) {
+                              alert(`⚠️ Belum semua dokumen standar ditugaskan:\n\n${missingStd.map(dt => getDocLabel(dt)).join('\n')}\n\nMohon tentukan siapa yang bertugas mengerjakan setiap dokumen.`);
+                              return;
+                            }
+
+                            const finalJobDesks: DocumentJobDesk[] = isSinglePanitia && ketuaPanitiaItem
+                              ? allStandard.map(dt => ({
+                                  id: `jd-${dt}-${Date.now()}`,
+                                  documentType: dt as DocumentType,
+                                  assignedMemberId: ketuaPanitiaItem.memberId || '',
+                                  assignedMemberName: ketuaPanitiaItem.memberName,
+                                  assignedAt: new Date().toLocaleString('id-ID'),
+                                  assignedBy: activePersona.name
+                                }))
+                              : currentDraft;
+
+                            setDocumentJobDesks(
+                              detailProposal.id,
+                              finalJobDesks,
+                              activePersona.name,
+                              savedJobDesks
+                            );
+                            setDetailProposal(prev => prev ? { ...prev, documentJobDesks: finalJobDesks } : null);
+                            setDraftJobDesks([]);
+                            setActiveTabWorkspace('sk');
+                            alert('✅ Jobdesk dokumen berhasil disimpan! Silakan lanjutkan ke Tab SK untuk mulai membuat dokumen.');
+                          };
+
+                          return (
+                            <div className="bg-gradient-to-br from-slate-50 to-blue-50/40 border border-blue-200 rounded-2xl p-5 space-y-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <ClipboardList className="w-4 h-4 text-blue-700" />
+                                  <span className="font-bold text-slate-800 text-sm">Penetapan Jobdesk Dokumen Kegiatan</span>
+                                  <span className="text-[10px] bg-blue-100 text-blue-800 border border-blue-300 px-2 py-0.5 rounded-full font-bold">
+                                    {savedJobDesks.length > 0 ? '✅ Sudah Ditetapkan' : '⏳ Belum Ditetapkan'}
+                                  </span>
+                                </div>
+                                {(detailProposal.jobDeskLogs && detailProposal.jobDeskLogs.length > 0) && (
+                                  <button
+                                    onClick={() => setShowJobDeskLogs(!showJobDeskLogs)}
+                                    className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-700 bg-white border border-slate-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                                  >
+                                    <History className="w-3 h-3" />
+                                    <span>Riwayat Perubahan ({detailProposal.jobDeskLogs.length})</span>
+                                  </button>
+                                )}
+                              </div>
+
+                              {!isKetuaPanitia && !isSinglePanitia && (
+                                <div className="bg-sky-50 border border-sky-200 text-sky-900 p-3 rounded-xl text-xs flex items-center gap-2">
+                                  <Lock className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                                  <span>Penetapan Jobdesk hanya dapat dilakukan oleh <strong>Ketua Panitia</strong>{ketuaPanitiaItem ? ` (${ketuaPanitiaItem.memberName})` : ''}.</span>
+                                </div>
+                              )}
+
+                              {isSinglePanitia && ketuaPanitiaItem && (
+                                <div className="bg-amber-50 border border-amber-300 text-amber-900 p-3 rounded-xl text-xs flex items-center gap-2">
+                                  <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                  <span>⚡ <strong>Mode Panitia Tunggal:</strong> Semua dokumen otomatis ditugaskan ke Ketua Panitia (<strong>{ketuaPanitiaItem.memberName}</strong>).</span>
+                                </div>
+                              )}
+
+                              {/* Standard Document Jobdesk Rows */}
+                              {!isSinglePanitia && (
+                                <div className="space-y-2">
+                                  {(['sk_panitia', 'surat_tugas', 'surat_undangan'] as DocumentType[]).map(docType => {
+                                    const assigneeId = getAssignee(docType);
+                                    const assignedMember = commList.find(c => c.memberId === assigneeId);
+                                    return (
+                                      <div key={docType} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                                        <span className="text-xs font-bold text-slate-700 w-44 shrink-0">{getDocLabel(docType)}</span>
+                                        {isKetuaPanitia ? (
+                                          <select
+                                            value={assigneeId}
+                                            onChange={e => updateAssignee(docType, e.target.value)}
+                                            className="flex-1 p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white cursor-pointer"
+                                          >
+                                            <option value="">— Pilih Anggota Panitia —</option>
+                                            {commList.map(c => (
+                                              <option key={c.id} value={c.memberId || c.id}>{c.memberName} ({c.roleTitle})</option>
+                                            ))}
+                                          </select>
+                                        ) : (
+                                          <span className={`flex-1 text-xs px-3 py-1.5 rounded-lg border ${assignedMember ? 'bg-blue-50 border-blue-200 text-blue-900 font-medium' : 'bg-slate-50 border-slate-200 text-slate-400 italic'}`}>
+                                            {assignedMember ? `👤 ${assignedMember.memberName} (${assignedMember.roleTitle})` : 'Belum ditetapkan'}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+
+                                  {/* Custom Document Jobdesk Rows */}
+                                  {customJobDesks.map((jd, idx) => {
+                                    const assignedMember = commList.find(c => c.memberId === jd.assignedMemberId);
+                                    return (
+                                      <div key={jd.id} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-emerald-200 shadow-sm">
+                                        <span className="text-xs font-bold text-emerald-700 w-44 shrink-0">📄 {jd.customTitle}</span>
+                                        {isKetuaPanitia ? (
+                                          <>
+                                            <select
+                                              value={jd.assignedMemberId}
+                                              onChange={e => updateAssignee('custom', e.target.value, jd.customTitle)}
+                                              className="flex-1 p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white cursor-pointer"
+                                            >
+                                              <option value="">— Pilih Anggota Panitia —</option>
+                                              {commList.map(c => (
+                                                <option key={c.id} value={c.memberId || c.id}>{c.memberName} ({c.roleTitle})</option>
+                                              ))}
+                                            </select>
+                                            <button
+                                              onClick={() => setDraftJobDesks(currentDraft.filter(item => item.id !== jd.id))}
+                                              className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer"
+                                              title="Hapus dokumen kustom ini"
+                                            >
+                                              <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                          </>
+                                        ) : (
+                                          <span className={`flex-1 text-xs px-3 py-1.5 rounded-lg border ${assignedMember ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-medium' : 'bg-slate-50 border-slate-200 text-slate-400 italic'}`}>
+                                            {assignedMember ? `👤 ${assignedMember.memberName} (${assignedMember.roleTitle})` : 'Belum ditetapkan'}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+
+                                  {/* Add Custom Document Row */}
+                                  {isKetuaPanitia && (
+                                    <div className="flex items-center gap-2 bg-emerald-50 border border-dashed border-emerald-300 p-3 rounded-xl">
+                                      <input
+                                        type="text"
+                                        value={newCustomDocTitle}
+                                        onChange={e => setNewCustomDocTitle(e.target.value)}
+                                        placeholder="Judul dokumen kustom (mis: Surat Izin Tempat)"
+                                        className="flex-1 p-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                                      />
+                                      <select
+                                        value={newCustomDocAssignee}
+                                        onChange={e => setNewCustomDocAssignee(e.target.value)}
+                                        className="w-48 p-2 border border-slate-300 rounded-lg text-xs focus:outline-none bg-white cursor-pointer"
+                                      >
+                                        <option value="">— Pilih Petugas —</option>
+                                        {commList.map(c => (
+                                          <option key={c.id} value={c.memberId || c.id}>{c.memberName}</option>
+                                        ))}
+                                      </select>
+                                      <button
+                                        onClick={() => {
+                                          if (!newCustomDocTitle.trim() || !newCustomDocAssignee) {
+                                            alert('Lengkapi judul dokumen dan pilih petugas terlebih dahulu!');
+                                            return;
+                                          }
+                                          const targetMember = commList.find(c => c.memberId === newCustomDocAssignee);
+                                          setDraftJobDesks([...currentDraft, {
+                                            id: `jd-custom-${Date.now()}`,
+                                            documentType: 'custom',
+                                            customTitle: newCustomDocTitle.trim(),
+                                            assignedMemberId: newCustomDocAssignee,
+                                            assignedMemberName: targetMember?.memberName || newCustomDocAssignee,
+                                            assignedAt: new Date().toLocaleString('id-ID'),
+                                            assignedBy: activePersona.name
+                                          }]);
+                                          setNewCustomDocTitle('');
+                                          setNewCustomDocAssignee('');
+                                        }}
+                                        className="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                                      >
+                                        <Plus className="w-3.5 h-3.5" /> Tambah
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Save Button */}
+                              {isKetuaPanitia && (
+                                <div className="flex justify-end pt-1">
+                                  <button
+                                    onClick={handleSaveJobDesks}
+                                    className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-5 py-2 rounded-xl text-xs shadow flex items-center gap-2 transition-all cursor-pointer"
+                                  >
+                                    <ClipboardList className="w-3.5 h-3.5" />
+                                    <span>{savedJobDesks.length > 0 ? 'Perbarui Jobdesk & Buka Tab SK' : 'Simpan Jobdesk & Mulai Buat Dokumen'}</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* Jobdesk Change History Log */}
+                              {showJobDeskLogs && detailProposal.jobDeskLogs && detailProposal.jobDeskLogs.length > 0 && (
+                                <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2">
+                                  <div className="flex items-center gap-1.5 font-bold text-slate-700 text-xs">
+                                    <History className="w-3.5 h-3.5 text-slate-500" />
+                                    <span>Riwayat Perubahan Jobdesk:</span>
+                                  </div>
+                                  <div className="space-y-1.5 divide-y divide-slate-100">
+                                    {detailProposal.jobDeskLogs.map(log => (
+                                      <div key={log.id} className="pt-1.5 first:pt-0 text-[11px] flex items-start justify-between gap-2">
+                                        <div className="space-y-0.5">
+                                          <span className="font-bold text-slate-800">
+                                            {log.customTitle || log.documentType.replace('_', ' ').toUpperCase()}
+                                          </span>
+                                          <div className="text-slate-600">
+                                            {log.previousMemberName
+                                              ? <span>{log.previousMemberName} → <strong>{log.newMemberName}</strong></span>
+                                              : <span>Ditugaskan ke <strong>{log.newMemberName}</strong></span>
+                                            }
+                                            {' '}· oleh <em>{log.changedBy}</em>
+                                          </div>
+                                        </div>
+                                        <span className="text-[10px] text-slate-400 font-mono shrink-0">{log.changedAt}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
                         {/* Riwayat Verifikasi & Persetujuan Panitia */}
                         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
                           <div className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
@@ -1200,6 +1495,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                 );
               })()}
 
+
               {/* TAB 3: PERSURATAN & SK */}
               {activeTabWorkspace === 'sk' && (
                 <div className="space-y-6">
@@ -1208,6 +1504,27 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                     const commMembers = detailProposal.committeeMembers || [];
                     const isSinglePanitia = commMembers.length === 1;
                     const ketuaPanitiaItem = commMembers.find(c => c.roleTitle === 'Ketua Panitia') || commMembers[0];
+
+                    // Jobdesk guard variables
+                    const jobDesks = detailProposal.documentJobDesks || [];
+                    const jobDesksSet = jobDesks.length > 0;
+                    const isAdminMaster = currentRole === 'admin_master';
+                    const myMemberId = currentAccount?.memberId || '';
+                    const isAssignedToMe = (docType: DocumentType, customTitle?: string) => {
+                      if (isAdminMaster || isSinglePanitia) return true;
+                      const jd = jobDesks.find(j =>
+                        j.documentType === docType &&
+                        (docType !== 'custom' || j.customTitle === customTitle)
+                      );
+                      return jd ? jd.assignedMemberId === myMemberId : false;
+                    };
+                    const getJobDeskHolder = (docType: DocumentType, customTitle?: string) => {
+                      const jd = jobDesks.find(j =>
+                        j.documentType === docType &&
+                        (docType !== 'custom' || j.customTitle === customTitle)
+                      );
+                      return jd ? jd.assignedMemberName : null;
+                    };
 
                     const activeDoc = currentDocs.find(d => d.id === selectedDocId) || currentDocs[0];
 
@@ -1281,43 +1598,97 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                             </p>
                           </div>
 
-                          {/* Action Buttons to Add Documents */}
+                          {/* Action Buttons to Add Documents — Gated by Jobdesk */}
                           <div className="flex items-center gap-2 flex-wrap shrink-0">
-                            {!currentDocs.some(d => d.documentType === 'sk_panitia') && (
-                              <button
-                                onClick={() => handleCreateDoc('sk_panitia')}
-                                className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-dwp-gold border border-dwp-gold/40 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
-                              >
-                                <Plus className="w-3.5 h-3.5" /> + SK Panitia
-                              </button>
+                            {!jobDesksSet && !isAdminMaster ? (
+                              <span className="text-amber-300 text-[11px] font-semibold flex items-center gap-1">
+                                ⏳ Menunggu Ketua Panitia menetapkan Jobdesk
+                              </span>
+                            ) : (
+                              <>
+                                {/* SK Panitia */}
+                                {!currentDocs.some(d => d.documentType === 'sk_panitia') && (
+                                  isAssignedToMe('sk_panitia') ? (
+                                    <button
+                                      onClick={() => handleCreateDoc('sk_panitia')}
+                                      className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-dwp-gold border border-dwp-gold/40 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" /> + SK Panitia
+                                    </button>
+                                  ) : (
+                                    <span className="text-slate-400 text-[11px] flex items-center gap-1 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl">
+                                      📜 SK Panitia — dikerjakan oleh: <em>{getJobDeskHolder('sk_panitia')}</em>
+                                    </span>
+                                  )
+                                )}
+
+                                {/* Surat Tugas */}
+                                {!currentDocs.some(d => d.documentType === 'surat_tugas') && (
+                                  isAssignedToMe('surat_tugas') ? (
+                                    <button
+                                      onClick={() => handleCreateDoc('surat_tugas')}
+                                      className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" /> + Surat Tugas
+                                    </button>
+                                  ) : (
+                                    <span className="text-slate-400 text-[11px] flex items-center gap-1 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl">
+                                      📑 Surat Tugas — dikerjakan oleh: <em>{getJobDeskHolder('surat_tugas')}</em>
+                                    </span>
+                                  )
+                                )}
+
+                                {/* Surat Undangan */}
+                                {!currentDocs.some(d => d.documentType === 'surat_undangan') && (
+                                  isAssignedToMe('surat_undangan') ? (
+                                    <button
+                                      onClick={() => handleCreateDoc('surat_undangan')}
+                                      className="bg-sky-900 hover:bg-sky-800 text-sky-200 border border-sky-700 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" /> + Surat Undangan
+                                    </button>
+                                  ) : (
+                                    <span className="text-slate-400 text-[11px] flex items-center gap-1 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl">
+                                      ✉️ Surat Undangan — dikerjakan oleh: <em>{getJobDeskHolder('surat_undangan')}</em>
+                                    </span>
+                                  )
+                                )}
+
+                                {/* Custom Docs from Jobdesk */}
+                                {jobDesks.filter(jd => jd.documentType === 'custom').map(jd => {
+                                  const alreadyMade = currentDocs.some(d => d.documentType === 'custom' && d.customTitle === jd.customTitle);
+                                  if (alreadyMade) return null;
+                                  return isAssignedToMe('custom', jd.customTitle) ? (
+                                    <button
+                                      key={jd.id}
+                                      onClick={() => handleCreateDoc('custom', jd.customTitle)}
+                                      className="bg-emerald-800 hover:bg-emerald-700 text-emerald-100 border border-emerald-600 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                                    >
+                                      <Plus className="w-3.5 h-3.5" /> + {jd.customTitle}
+                                    </button>
+                                  ) : (
+                                    <span key={jd.id} className="text-slate-400 text-[11px] flex items-center gap-1 bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-xl">
+                                      📄 {jd.customTitle} — dikerjakan oleh: <em>{jd.assignedMemberName}</em>
+                                    </span>
+                                  );
+                                })}
+                              </>
                             )}
-                            {!currentDocs.some(d => d.documentType === 'surat_tugas') && (
-                              <button
-                                onClick={() => handleCreateDoc('surat_tugas')}
-                                className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
-                              >
-                                <Plus className="w-3.5 h-3.5" /> + Surat Tugas
-                              </button>
-                            )}
-                            {!currentDocs.some(d => d.documentType === 'surat_undangan') && (
-                              <button
-                                onClick={() => handleCreateDoc('surat_undangan')}
-                                className="bg-sky-900 hover:bg-sky-800 text-sky-200 border border-sky-700 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
-                              >
-                                <Plus className="w-3.5 h-3.5" /> + Surat Undangan
-                              </button>
-                            )}
-                            <button
-                              onClick={() => {
-                                const title = prompt('Masukkan Judul Dokumen Kustom (misal: Surat Permohonan Izin Tempat):', 'Surat Permohonan Izin Tempat');
-                                if (title) handleCreateDoc('custom', title);
-                              }}
-                              className="bg-emerald-800 hover:bg-emerald-700 text-emerald-100 border border-emerald-600 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
-                            >
-                              <Plus className="w-3.5 h-3.5" /> + Dokumen Kustom
-                            </button>
                           </div>
                         </div>
+
+                        {/* Jobdesk Not Set Banner */}
+                        {!jobDesksSet && !isAdminMaster && (
+                          <div className="bg-amber-50 border border-amber-300 text-amber-900 p-4 rounded-2xl flex items-start gap-3">
+                            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                            <div className="space-y-1">
+                              <span className="font-bold text-sm block">⏳ Menunggu Penetapan Jobdesk Dokumen</span>
+                              <p className="text-xs leading-relaxed">
+                                Ketua Panitia belum menetapkan jobdesk dokumen. Silakan buka <strong>Tab Panitia</strong> dan tetapkan jobdesk terlebih dahulu sebelum dokumen dapat dibuat.
+                              </p>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Notice for Single Panitia Mode */}
                         {isSinglePanitia && (

@@ -112,6 +112,8 @@ export interface ActivityProposal {
   committeeStatus?: CommitteeStatus;
   committeeNotes?: string;
   committeeLogs?: CommitteeLog[];
+  documentJobDesks?: DocumentJobDesk[];  // Jobdesk dokumen ditetapkan Ketua Panitia
+  jobDeskLogs?: JobDeskLog[];            // Riwayat perubahan jobdesk (audit trail)
 }
 
 export interface AttendanceRecord {
@@ -251,6 +253,31 @@ export interface KopSuratConfig {
 }
 
 export type DocumentType = 'sk_panitia' | 'surat_tugas' | 'surat_undangan' | 'custom';
+
+// Satu entri jobdesk per dokumen yang ditetapkan Ketua Panitia
+export interface DocumentJobDesk {
+  id: string;
+  documentType: DocumentType;
+  customTitle?: string;           // Diisi jika documentType === 'custom'
+  assignedMemberId: string;
+  assignedMemberName: string;
+  assignedAt: string;             // ISO timestamp
+  assignedBy: string;             // Nama Ketua Panitia yang menetapkan
+}
+
+// Audit log setiap perubahan penugasan jobdesk
+export interface JobDeskLog {
+  id: string;
+  documentType: DocumentType;
+  customTitle?: string;
+  previousMemberId?: string;
+  previousMemberName?: string;
+  newMemberId: string;
+  newMemberName: string;
+  changedBy: string;
+  changedAt: string;
+  reason?: string;
+}
 export type DocumentStatus = 
   | 'draft'
   | 'pending_panitia_review'
