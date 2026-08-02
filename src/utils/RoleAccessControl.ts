@@ -94,7 +94,7 @@ export const DEFAULT_PERMISSION_MATRIX: DynamicPermissionMatrix = {
   proposalActions: DEFAULT_PROPOSAL_ACTIONS
 };
 
-const STORAGE_KEY = 'dwp_dynamic_permissions_v1';
+const STORAGE_KEY = 'dwp_dynamic_permissions_v2';
 
 // Load Matrix from Local Storage
 export const getDynamicPermissions = (): DynamicPermissionMatrix => {
@@ -103,10 +103,15 @@ export const getDynamicPermissions = (): DynamicPermissionMatrix => {
     if (saved) {
       const parsed = JSON.parse(saved);
       const tabs = { ...DEFAULT_ROLE_PERMISSIONS, ...parsed.tabs };
-      // Ensure 'profile' tab is always present for every role
+      // Ensure 'notifications' and 'profile' tabs are always present for every role
       (Object.keys(tabs) as UserRole[]).forEach(r => {
-        if (tabs[r] && !tabs[r].includes('profile')) {
-          tabs[r] = [...tabs[r], 'profile'];
+        if (tabs[r]) {
+          if (!tabs[r].includes('notifications')) {
+            tabs[r] = [...tabs[r], 'notifications'];
+          }
+          if (!tabs[r].includes('profile')) {
+            tabs[r] = [...tabs[r], 'profile'];
+          }
         }
       });
       return {
