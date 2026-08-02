@@ -658,17 +658,18 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                               </div>
 
                               <div>
-                                <label className="font-bold text-slate-700 block mb-1">Bidang *</label>
-                                <select
-                                  value={editBidang}
-                                  onChange={(e: any) => setEditBidang(e.target.value)}
-                                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium bg-white"
-                                >
-                                  <option value="Pendidikan">Bidang Pendidikan</option>
-                                  <option value="Ekonomi">Bidang Ekonomi</option>
-                                  <option value="Sosial Budaya">Bidang Sosial Budaya</option>
-                                  <option value="Sekretariat">Sekretariat</option>
-                                </select>
+                                <label className="font-bold text-slate-700 block mb-1 flex items-center justify-between">
+                                  <span>Bidang Organisasi *</span>
+                                  <span className="text-[10px] text-amber-700 font-semibold bg-amber-100 px-2 py-0.5 rounded-full">
+                                    🔒 Terkunci (Sesuai Usulan Awal)
+                                  </span>
+                                </label>
+                                <input
+                                  type="text"
+                                  disabled
+                                  value={`Bidang ${editBidang}`}
+                                  className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-100 text-slate-600 font-bold cursor-not-allowed select-none"
+                                />
                               </div>
                             </div>
 
