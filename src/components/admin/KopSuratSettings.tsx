@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp, defaultKopSuratConfig } from '../../context/AppContext';
 import { KopSuratConfig } from '../../types';
+import { ImageUploadCompressor } from '../common/ImageUploadCompressor';
 import { 
   FileText, 
   Save, 
@@ -81,29 +82,31 @@ export const KopSuratSettings: React.FC = () => {
             </h3>
           </div>
 
-          {/* Logo URL Input */}
-          <div className="space-y-1.5">
-            <label className="font-bold text-slate-700 flex items-center gap-1.5">
-              <ImageIcon className="w-3.5 h-3.5 text-dwp-burgundy" />
-              <span>URL Gambar Logo Kop Surat *</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="url"
-                required
-                value={formConfig.logoUrl}
-                onChange={(e) => setFormConfig({ ...formConfig, logoUrl: e.target.value })}
-                placeholder="https://domain.com/logo.png"
-                className="flex-1 p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-mono text-[11px]"
-              />
+          {/* Logo Upload with Compression */}
+          <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+            <div className="flex items-center justify-between">
+              <label className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
+                <ImageIcon className="w-4 h-4 text-dwp-burgundy" />
+                <span>Unggah Gambar Logo Kop Surat Resmi *</span>
+              </label>
               <button
                 type="button"
                 onClick={() => setFormConfig({ ...formConfig, logoUrl: defaultKopSuratConfig.logoUrl })}
-                className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-[11px] shrink-0 cursor-pointer"
+                className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-[10px] cursor-pointer transition-all shrink-0"
               >
                 Gunakan Logo Official DWP
               </button>
             </div>
+
+            <ImageUploadCompressor
+              label="Pilih File Gambar Logo (PNG / SVG / WebP Transparan)"
+              value={formConfig.logoUrl}
+              onChange={(dataUrl) => setFormConfig({ ...formConfig, logoUrl: dataUrl })}
+              maxWidth={600}
+              maxHeight={600}
+              quality={0.9}
+              helpText="Gambar logo langsung diunggah dari komputer/HP dan otomatis dikompresi hemat memori tanpa mengurangi ketajaman logo saat dicetak."
+            />
           </div>
 
           {/* Header Lines */}
