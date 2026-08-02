@@ -42,9 +42,10 @@ export const LoginPage: React.FC = () => {
 
   // Quick Demo Login Handler
   const handleQuickLogin = (userAccount: typeof userAccounts[0]) => {
+    const pass = (userAccount.username === 'admin' || userAccount.role === 'admin_master') ? 'admin123' : 'dwp2026!';
     setUsername(userAccount.username);
-    setPassword('dwp123');
-    login(userAccount.username, 'dwp123');
+    setPassword(pass);
+    login(userAccount.username, pass);
   };
 
   return (
@@ -83,7 +84,7 @@ export const LoginPage: React.FC = () => {
         {/* Form Card */}
         <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20 space-y-6">
           {errorMsg && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3.5 rounded-2xl text-xs flex items-start gap-2.5 shadow-sm">
+            <div className="bg-rose-50 border border-rose-200 text-rose-800 p-3.5 rounded-2xl text-xs flex items-start gap-2.5 shadow-sm animate-fade-in">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
               <div className="leading-relaxed font-medium">{errorMsg}</div>
             </div>
@@ -101,7 +102,7 @@ export const LoginPage: React.FC = () => {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Masukkan Username atau Email..."
+                  placeholder="Masukkan Username (contoh: ketua, sekretaris)..."
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-dwp-burgundy focus:outline-none transition-all"
                 />
               </div>
@@ -134,7 +135,7 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-dwp-burgundy to-dwp-darkBurgundy hover:brightness-110 text-white font-bold py-3.5 rounded-2xl text-xs shadow-lg flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-dwp-burgundy to-dwp-darkBurgundy hover:brightness-110 text-white font-bold py-3.5 rounded-2xl text-xs shadow-lg flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-50 cursor-pointer"
             >
               {isLoading ? (
                 <span>Memverifikasi Autentikasi...</span>
@@ -149,22 +150,29 @@ export const LoginPage: React.FC = () => {
           </form>
 
           {/* Quick Persona Demo Account Selector */}
-          <div className="pt-3 border-t border-slate-100 space-y-2.5">
-            <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider text-center">
-              Pilih Akun Demo Login Berdasarkan Role:
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {userAccounts.slice(0, 6).map((acc) => (
+          <div className="pt-4 border-t border-slate-100 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
+                🔑 Akun Bawaan (Quick Login Test):
+              </span>
+              <span className="text-[9px] bg-slate-100 text-slate-600 font-semibold px-2 py-0.5 rounded-full border">
+                Pass: dwp2026! / admin123
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {userAccounts.map((acc) => (
                 <button
                   key={acc.id}
                   type="button"
                   onClick={() => handleQuickLogin(acc)}
-                  className="p-2.5 bg-slate-50 hover:bg-dwp-burgundy hover:text-white border border-slate-200 rounded-xl text-left transition-all group"
+                  className="p-2 bg-slate-50 hover:bg-dwp-burgundy hover:text-white border border-slate-200 rounded-xl text-left transition-all group cursor-pointer"
+                  title={`Klik untuk login langsung sebagai ${acc.username}`}
                 >
-                  <div className="font-bold text-[11px] truncate group-hover:text-dwp-gold">
+                  <div className="font-bold text-[10px] truncate group-hover:text-dwp-gold">
                     {acc.username}
                   </div>
-                  <div className="text-[9px] text-slate-500 group-hover:text-slate-200 capitalize truncate">
+                  <div className="text-[8px] text-slate-500 group-hover:text-slate-200 capitalize truncate">
                     {acc.role.replace('_', ' ')}
                   </div>
                 </button>

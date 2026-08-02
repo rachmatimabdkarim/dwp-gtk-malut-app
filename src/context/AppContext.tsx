@@ -58,7 +58,8 @@ export const getEffectiveRole = (user: UserAccount, membersList: Member[]): User
 export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
   {
     id: 'usr-001',
-    username: 'admin.it',
+    username: 'admin',
+    password: 'admin123',
     email: 'admin.it@malut.go.id',
     role: 'admin_master',
     memberId: undefined, // User Non-Anggota (Superadmin IT Support)
@@ -67,7 +68,8 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
   },
   {
     id: 'usr-002',
-    username: 'rahmiati.ketua',
+    username: 'ketua',
+    password: 'dwp2026!',
     email: 'rahmiati.dwpgtk@malut.go.id',
     role: 'ketua',
     memberId: 'dwp-001', // Linked ke Ketua DWP
@@ -76,7 +78,8 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
   },
   {
     id: 'usr-003',
-    username: 'endang.waket',
+    username: 'waket',
+    password: 'dwp2026!',
     email: 'endang.dwp@malut.go.id',
     role: 'wakil_ketua',
     memberId: 'dwp-002', // Linked ke Wakil Ketua
@@ -85,7 +88,8 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
   },
   {
     id: 'usr-004',
-    username: 'fitriani.sekretaris',
+    username: 'sekretaris',
+    password: 'dwp2026!',
     email: 'fitriani.sekretaris@malut.go.id',
     role: 'sekretaris',
     memberId: 'dwp-003', // Linked ke Sekretaris
@@ -94,7 +98,8 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
   },
   {
     id: 'usr-005',
-    username: 'hasnah.bendahara',
+    username: 'bendahara',
+    password: 'dwp2026!',
     email: 'hasnah.bendahara@malut.go.id',
     role: 'bendahara',
     memberId: 'dwp-005', // Linked ke Bendahara
@@ -103,12 +108,43 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
   },
   {
     id: 'usr-006',
-    username: 'siti.pendidikan',
+    username: 'kabid_pendidikan',
+    password: 'dwp2026!',
     email: 'siti.aminah@malut.go.id',
     role: 'admin_bidang',
     memberId: 'dwp-006', // Linked ke Ketua Bidang Pendidikan
     status: 'aktif',
     createdAt: '2026-01-15'
+  },
+  {
+    id: 'usr-007',
+    username: 'kabid_ekonomi',
+    password: 'dwp2026!',
+    email: 'fatimah.ekonomi@malut.go.id',
+    role: 'admin_bidang',
+    memberId: 'dwp-007', // Linked ke Ketua Bidang Ekonomi
+    status: 'aktif',
+    createdAt: '2026-01-16'
+  },
+  {
+    id: 'usr-008',
+    username: 'kabid_sosbud',
+    password: 'dwp2026!',
+    email: 'hawa.sosbud@malut.go.id',
+    role: 'admin_bidang',
+    memberId: 'dwp-008', // Linked ke Ketua Bidang Sosbud
+    status: 'aktif',
+    createdAt: '2026-01-17'
+  },
+  {
+    id: 'usr-009',
+    username: 'anggota',
+    password: 'dwp2026!',
+    email: 'halimah.anggota@malut.go.id',
+    role: 'anggota',
+    memberId: 'dwp-009', // Linked ke Anggota DWP
+    status: 'aktif',
+    createdAt: '2026-01-18'
   }
 ];
 

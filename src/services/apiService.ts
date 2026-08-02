@@ -5,19 +5,26 @@ import { UserAccount, Member, ActivityProposal, UserRole } from '../types';
 
 export const apiService = {
   // Authentication
-  async authenticateUser(username: string, passwordHash: string): Promise<UserAccount | null> {
+  async authenticateUser(usernameInput: string, passwordInput: string): Promise<UserAccount | null> {
     const saved = localStorage.getItem('dwp_user_accounts');
     const users: UserAccount[] = saved ? JSON.parse(saved) : [];
     
-    // Find matching user (case-insensitive username check)
+    // Find matching user (case-insensitive username or email check)
     const user = users.find(
-      u => (u.username.toLowerCase() === username.toLowerCase() || u.email.toLowerCase() === username.toLowerCase())
+      u => (u.username.toLowerCase() === usernameInput.trim().toLowerCase() || u.email.toLowerCase() === usernameInput.trim().toLowerCase())
     );
 
     if (!user) return null;
     if (user.status !== 'aktif') throw new Error('Akun Anda dalam status Non-Aktif. Hubungi Superadmin IT.');
 
-    // In production, bcrypt.compare(password, user.passwordHash) is executed here
+    // Password verification logic
+    const defaultPassword = (user.username === 'admin' || user.role === 'admin_master') ? 'admin123' : 'dwp2026!';
+    const validPassword = user.password || defaultPassword;
+
+    if (passwordInput !== validPassword) {
+      return null;
+    }
+
     return user;
   },
 

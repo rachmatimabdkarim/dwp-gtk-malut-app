@@ -8,6 +8,7 @@ export const AdminHeader: React.FC = () => {
   const { 
     currentRole, 
     setCurrentRole, 
+    currentAccount,
     activePersona, 
     setActiveTab, 
     setAdminSubTab, 
@@ -164,19 +165,31 @@ export const AdminHeader: React.FC = () => {
           </div>
 
           <div className="relative">
-            <select
-              value={currentRole}
-              onChange={(e) => setCurrentRole(e.target.value as UserRole)}
-              className="bg-slate-900 text-dwp-lightGold border border-dwp-gold/40 text-[11px] font-semibold rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-dwp-gold cursor-pointer"
-            >
-              <option value="admin_master">⚡ Super Admin IT (Non-Anggota)</option>
-              <option value="admin_bidang">🎓 Ketua Bidang (Pengusul Kegiatan)</option>
-              <option value="sekretaris">📜 Sekretaris DWP (Pengusul & Administrasi)</option>
-              <option value="bendahara">💰 Bendahara DWP (Keuangan & RAB)</option>
-              <option value="wakil_ketua">🛡️ Wakil Ketua DWP (Verifikator Usulan)</option>
-              <option value="ketua">👑 Ketua DWP (Persetujuan Akhir)</option>
-              <option value="anggota">👤 Anggota DWP (Anggota Biasa)</option>
-            </select>
+            {currentAccount?.role === 'admin_master' ? (
+              <div className="flex items-center gap-1.5 bg-slate-900/90 border border-dwp-gold/50 px-2 py-0.5 rounded-lg shadow-sm">
+                <span className="text-[9px] bg-dwp-gold text-slate-950 font-black px-1.5 py-0.2 rounded shrink-0">
+                  ⚡ SIMULASI IT
+                </span>
+                <select
+                  value={currentRole}
+                  onChange={(e) => setCurrentRole(e.target.value as UserRole)}
+                  className="bg-transparent text-dwp-lightGold text-[11px] font-semibold focus:outline-none cursor-pointer"
+                >
+                  <option value="admin_master" className="bg-slate-900 text-white">⚡ Super Admin IT (Non-Anggota)</option>
+                  <option value="admin_bidang" className="bg-slate-900 text-white">🎓 Ketua Bidang (Pengusul)</option>
+                  <option value="sekretaris" className="bg-slate-900 text-white">📜 Sekretaris DWP</option>
+                  <option value="bendahara" className="bg-slate-900 text-white">💰 Bendahara DWP</option>
+                  <option value="wakil_ketua" className="bg-slate-900 text-white">🛡️ Wakil Ketua DWP</option>
+                  <option value="ketua" className="bg-slate-900 text-white">👑 Ketua DWP</option>
+                  <option value="anggota" className="bg-slate-900 text-white">👤 Anggota DWP</option>
+                </select>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 bg-slate-800/90 border border-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-bold text-dwp-gold shadow-sm">
+                <Shield className="w-3.5 h-3.5 text-dwp-gold" />
+                <span>{getRoleDisplayName(currentRole)}</span>
+              </div>
+            )}
           </div>
         </div>
 
