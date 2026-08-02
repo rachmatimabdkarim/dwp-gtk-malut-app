@@ -802,12 +802,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const effRole = getEffectiveRole(user, members);
     setCurrentRole(effRole);
 
+    addSystemAuditLog({
+      category: 'auth',
+      severity: 'success',
+      actorName: user.username,
+      actorRole: effRole,
+      action: 'Sesi Login Pengguna System',
+      details: `User "${user.username}" (${user.email}) berhasil login masuk ke Portal Admin sebagai ${effRole}.`
+    });
+
     setActiveTab('admin');
     setAdminSubTab('dashboard');
     return true;
   };
 
   const logout = () => {
+    if (currentAccount) {
+      addSystemAuditLog({
+        category: 'auth',
+        severity: 'info',
+        actorName: activePersona.name,
+        actorRole: currentRole,
+        action: 'Keluar Sesi (Logout)',
+        details: `Pengguna ${activePersona.name} (${currentRole}) telah keluar dari portal admin.`
+      });
+    }
     apiService.clearAuthSession();
     setIsAuthenticated(false);
     setCurrentAccount(null);
@@ -917,9 +936,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString().split('T')[0]
     };
     setUserAccounts(prev => [newAcc, ...prev]);
+
+    addSystemAuditLog({
+      category: 'user',
+      severity: 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Pembuatan Akun User System Baru',
+      details: `Akun user baru "${newAcc.username}" (${newAcc.email}) dengan role "${newAcc.role}" berhasil dibuat.`
+    });
   };
 
   const updateUserAccount = (id: string, updated: Partial<UserAccount>) => {
+    const targetUser = userAccounts.find(u => u.id === id);
+    const uname = targetUser ? targetUser.username : id;
+
     setUserAccounts(prev => prev.map(u => {
       if (u.id !== id) return u;
       const targetMemberId = updated.memberId !== undefined ? updated.memberId : u.memberId;
@@ -932,10 +963,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       return { ...u, ...updated, email: finalEmail };
     }));
+
+    addSystemAuditLog({
+      category: 'user',
+      severity: 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Pembaruan Kredensial Akun User',
+      details: `Akun user "${uname}" diperbarui (Role: ${updated.role || 'tetap'}, Status: ${updated.status || 'tetap'}${updated.password ? ', Password Di-reset' : ''}).`
+    });
   };
 
   const deleteUserAccount = (id: string) => {
+    const targetUser = userAccounts.find(u => u.id === id);
+    const uname = targetUser ? targetUser.username : id;
+
     setUserAccounts(prev => prev.filter(u => u.id !== id));
+
+    addSystemAuditLog({
+      category: 'user',
+      severity: 'warning',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Penghapusan Akun User System',
+      details: `Akun user system "${uname}" telah dihapus dari database oleh ${activePersona.name}.`
+    });
   };
 
   const addMember = (newMem: Omit<Member, 'id' | 'dateJoined'>) => {
@@ -945,18 +997,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       dateJoined: new Date().toISOString().split('T')[0]
     };
     setMembers(prev => [created, ...prev]);
+
+    addSystemAuditLog({
+      category: 'member',
+      severity: 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Penambahan Data Anggota DWP Baru',
+      details: `Anggota baru "${created.name}" (NIP: ${created.nip || '-'}, Jabatan: ${created.jabatan}, Bidang: ${created.bidang}) berhasil didaftarkan.`
+    });
   };
 
   const updateMember = (id: string, updated: Partial<Member>) => {
+    const targetMem = members.find(m => m.id === id);
+    const mName = targetMem ? targetMem.name : id;
+
     setMembers(prev => prev.map(m => m.id === id ? { ...m, ...updated } : m));
     // Auto sync email to any linked user account
     if (updated.email) {
       setUserAccounts(prev => prev.map(u => u.memberId === id ? { ...u, email: updated.email! } : u));
     }
+
+    addSystemAuditLog({
+      category: 'member',
+      severity: 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Pembaruan Profil Data Anggota DWP',
+      details: `Profil data anggota "${mName}" telah diperbarui oleh ${activePersona.name}.`
+    });
   };
 
   const deleteMember = (id: string) => {
+    const targetMem = members.find(m => m.id === id);
+    const mName = targetMem ? targetMem.name : id;
+
     setMembers(prev => prev.filter(m => m.id !== id));
+
+    addSystemAuditLog({
+      category: 'member',
+      severity: 'warning',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Penghapusan Data Anggota DWP',
+      details: `Data anggota "${mName}" telah dihapus dari database oleh ${activePersona.name}.`
+    });
   };
 
   const addProposal = (propData: Omit<ActivityProposal, 'id' | 'currentStage' | 'stageProgress' | 'logs' | 'createdAt'>) => {
@@ -1010,6 +1095,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setProposals(prev => [newProp, ...prev]);
+
+    // System Audit Log Recording
+    addSystemAuditLog({
+      category: 'proposal',
+      severity: 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Pengajuan Usulan Kegiatan Baru',
+      details: `Usulan "${newProp.title}" (Bidang: ${newProp.bidang}, RAB: Rp ${newProp.estimatedBudget.toLocaleString('id-ID')}) berhasil diajukan oleh ${activePersona.name}.`
+    });
 
     // Dispatch real-time notification based on initial stage
     setTimeout(() => {
@@ -1086,6 +1181,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
 
       const updatedLogs = [...p.logs, newLog];
+
+      // System Audit Log Recording
+      addSystemAuditLog({
+        category: 'proposal',
+        severity: decision === 'approved' ? 'success' : decision === 'revision' ? 'warning' : 'error',
+        actorName: activePersona.name,
+        actorRole: currentRole,
+        action: `Peninjauan Tahap Usulan Kegiatan`,
+        details: `Usulan: "${p.title}" | Tahap: ${stageLabels[p.currentStage] || 'Peninjauan'} | Keputusan: ${decision.toUpperCase()} | Catatan: "${notes || '-'}"`
+      });
 
       // Trigger real-time notifications based on stage transition
       setTimeout(() => {
@@ -1235,6 +1340,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         ]);
       }, 50);
 
+      addSystemAuditLog({
+        category: 'proposal',
+        severity: 'info',
+        actorName: activePersona.name,
+        actorRole: currentRole,
+        action: `Pengajuan Ulang Usulan (Revisi)`,
+        details: `Usulan "${p.title}" yang sebelumnya direvisi telah diperbaiki dan diajukan kembali untuk verifikasi.`
+      });
+
       return {
         ...p,
         ...updatedData,
@@ -1246,7 +1360,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateProposalCommittee = (proposalId: string, committeeMembers: CommitteeMember[]) => {
+    const targetProp = proposals.find(p => p.id === proposalId);
+    const pTitle = targetProp ? targetProp.title : proposalId;
+
     setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, committeeMembers } : p));
+
+    addSystemAuditLog({
+      category: 'proposal',
+      severity: 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: `Pembaruan Susunan Panitia Pelaksana`,
+      details: `Susunan Panitia Kegiatan "${pTitle}" telah diperbarui oleh ${activePersona.name} (${committeeMembers.length} Anggota Panitia).`
+    });
   };
 
   const updateCommitteeStatus = (proposalId: string, status: CommitteeStatus, notes?: string, actorName?: string) => {
@@ -1294,6 +1420,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         committeeLogs: [...existingLogs, newLog]
       };
     }));
+
+    addSystemAuditLog({
+      category: 'proposal',
+      severity: status === 'approved_by_ketua' ? 'success' : status === 'pending_waket_verification' ? 'info' : 'warning',
+      actorName: actorName || activePersona.name,
+      actorRole: currentRole,
+      action: `Tindak Lanjut Status Panitia Pelaksana`,
+      details: `Usulan "${targetProposalTitle}": Status Panitia -> ${status.toUpperCase()} | Catatan: "${notes || '-'}"`
+    });
 
     setTimeout(() => {
       const timestampStr = new Date().toLocaleString('id-ID');
@@ -1461,10 +1596,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setNews(prev => [newArticle, ...prev]);
+
+    addSystemAuditLog({
+      category: 'proposal',
+      severity: 'success',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Persetujuan LPJ & Publikasi Berita',
+      details: `Laporan Pelaksanaan Kegiatan "${targetReport.activityTitle}" telah disetujui resmi oleh Ketua DWP dan diterbitkan sebagai Berita Publik.`
+    });
   };
 
   const addNewsArticle = (art: Omit<NewsArticle, 'id'>) => {
     setNews(prev => [{ ...art, id: `news-${Date.now()}` }, ...prev]);
+    addSystemAuditLog({
+      category: 'cms',
+      severity: 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Publikasi Berita Baru',
+      details: `Berita baru "${art.title}" (${art.category}) berhasil dipublikasikan ke situs web utama.`
+    });
   };
 
   const [permissionMatrix, setPermissionMatrix] = useState<DynamicPermissionMatrix>(() => getDynamicPermissions());
@@ -1472,11 +1624,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updatePermissionMatrix = (matrix: DynamicPermissionMatrix) => {
     saveDynamicPermissions(matrix);
     setPermissionMatrix(matrix);
+
+    addSystemAuditLog({
+      category: 'system',
+      severity: 'warning',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Pembaruan Matriks Hak Akses (RBAC)',
+      details: `Matriks Hak Akses & Kewenangan Role Pengurus telah diperbarui secara real-time oleh ${activePersona.name}.`
+    });
   };
 
   const resetPermissionMatrix = () => {
     const defaultMatrix = resetDynamicPermissionsToDefault();
     setPermissionMatrix(defaultMatrix);
+
+    addSystemAuditLog({
+      category: 'system',
+      severity: 'warning',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Reset Matriks Hak Akses ke Default',
+      details: `Matriks Hak Akses Role telah dikembalikan ke pengaturan standar oleh ${activePersona.name}.`
+    });
   };
 
   const updateSiteConfig = (newCfg: Partial<SiteConfig>) => {
@@ -1484,6 +1654,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const updated = { ...prev, ...newCfg };
       localStorage.setItem('dwp_site_config', JSON.stringify(updated));
       return updated;
+    });
+
+    addSystemAuditLog({
+      category: 'cms',
+      severity: 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Pembaruan Tampilan CMS & Identitas Web',
+      details: `Pengaturan CMS & Tampilan Situs Utama telah diperbarui oleh ${activePersona.name}.`
     });
   };
 

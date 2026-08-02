@@ -132,7 +132,7 @@ export interface AttendanceRecord {
 export interface SystemAuditLogEntry {
   id: string;
   timestamp: string;
-  category: 'proposal' | 'member' | 'user' | 'security' | 'system' | 'auth';
+  category: 'proposal' | 'member' | 'user' | 'security' | 'system' | 'auth' | 'cms';
   severity: 'info' | 'success' | 'warning' | 'error';
   actorName: string;
   actorRole: string;
