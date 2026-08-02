@@ -34,15 +34,27 @@ export interface AuditLogItem {
 }
 
 export const SystemAuditLogs: React.FC = () => {
-  const { proposals, members, userAccounts, activePersona } = useApp();
+  const { proposals, members, userAccounts, activePersona, systemAuditLogs } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSeverity, setSelectedSeverity] = useState<string>('all');
 
-  // Generate combined audit logs from system state and proposal workflows
+  // Generate combined audit logs from system state, deletion events, and proposal workflows
   const generateAuditLogs = (): AuditLogItem[] => {
-    const logs: AuditLogItem[] = [];
+    const logs: AuditLogItem[] = [
+      ...systemAuditLogs.map(s => ({
+        id: s.id,
+        timestamp: s.timestamp,
+        category: s.category as any,
+        severity: s.severity,
+        actorName: s.actorName,
+        actorRole: s.actorRole,
+        action: s.action,
+        details: s.details,
+        ipAddress: s.ipAddress || '180.252.34.12 (Akses Terverifikasi)'
+      }))
+    ];
 
     // 1. Proposal Workflow Logs
     proposals.forEach(p => {

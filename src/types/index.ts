@@ -129,6 +129,18 @@ export interface AttendanceRecord {
   notes?: string;
 }
 
+export interface SystemAuditLogEntry {
+  id: string;
+  timestamp: string;
+  category: 'proposal' | 'member' | 'user' | 'security' | 'system' | 'auth';
+  severity: 'info' | 'success' | 'warning' | 'error';
+  actorName: string;
+  actorRole: string;
+  action: string;
+  details: string;
+  ipAddress?: string;
+}
+
 export interface ExecutionReport {
   id: string;
   activityId: string;

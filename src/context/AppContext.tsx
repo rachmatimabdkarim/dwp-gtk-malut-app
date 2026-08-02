@@ -13,7 +13,8 @@ import {
   AppNotification,
   CommitteeMember,
   CommitteeStatus,
-  CommitteeLog
+  CommitteeLog,
+  SystemAuditLogEntry
 } from '../types';
 import { apiService } from '../services/apiService';
 import { 
@@ -656,6 +657,9 @@ interface AppContextType {
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
   clearReadNotifications: () => void;
+
+  systemAuditLogs: SystemAuditLogEntry[];
+  addSystemAuditLog: (entry: Omit<SystemAuditLogEntry, 'id' | 'timestamp'>) => void;
   
   activeTab: 'public' | 'admin';
   setActiveTab: (tab: 'public' | 'admin') => void;
@@ -714,6 +718,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem('dwp_notifications');
     return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
   });
+
+  const [systemAuditLogs, setSystemAuditLogs] = useState<SystemAuditLogEntry[]>(() => {
+    const saved = localStorage.getItem('dwp_system_audit_logs');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('dwp_system_audit_logs', JSON.stringify(systemAuditLogs));
+  }, [systemAuditLogs]);
+
+  const addSystemAuditLog = (entry: Omit<SystemAuditLogEntry, 'id' | 'timestamp'>) => {
+    const newLog: SystemAuditLogEntry = {
+      ...entry,
+      id: `log-sys-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      timestamp: new Date().toLocaleString('id-ID'),
+      ipAddress: entry.ipAddress || '180.252.34.12 (Terverifikasi)'
+    };
+    setSystemAuditLogs(prev => [newLog, ...prev]);
+  };
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     return !!apiService.getAuthSession();
@@ -1345,10 +1368,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteProposal = (proposalId: string) => {
+    const targetProposal = proposals.find(p => p.id === proposalId);
+    const targetTitle = targetProposal ? targetProposal.title : proposalId;
+    const targetOrganizer = targetProposal ? targetProposal.createdBy : 'Pengurus';
+    const targetBudget = targetProposal ? targetProposal.estimatedBudget : 0;
+
     setProposals(prev => {
       const updated = prev.filter(p => p.id !== proposalId);
       localStorage.setItem('dwp_proposals', JSON.stringify(updated));
       return updated;
+    });
+
+    // Record Deletion Event in System Audit Logs
+    addSystemAuditLog({
+      category: 'proposal',
+      severity: 'error',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: `Penghapusan Permanent Usulan Kegiatan`,
+      details: `Usulan kegiatan "${targetTitle}" (Pengusul: ${targetOrganizer}, RAB: Rp ${targetBudget.toLocaleString('id-ID')}) telah dihapus dari sistem secara permanen oleh ${activePersona.name} (${activePersona.title}).`
     });
   };
 
@@ -1494,6 +1532,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       markNotificationAsRead,
       markAllNotificationsAsRead,
       clearReadNotifications,
+      systemAuditLogs,
+      addSystemAuditLog,
       focusedProposalId,
       setFocusedProposalId,
       focusedWorkspaceTab,
