@@ -12,10 +12,9 @@ import {
   Building2,
   KeyRound
 } from 'lucide-react';
-import { UserRole } from '../../types';
 
 export const LoginPage: React.FC = () => {
-  const { login, userAccounts, siteConfig } = useApp();
+  const { login, siteConfig } = useApp();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -40,13 +39,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  // Quick Demo Login Handler
-  const handleQuickLogin = (userAccount: typeof userAccounts[0]) => {
-    const pass = (userAccount.username === 'admin' || userAccount.role === 'admin_master') ? 'admin123' : 'dwp2026!';
-    setUsername(userAccount.username);
-    setPassword(pass);
-    login(userAccount.username, pass);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-dwp-burgundy via-dwp-darkBurgundy to-slate-950 flex items-center justify-center p-4 relative overflow-hidden font-sans">
@@ -102,7 +94,7 @@ export const LoginPage: React.FC = () => {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Masukkan Username (contoh: ketua, sekretaris)..."
+                  placeholder="Masukkan Username Anda..."
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-xs font-medium text-slate-900 focus:bg-white focus:ring-2 focus:ring-dwp-burgundy focus:outline-none transition-all"
                 />
               </div>
@@ -149,36 +141,6 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Quick Persona Demo Account Selector */}
-          <div className="pt-4 border-t border-slate-100 space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-                🔑 Akun Bawaan (Quick Login Test):
-              </span>
-              <span className="text-[9px] bg-slate-100 text-slate-600 font-semibold px-2 py-0.5 rounded-full border">
-                Pass: dwp2026! / admin123
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {userAccounts.map((acc) => (
-                <button
-                  key={acc.id}
-                  type="button"
-                  onClick={() => handleQuickLogin(acc)}
-                  className="p-2 bg-slate-50 hover:bg-dwp-burgundy hover:text-white border border-slate-200 rounded-xl text-left transition-all group cursor-pointer"
-                  title={`Klik untuk login langsung sebagai ${acc.username}`}
-                >
-                  <div className="font-bold text-[10px] truncate group-hover:text-dwp-gold">
-                    {acc.username}
-                  </div>
-                  <div className="text-[8px] text-slate-500 group-hover:text-slate-200 capitalize truncate">
-                    {acc.role.replace('_', ' ')}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Footer info */}
