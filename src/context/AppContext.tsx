@@ -1320,28 +1320,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             {
               id: `notif-bendahara-${Date.now()}`,
               targetRole: 'bendahara',
-              title: '💰 Pemberitahuan Pencairan Dana RAB',
-              message: `Usulan Kegiatan "${p.title}" telah disetujui resmi oleh Ketua DWP. Anggaran Rp ${p.estimatedBudget.toLocaleString('id-ID')} siap diproses pencairan.`,
+              title: '💰 Informasi Anggaran Disetujui Ketua DWP',
+              message: `Informasi: Usulan Kegiatan "${p.title}" beserta RAB-nya telah disetujui resmi oleh Ketua DWP. Anggaran Rp ${p.estimatedBudget.toLocaleString('id-ID')} telah disahkan.`,
               timestamp: timestampStr,
               isRead: false,
               type: 'rab_pencairan',
               proposalId: p.id,
-              nextStepAction: '👉 Langkah Selanjutnya: Siapkan pencairan anggaran sesuai RAB disetujui.',
+              nextStepAction: '👉 Informasi: Anggaran kegiatan telah disahkan. Siapkan alokasi pencairan dana sesuai RAB yang disetujui.',
               targetTab: 'usulan',
               actionButtonText: 'Lihat RAB Disetujui ➔'
             },
             {
               id: `notif-sekretaris-${Date.now() + 1}`,
               targetRole: 'sekretaris',
-              title: '📜 Pemberitahuan Persuratan & SK',
-              message: `Usulan Kegiatan "${p.title}" telah disetujui resmi oleh Ketua DWP. Draf SK Panitia, Surat Tugas, & Undangan siap dibuat.`,
+              title: '📜 Informasi Proposal Disetujui Ketua DWP',
+              message: `Informasi: Usulan Kegiatan "${p.title}" telah disetujui resmi oleh Ketua DWP. Pengusul saat ini sedang menyusun panitia pelaksana kegiatan.`,
               timestamp: timestampStr,
               isRead: false,
               type: 'sk_pengarsipan',
               proposalId: p.id,
-              nextStepAction: '👉 Langkah Selanjutnya: Tentukan Ketua Panitia & Tim Panitia Pelaksana di Tab Panitia.',
-              targetTab: 'panitia',
-              actionButtonText: 'Susun Panitia ➔'
+              nextStepAction: '👉 Informasi: Proposal telah disetujui Ketua DWP. Pengusul sedang menyusun panitia pelaksana. Anda akan mendapat notifikasi berikutnya saat draf dokumen siap.',
+              targetTab: 'usulan',
+              actionButtonText: 'Lihat Status Proposal ➔'
             },
             {
               id: `notif-pengusul-${Date.now() + 2}`,
@@ -1352,9 +1352,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               isRead: false,
               type: 'approved',
               proposalId: p.id,
-              nextStepAction: '👉 Langkah Selanjutnya: Pantau pembentukan panitia pelaksana & draf dokumen kegiatan.',
-              targetTab: 'usulan',
-              actionButtonText: 'Buka Detail Usulan ➔'
+              nextStepAction: '👉 Langkah Selanjutnya: Ketua Bidang / Pengusul menentukan Ketua Panitia & Tim Panitia Pelaksana di Tab Panitia.',
+              targetTab: 'panitia',
+              actionButtonText: 'Susun Panitia ➔'
             },
             ...prevNotifs
           ]);
