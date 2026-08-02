@@ -21,6 +21,7 @@ import { UserManagement } from './components/admin/UserManagement';
 import { CMSCustomizer } from './components/admin/CMSCustomizer';
 import { SystemAuditLogs } from './components/admin/SystemAuditLogs';
 import { UserProfilePage } from './components/admin/UserProfilePage';
+import { NotificationCenter } from './components/admin/NotificationCenter';
 
 // Auth & Security Components
 import { LoginPage } from './components/auth/LoginPage';
@@ -90,6 +91,7 @@ const MainLayout: React.FC = () => {
             <>
               {adminSubTab === 'dashboard' && <DashboardOverview />}
               {adminSubTab === 'proposals' && <FiveStageApprovalWorkflow />}
+              {adminSubTab === 'notifications' && <NotificationCenter />}
               {adminSubTab === 'members' && <MemberManagement />}
               {adminSubTab === 'users' && <UserManagement />}
               {adminSubTab === 'cms' && <CMSCustomizer />}

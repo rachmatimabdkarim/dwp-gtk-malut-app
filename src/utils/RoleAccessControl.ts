@@ -3,6 +3,7 @@ import { UserRole } from '../types';
 export type AdminSubTab = 
   | 'dashboard' 
   | 'proposals'
+  | 'notifications'
   | 'members' 
   | 'users' 
   | 'cms'
@@ -52,13 +53,13 @@ export interface DynamicPermissionMatrix {
 
 // Default Access Control Matrix
 export const DEFAULT_ROLE_PERMISSIONS: Record<UserRole, AdminSubTab[]> = {
-  admin_master: ['dashboard', 'proposals', 'members', 'users', 'cms', 'logs', 'profile'],
-  ketua: ['dashboard', 'proposals', 'members', 'users', 'cms', 'logs', 'profile'],
-  wakil_ketua: ['dashboard', 'proposals', 'members', 'users', 'logs', 'profile'],
-  sekretaris: ['dashboard', 'proposals', 'members', 'cms', 'logs', 'profile'],
-  bendahara: ['dashboard', 'proposals', 'members', 'logs', 'profile'],
-  admin_bidang: ['dashboard', 'proposals', 'members', 'logs', 'profile'],
-  anggota: ['dashboard', 'members', 'profile']
+  admin_master: ['dashboard', 'proposals', 'notifications', 'members', 'users', 'cms', 'logs', 'profile'],
+  ketua: ['dashboard', 'proposals', 'notifications', 'members', 'users', 'cms', 'logs', 'profile'],
+  wakil_ketua: ['dashboard', 'proposals', 'notifications', 'members', 'users', 'logs', 'profile'],
+  sekretaris: ['dashboard', 'proposals', 'notifications', 'members', 'cms', 'logs', 'profile'],
+  bendahara: ['dashboard', 'proposals', 'notifications', 'members', 'logs', 'profile'],
+  admin_bidang: ['dashboard', 'proposals', 'notifications', 'members', 'logs', 'profile'],
+  anggota: ['dashboard', 'notifications', 'members', 'profile']
 };
 
 export const DEFAULT_ROLE_CMS_SECTIONS: Record<UserRole, CMSSection[]> = {

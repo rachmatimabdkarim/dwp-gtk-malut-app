@@ -8,7 +8,8 @@ import {
   UserCheck, 
   Globe,
   ScrollText,
-  UserCog
+  UserCog,
+  Bell
 } from 'lucide-react';
 
 export const AdminSidebar: React.FC = () => {
@@ -17,8 +18,6 @@ export const AdminSidebar: React.FC = () => {
   const roleInfo = getRoleDescription(currentRole);
   const pendingApprovalCount = proposals.filter(p => p.currentStage !== 'approved' && p.currentStage !== 'rejected').length;
   const unreadRoleNotifs = notifications.filter(n => (n.targetRole === currentRole || n.targetRole === 'all') && !n.isRead).length;
-
-  const activityBadge = unreadRoleNotifs > 0 ? unreadRoleNotifs : (pendingApprovalCount > 0 ? pendingApprovalCount : null);
 
   const rawNavItems = [
     {
@@ -31,7 +30,13 @@ export const AdminSidebar: React.FC = () => {
       id: 'proposals' as AdminSubTab,
       label: 'Kegiatan',
       icon: CheckSquare,
-      badge: activityBadge
+      badge: pendingApprovalCount > 0 ? pendingApprovalCount : null
+    },
+    {
+      id: 'notifications' as AdminSubTab,
+      label: 'Notifikasi',
+      icon: Bell,
+      badge: unreadRoleNotifs > 0 ? unreadRoleNotifs : null
     },
     {
       id: 'members' as AdminSubTab,
