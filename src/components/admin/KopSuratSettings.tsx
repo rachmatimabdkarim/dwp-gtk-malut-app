@@ -290,6 +290,25 @@ export const KopSuratSettings: React.FC = () => {
                   className="w-full accent-dwp-burgundy cursor-pointer"
                 />
               </div>
+
+              {/* Bottom Line Spacing (Margin/Padding to Double Line Border) */}
+              <div className="sm:col-span-2">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-bold text-slate-700">➖ Jarak Garis Pembatas Bawah dengan Teks Terakhir Kop</label>
+                  <span className="font-mono text-slate-900 font-bold bg-white px-1.5 py-0.5 rounded border text-[10px]">
+                    {formConfig.bottomLineSpacing ?? 12} px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={30}
+                  step={1}
+                  value={formConfig.bottomLineSpacing ?? 12}
+                  onChange={(e) => updateField({ bottomLineSpacing: Number(e.target.value) })}
+                  className="w-full accent-dwp-burgundy cursor-pointer"
+                />
+              </div>
             </div>
           </div>
 
@@ -383,7 +402,10 @@ export const KopSuratSettings: React.FC = () => {
 
           {/* Letterhead Paper Rendering Box */}
           <div className="bg-slate-50 border border-slate-300 p-5 rounded-2xl shadow-inner font-serif space-y-3">
-            <div className="flex items-center gap-3 border-b-2 border-slate-900 pb-3">
+            <div 
+              style={{ paddingBottom: `${formConfig.bottomLineSpacing ?? 12}px` }}
+              className="flex items-center gap-3 border-b-4 border-double border-slate-900"
+            >
               <img
                 src={formConfig.logoUrl || defaultKopSuratConfig.logoUrl}
                 alt="Logo Kop DWP"

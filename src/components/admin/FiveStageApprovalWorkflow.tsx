@@ -1601,7 +1601,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                   {/* Simulated Printable Paper */}
                                   <div className="bg-white p-6 rounded-xl border border-slate-300 font-serif text-[11px] text-slate-900 leading-normal space-y-4 shadow-sm">
                                     {/* Kop Surat Header */}
-                                    <div className="flex items-center gap-3 border-b-4 border-double border-slate-900 pb-3">
+                                     <div 
+                                       style={{ paddingBottom: `${kopSuratConfig.bottomLineSpacing ?? 12}px` }}
+                                       className="flex items-center gap-3 border-b-4 border-double border-slate-900"
+                                     >
                                       <img
                                         src={kopSuratConfig.logoUrl}
                                         alt="Logo DWP"
