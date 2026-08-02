@@ -53,6 +53,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState<ActivityProposal | null>(null);
   const [revisingProposal, setRevisingProposal] = useState<ActivityProposal | null>(null);
+  const [decisionType, setDecisionType] = useState<'approved' | 'revision' | 'rejected'>('approved');
   const [decisionNotes, setDecisionNotes] = useState('');
 
   // Activity Workspace Detail Modal State
@@ -449,7 +450,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                   <div className="flex items-center gap-2">
                     {userCanAct ? (
                       <button
-                        onClick={() => setSelectedProposal(proposal)}
+                        onClick={() => {
+                          setDetailProposal(proposal);
+                          setActiveTabWorkspace('usulan');
+                        }}
                         className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow flex items-center gap-2"
                       >
                         <ShieldCheck className="w-4 h-4 text-dwp-gold" />
@@ -559,58 +563,197 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
             <div className="flex-1 overflow-y-auto space-y-4 text-xs pr-1">
               
               {/* TAB 1: USULAN & VERIFIKASI */}
-              {activeTabWorkspace === 'usulan' && (
-                <div className="space-y-4">
-                  <div className="grid md:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">Estimasi RAB:</span>
-                      <strong className="text-emerald-700 text-sm font-serif">Rp {detailProposal.estimatedBudget.toLocaleString('id-ID')}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">Tanggal Pelaksanaan:</span>
-                      <strong className="text-slate-800">{formatDateRangeDDMMYYYY(detailProposal.startDate, detailProposal.endDate)}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">Lokasi Pelaksanaan:</span>
-                      <strong className="text-slate-800">{detailProposal.location}</strong>
-                    </div>
-                  </div>
+              {activeTabWorkspace === 'usulan' && (() => {
+                const isApprovedOrRejected = detailProposal.currentStage === 'approved' || detailProposal.currentStage === 'rejected';
+                const canReview = !isApprovedOrRejected && (
+                  (currentRole as string) === 'admin_master' ||
+                  (detailProposal.currentStage === 'stage_4_wakil_ketua' && (currentRole === 'wakil_ketua' || (currentRole as string) === 'admin_master')) ||
+                  (detailProposal.currentStage === 'stage_5_ketua' && (currentRole === 'ketua' || (currentRole as string) === 'admin_master'))
+                );
 
-                  <div className="space-y-2">
-                    <span className="font-bold text-slate-800 block text-xs">Latar Belakang & Urgensi:</span>
-                    <p className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-slate-700 leading-relaxed">
-                      {detailProposal.background}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <span className="font-bold text-slate-800 block text-xs">Maksud & Tujuan Kegiatan:</span>
-                    <p className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-slate-700 leading-relaxed">
-                      {detailProposal.objective || 'Meningkatkan partisipasi dan kualitas kegiatan DWP GTK Maluku Utara.'}
-                    </p>
-                  </div>
-
-                  {/* Logs */}
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
-                    <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-dwp-burgundy" />
-                      <span>Riwayat Verifikasi Berjenjang:</span>
-                    </div>
-                    <div className="space-y-2 divide-y divide-slate-200">
-                      {detailProposal.logs.map((log) => (
-                        <div key={log.id} className="pt-2 first:pt-0 flex items-start justify-between text-xs gap-2">
-                          <div>
-                            <span className="font-bold text-slate-800">{log.actorName}</span>
-                            <span className="text-slate-500"> ({log.stageName}): </span>
-                            <span className="italic text-slate-700">"{log.notes}"</span>
+                return (
+                  <div className="space-y-4">
+                    {/* PANEL PENINJAUAN & KEPUTUSAN UNIFIED */}
+                    {canReview && (
+                      <div className="bg-gradient-to-r from-dwp-burgundy via-slate-900 to-dwp-burgundy p-5 rounded-2xl text-white shadow-xl space-y-4 border border-dwp-gold/40 animate-in fade-in-50">
+                        <div className="flex items-center justify-between border-b border-white/20 pb-3">
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5 text-dwp-gold" />
+                            <div>
+                              <h4 className="font-serif font-bold text-dwp-gold text-sm md:text-base">
+                                Form Peninjauan & Persetujuan Usulan ({activePersona.title})
+                              </h4>
+                              <p className="text-[11px] text-slate-300">
+                                Cermati seluruh detil usulan, RAB, dan latar belakang di bawah sebelum memberikan keputusan.
+                              </p>
+                            </div>
                           </div>
-                          <span className="text-[10px] text-slate-400 shrink-0 font-mono">{log.timestamp}</span>
+                          <span className="text-[10px] bg-dwp-gold/20 text-dwp-gold font-mono px-3 py-1 rounded-full border border-dwp-gold/30 shrink-0 font-bold">
+                            Tahap: {getStageBadgeLabel(detailProposal)}
+                          </span>
                         </div>
-                      ))}
+
+                        {/* Opsi Keputusan */}
+                        <div className="space-y-2">
+                          <label className="font-bold text-xs text-dwp-gold block">1. Pilih Keputusan Peninjauan:</label>
+                          <div className="grid grid-cols-3 gap-2.5">
+                            <button
+                              type="button"
+                              onClick={() => setDecisionType('approved')}
+                              className={`p-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                                decisionType === 'approved'
+                                  ? 'bg-emerald-600 text-white ring-2 ring-emerald-300 shadow-lg scale-[1.02]'
+                                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                              }`}
+                            >
+                              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                              <span>✓ Setujui Usulan</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setDecisionType('revision')}
+                              className={`p-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                                decisionType === 'revision'
+                                  ? 'bg-amber-600 text-white ring-2 ring-amber-300 shadow-lg scale-[1.02]'
+                                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                              }`}
+                            >
+                              <AlertTriangle className="w-4 h-4 text-amber-400" />
+                              <span>⚠️ Minta Revisi</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setDecisionType('rejected')}
+                              className={`p-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all ${
+                                decisionType === 'rejected'
+                                  ? 'bg-rose-600 text-white ring-2 ring-rose-300 shadow-lg scale-[1.02]'
+                                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                              }`}
+                            >
+                              <XCircle className="w-4 h-4 text-rose-400" />
+                              <span>🔴 Tolak Usulan</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Catatan / Instruksi */}
+                        <div className="space-y-1.5">
+                          <label className="font-bold text-xs text-dwp-gold block">
+                            2. Catatan / Instruksi Peninjauan {decisionType !== 'approved' && <span className="text-rose-300">(Wajib diisi)</span>}:
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={decisionNotes}
+                            onChange={(e) => setDecisionNotes(e.target.value)}
+                            placeholder={
+                              decisionType === 'approved'
+                                ? "Masukkan catatan persetujuan atau instruksi pelaksanaan (Opsional)..."
+                                : decisionType === 'revision'
+                                ? "Jelaskan bagian mana dari proposal/RAB yang perlu diperbaiki oleh pengusul..."
+                                : "Jelaskan alasan penolakan usulan kegiatan..."
+                            }
+                            className="w-full p-3 rounded-xl bg-slate-950/80 border border-slate-700 text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-dwp-gold font-medium"
+                          />
+                        </div>
+
+                        {/* Submit Action Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (decisionType !== 'approved' && !decisionNotes.trim()) {
+                              alert('⚠️ Catatan Peninjauan Wajib Diisi untuk keputusan Revisi atau Penolakan.');
+                              return;
+                            }
+                            advanceApproval(detailProposal.id, decisionType, decisionNotes);
+                            
+                            let newStage: ProposalStage = detailProposal.currentStage;
+                            if (decisionType === 'rejected') newStage = 'rejected';
+                            else if (decisionType === 'revision') newStage = 'revision_requested';
+                            else {
+                              if (detailProposal.currentStage === 'stage_4_wakil_ketua') newStage = 'stage_5_ketua';
+                              else if (detailProposal.currentStage === 'stage_5_ketua') newStage = 'approved';
+                            }
+
+                            const newLog = {
+                              id: `log-${Date.now()}`,
+                              stageName: getStageBadgeLabel(detailProposal),
+                              actorRole: currentRole,
+                              actorName: activePersona.name,
+                              decision: decisionType,
+                              notes: decisionNotes || (decisionType === 'approved' ? 'Telah diverifikasi dan disetujui.' : decisionType === 'revision' ? 'Perlu revisi penyesuaian.' : 'Ditolak.'),
+                              timestamp: new Date().toLocaleString('id-ID')
+                            };
+
+                            setDetailProposal(prev => prev ? {
+                              ...prev,
+                              currentStage: newStage,
+                              logs: [...prev.logs, newLog]
+                            } : null);
+
+                            setDecisionNotes('');
+                            alert(`✅ Keputusan Peninjauan "${decisionType.toUpperCase()}" berhasil disimpan dan dikirimkan!`);
+                          }}
+                          className="w-full bg-dwp-gold hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.01]"
+                        >
+                          <Send className="w-4 h-4 text-slate-950" />
+                          <span>Kirim Keputusan Peninjauan ({decisionType.toUpperCase()})</span>
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="grid md:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">Estimasi RAB:</span>
+                        <strong className="text-emerald-700 text-sm font-serif">Rp {detailProposal.estimatedBudget.toLocaleString('id-ID')}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">Tanggal Pelaksanaan:</span>
+                        <strong className="text-slate-800">{formatDateRangeDDMMYYYY(detailProposal.startDate, detailProposal.endDate)}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">Lokasi Pelaksanaan:</span>
+                        <strong className="text-slate-800">{detailProposal.location}</strong>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className="font-bold text-slate-800 block text-xs">Latar Belakang & Urgensi:</span>
+                      <p className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-slate-700 leading-relaxed">
+                        {detailProposal.background}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <span className="font-bold text-slate-800 block text-xs">Maksud & Tujuan Kegiatan:</span>
+                      <p className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-slate-700 leading-relaxed">
+                        {detailProposal.objective || 'Meningkatkan partisipasi dan kualitas kegiatan DWP GTK Maluku Utara.'}
+                      </p>
+                    </div>
+
+                    {/* Logs */}
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                      <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                        <FileText className="w-4 h-4 text-dwp-burgundy" />
+                        <span>Riwayat Verifikasi Berjenjang:</span>
+                      </div>
+                      <div className="space-y-2 divide-y divide-slate-200">
+                        {detailProposal.logs.map((log) => (
+                          <div key={log.id} className="pt-2 first:pt-0 flex items-start justify-between text-xs gap-2">
+                            <div>
+                              <span className="font-bold text-slate-800">{log.actorName}</span>
+                              <span className="text-slate-500"> ({log.stageName}): </span>
+                              <span className="italic text-slate-700">"{log.notes}"</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 shrink-0 font-mono">{log.timestamp}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* TAB 2: KEPANITIAAN PELAKSANA */}
               {activeTabWorkspace === 'panitia' && (() => {
