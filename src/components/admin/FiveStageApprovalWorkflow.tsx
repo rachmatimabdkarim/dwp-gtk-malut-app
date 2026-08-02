@@ -60,6 +60,33 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
   const [detailProposal, setDetailProposal] = useState<ActivityProposal | null>(null);
   const [activeTabWorkspace, setActiveTabWorkspace] = useState<'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj'>('usulan');
 
+  // Revision Inline Edit State
+  const [isEditingProposal, setIsEditingProposal] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editBidang, setEditBidang] = useState<'Pendidikan' | 'Ekonomi' | 'Sosial Budaya' | 'Sekretariat'>('Pendidikan');
+  const [editBackground, setEditBackground] = useState('');
+  const [editObjective, setEditObjective] = useState('');
+  const [editTargetAudience, setEditTargetAudience] = useState('');
+  const [editEstimatedBudget, setEditEstimatedBudget] = useState(10000000);
+  const [editLocation, setEditLocation] = useState('');
+  const [editStartDate, setEditStartDate] = useState('');
+  const [editEndDate, setEditEndDate] = useState('');
+
+  React.useEffect(() => {
+    if (detailProposal) {
+      setEditTitle(detailProposal.title);
+      setEditBidang(detailProposal.bidang);
+      setEditBackground(detailProposal.background);
+      setEditObjective(detailProposal.objective || '');
+      setEditTargetAudience(detailProposal.targetAudience || '');
+      setEditEstimatedBudget(detailProposal.estimatedBudget);
+      setEditLocation(detailProposal.location);
+      setEditStartDate(detailProposal.startDate);
+      setEditEndDate(detailProposal.endDate);
+      setIsEditingProposal(detailProposal.currentStage === 'revision_requested');
+    }
+  }, [detailProposal]);
+
   // Auto open proposal workspace when triggered by notification or global focus
   React.useEffect(() => {
     if (focusedProposalId) {
@@ -408,27 +435,6 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
               {/* Actions Row */}
               <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-3">
                 <div className="flex items-center gap-2">
-                  {isRevision && isMyProposal && (
-                    <button
-                      onClick={() => {
-                        setRevisingProposal(proposal);
-                        setTitle(proposal.title);
-                        setBidang(proposal.bidang);
-                        setBackground(proposal.background);
-                        setObjective(proposal.objective);
-                        setTargetAudience(proposal.targetAudience);
-                        setEstimatedBudget(proposal.estimatedBudget);
-                        setLocation(proposal.location);
-                        setStartDate(proposal.startDate);
-                        setEndDate(proposal.endDate);
-                      }}
-                      className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                      <span>Perbaiki Draf & Ajukan Ulang</span>
-                    </button>
-                  )}
-
                   {/* Superadmin IT Delete Button */}
                   {activePersona.role === 'admin_master' && (
                     <button
@@ -549,9 +555,218 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                   (detailProposal.currentStage === 'stage_4_wakil_ketua' && (currentRole === 'wakil_ketua' || (currentRole as string) === 'admin_master')) ||
                   (detailProposal.currentStage === 'stage_5_ketua' && (currentRole === 'ketua' || (currentRole as string) === 'admin_master'))
                 );
+                const isProposer = detailProposal.createdBy === activePersona.name || 
+                                   detailProposal.creatorRole === currentRole || 
+                                   (currentRole as string) === 'admin_master';
+                const isRevisionRequested = detailProposal.currentStage === 'revision_requested';
 
                 return (
                   <div className="space-y-4">
+                    {/* BANNER STATUS REVISI & FORM EDIT PERBAIKAN (KHUSUS PENGUSUL) */}
+                    {isRevisionRequested && isProposer && (
+                      <div className="space-y-3">
+                        <div className="bg-amber-500/15 border border-amber-300 p-4 rounded-2xl text-amber-900 space-y-2 shadow-sm">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="font-bold flex items-center gap-2 text-xs text-amber-950">
+                              <AlertTriangle className="w-4.5 h-4.5 text-amber-600 shrink-0" />
+                              <span>PROPOSAL MEMERLUKAN REVISI DARI PIMPINAN</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingProposal(!isEditingProposal)}
+                              className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow transition-all cursor-pointer w-fit"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>{isEditingProposal ? 'Tutup Form Edit' : 'Edit & Perbaiki Draf Usulan'}</span>
+                            </button>
+                          </div>
+
+                          <p className="text-xs text-amber-900 bg-white/80 p-3 rounded-xl border border-amber-200/80 font-medium leading-relaxed">
+                            💬 <strong>Catatan / Instruksi Revisi:</strong> "{detailProposal.revisionComment || detailProposal.logs[detailProposal.logs.length - 1]?.notes || 'Mohon perbaiki data usulan kegiatan sesuai arahan pimpinan.'}"
+                          </p>
+                        </div>
+
+                        {/* FORM EDIT DRAF PERBAIKAN */}
+                        {isEditingProposal && (
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              resubmitProposal(detailProposal.id, {
+                                title: editTitle,
+                                bidang: editBidang,
+                                background: editBackground,
+                                objective: editObjective,
+                                targetAudience: editTargetAudience,
+                                estimatedBudget: Number(editEstimatedBudget),
+                                location: editLocation,
+                                startDate: editStartDate,
+                                endDate: editEndDate
+                              });
+
+                              const creatorRole = detailProposal.creatorRole || 'admin_bidang';
+                              const targetStage: ProposalStage = creatorRole === 'wakil_ketua' ? 'stage_5_ketua' : 'stage_4_wakil_ketua';
+
+                              const resubmitLog = {
+                                id: `log-${Date.now()}`,
+                                stageName: 'Revisi Diajukan Kembali',
+                                actorRole: currentRole,
+                                actorName: activePersona.name,
+                                decision: 'approved' as const,
+                                notes: 'Proposal telah diperbaiki dan diajukan ulang untuk verifikasi.',
+                                timestamp: new Date().toLocaleString('id-ID')
+                              };
+
+                              setDetailProposal(prev => prev ? {
+                                ...prev,
+                                title: editTitle,
+                                bidang: editBidang,
+                                background: editBackground,
+                                objective: editObjective,
+                                targetAudience: editTargetAudience,
+                                estimatedBudget: Number(editEstimatedBudget),
+                                location: editLocation,
+                                startDate: editStartDate,
+                                endDate: editEndDate,
+                                currentStage: targetStage,
+                                revisionComment: undefined,
+                                logs: [...prev.logs, resubmitLog]
+                              } : null);
+
+                              setIsEditingProposal(false);
+                              alert('🚀 Perbaikan Draf usulan berhasil disimpan dan diajukan kembali ke Pimpinan untuk verifikasi!');
+                            }}
+                            className="bg-white p-4.5 rounded-2xl border-2 border-amber-300 space-y-3.5 shadow-md text-xs animate-in fade-in-50"
+                          >
+                            <div className="font-bold text-slate-800 flex items-center justify-between border-b border-slate-100 pb-2">
+                              <span className="flex items-center gap-1.5 text-dwp-burgundy font-serif text-sm">
+                                <Edit3 className="w-4 h-4 text-amber-600" />
+                                Form Perbaikan Draf Usulan Kegiatan
+                              </span>
+                              <span className="text-[10px] text-slate-500 font-normal">Isi perubahan lalu klik tombol Ajukan Ulang</span>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 gap-3">
+                              <div>
+                                <label className="font-bold text-slate-700 block mb-1">Judul Kegiatan *</label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={editTitle}
+                                  onChange={(e) => setEditTitle(e.target.value)}
+                                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="font-bold text-slate-700 block mb-1">Bidang *</label>
+                                <select
+                                  value={editBidang}
+                                  onChange={(e: any) => setEditBidang(e.target.value)}
+                                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium bg-white"
+                                >
+                                  <option value="Pendidikan">Bidang Pendidikan</option>
+                                  <option value="Ekonomi">Bidang Ekonomi</option>
+                                  <option value="Sosial Budaya">Bidang Sosial Budaya</option>
+                                  <option value="Sekretariat">Sekretariat</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="font-bold text-slate-700 block mb-1">Latar Belakang & Urgensi *</label>
+                              <textarea
+                                rows={3}
+                                required
+                                value={editBackground}
+                                onChange={(e) => setEditBackground(e.target.value)}
+                                className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="font-bold text-slate-700 block mb-1">Maksud & Tujuan Kegiatan *</label>
+                              <textarea
+                                rows={2}
+                                required
+                                value={editObjective}
+                                onChange={(e) => setEditObjective(e.target.value)}
+                                className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
+                              />
+                            </div>
+
+                            <div className="grid sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="font-bold text-slate-700 block mb-1">Estimasi RAB (Rp) *</label>
+                                <input
+                                  type="number"
+                                  required
+                                  value={editEstimatedBudget}
+                                  onChange={(e) => setEditEstimatedBudget(Number(e.target.value))}
+                                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="font-bold text-slate-700 block mb-1">Sasaran / Peserta *</label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={editTargetAudience}
+                                  onChange={(e) => setEditTargetAudience(e.target.value)}
+                                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid sm:grid-cols-3 gap-3">
+                              <CustomDateInput
+                                label="Tanggal Mulai *"
+                                subLabel="(tgl/bln/thn)"
+                                value={editStartDate}
+                                onChange={(val) => setEditStartDate(val)}
+                                required
+                              />
+
+                              <CustomDateInput
+                                label="Tanggal Selesai *"
+                                subLabel="(tgl/bln/thn)"
+                                value={editEndDate}
+                                onChange={(val) => setEditEndDate(val)}
+                                required
+                              />
+
+                              <div>
+                                <label className="font-bold text-slate-700 block mb-1">Lokasi Pelaksanaan *</label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={editLocation}
+                                  onChange={(e) => setEditLocation(e.target.value)}
+                                  className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="pt-2 border-t border-slate-100 flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingProposal(false)}
+                                className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold"
+                              >
+                                Batal
+                              </button>
+                              <button
+                                type="submit"
+                                className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2 rounded-xl shadow flex items-center gap-1.5 transition-all cursor-pointer"
+                              >
+                                <Send className="w-4 h-4" />
+                                <span>🚀 Simpan Perbaikan & Ajukan Ulang Usulan</span>
+                              </button>
+                            </div>
+                          </form>
+                        )}
+                      </div>
+                    )}
                     {/* MINIMALIST & COMPACT PANEL PENINJAUAN */}
                     {canReview && (
                       <div className="bg-amber-500/10 border border-amber-300/60 p-3.5 rounded-2xl space-y-3 shadow-sm">
