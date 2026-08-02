@@ -627,7 +627,8 @@ export const defaultKopSuratConfig: KopSuratConfig = {
   headerLine1FontSize: 14,
   headerLine2FontSize: 11,
   headerLine3FontSize: 10,
-  addressFontSize: 9
+  addressFontSize: 9,
+  headerLineSpacing: 2
 };
 
 interface AppContextType {

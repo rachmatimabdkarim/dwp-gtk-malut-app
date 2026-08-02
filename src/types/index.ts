@@ -241,6 +241,7 @@ export interface KopSuratConfig {
   headerLine2FontSize?: number; // in px
   headerLine3FontSize?: number; // in px
   addressFontSize?: number; // in px
+  headerLineSpacing?: number; // in px
 }
 
 export type DocumentType = 'sk_panitia' | 'surat_tugas' | 'surat_undangan' | 'custom';

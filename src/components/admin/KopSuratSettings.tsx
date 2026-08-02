@@ -254,9 +254,9 @@ export const KopSuratSettings: React.FC = () => {
               </div>
 
               {/* Address Font Size */}
-              <div className="sm:col-span-2">
+              <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="font-bold text-slate-700">Font Teks Alamat & Kontak Sekretariat</label>
+                  <label className="font-bold text-slate-700">Font Teks Alamat & Kontak</label>
                   <span className="font-mono text-slate-900 font-bold bg-white px-1.5 py-0.5 rounded border text-[10px]">
                     {formConfig.addressFontSize || 9} px
                   </span>
@@ -268,6 +268,25 @@ export const KopSuratSettings: React.FC = () => {
                   step={0.5}
                   value={formConfig.addressFontSize || 9}
                   onChange={(e) => updateField({ addressFontSize: Number(e.target.value) })}
+                  className="w-full accent-dwp-burgundy cursor-pointer"
+                />
+              </div>
+
+              {/* Header Line Spacing */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-bold text-slate-700">↕️ Jarak Antar Baris Header</label>
+                  <span className="font-mono text-slate-900 font-bold bg-white px-1.5 py-0.5 rounded border text-[10px]">
+                    {formConfig.headerLineSpacing ?? 2} px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={12}
+                  step={1}
+                  value={formConfig.headerLineSpacing ?? 2}
+                  onChange={(e) => updateField({ headerLineSpacing: Number(e.target.value) })}
                   className="w-full accent-dwp-burgundy cursor-pointer"
                 />
               </div>
@@ -378,7 +397,10 @@ export const KopSuratSettings: React.FC = () => {
                 }}
               />
 
-              <div className="text-center flex-1 space-y-0.5 text-slate-900">
+              <div 
+                style={{ gap: `${formConfig.headerLineSpacing ?? 2}px` }}
+                className="text-center flex-1 flex flex-col justify-center text-slate-900"
+              >
                 <h4 
                   style={{ fontSize: `${formConfig.headerLine1FontSize || 14}px` }}
                   className="font-bold tracking-wide leading-tight"
@@ -399,7 +421,7 @@ export const KopSuratSettings: React.FC = () => {
                 </h6>
                 <p 
                   style={{ fontSize: `${formConfig.addressFontSize || 9}px` }}
-                  className="font-sans text-slate-600 leading-tight mt-1"
+                  className="font-sans text-slate-600 leading-tight mt-0.5"
                 >
                   {formConfig.address || 'Jl. Raya Rum Kecamatan Tidore Utara, Kota Tidore Kepulauan (Kompleks BPMP Provinsi Maluku Utara)'}
                 </p>

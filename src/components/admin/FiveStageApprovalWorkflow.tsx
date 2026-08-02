@@ -1611,7 +1611,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                         }}
                                         className="object-contain shrink-0"
                                       />
-                                      <div className="text-center flex-1 space-y-0.5">
+                                      <div 
+                                        style={{ gap: `${kopSuratConfig.headerLineSpacing ?? 2}px` }}
+                                        className="text-center flex-1 flex flex-col justify-center text-slate-900"
+                                      >
                                         <h4 
                                           style={{ fontSize: `${kopSuratConfig.headerLine1FontSize || 14}px` }}
                                           className="font-bold uppercase tracking-wide"
