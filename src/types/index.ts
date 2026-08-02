@@ -244,6 +244,7 @@ export interface KopSuratConfig {
   headerLineSpacing?: number; // in px
   bottomLineSpacing?: number; // in px
   borderStyle?: 'single_thick' | 'double';
+  borderWidth?: number; // in px
 }
 
 export type DocumentType = 'sk_panitia' | 'surat_tugas' | 'surat_undangan' | 'custom';

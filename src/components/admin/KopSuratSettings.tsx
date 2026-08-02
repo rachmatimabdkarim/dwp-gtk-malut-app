@@ -319,18 +319,18 @@ export const KopSuratSettings: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => updateField({ borderStyle: 'single_thick' })}
-                    className={`py-1.5 px-2.5 rounded-xl font-bold text-[11px] transition-all border cursor-pointer ${
+                    className={`py-1.5 px-2 rounded-xl font-bold text-[10px] transition-all border cursor-pointer ${
                       (formConfig.borderStyle || 'single_thick') === 'single_thick'
                         ? 'bg-dwp-burgundy text-white border-dwp-burgundy shadow-sm'
                         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                     }`}
                   >
-                    Satu Garis Tebal (Resmi)
+                    Satu Garis Tebal
                   </button>
                   <button
                     type="button"
                     onClick={() => updateField({ borderStyle: 'double' })}
-                    className={`py-1.5 px-2.5 rounded-xl font-bold text-[11px] transition-all border cursor-pointer ${
+                    className={`py-1.5 px-2 rounded-xl font-bold text-[10px] transition-all border cursor-pointer ${
                       formConfig.borderStyle === 'double'
                         ? 'bg-dwp-burgundy text-white border-dwp-burgundy shadow-sm'
                         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
@@ -339,6 +339,25 @@ export const KopSuratSettings: React.FC = () => {
                     Dua Garis (Ganda)
                   </button>
                 </div>
+              </div>
+
+              {/* Border Line Thickness Slider */}
+              <div className="sm:col-span-2">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-bold text-slate-700">✏️ Ketebalan Garis Pembatas Bawah</label>
+                  <span className="font-mono text-slate-900 font-bold bg-white px-1.5 py-0.5 rounded border text-[10px]">
+                    {formConfig.borderWidth ?? 3.5} px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={8}
+                  step={0.5}
+                  value={formConfig.borderWidth ?? 3.5}
+                  onChange={(e) => updateField({ borderWidth: Number(e.target.value) })}
+                  className="w-full accent-dwp-burgundy cursor-pointer"
+                />
               </div>
             </div>
           </div>
@@ -434,11 +453,14 @@ export const KopSuratSettings: React.FC = () => {
           {/* Letterhead Paper Rendering Box */}
           <div className="bg-slate-50 border border-slate-300 p-5 rounded-2xl shadow-inner font-serif space-y-3">
             <div 
-              style={{ paddingBottom: `${formConfig.bottomLineSpacing ?? 12}px` }}
+              style={{ 
+                paddingBottom: `${formConfig.bottomLineSpacing ?? 12}px`,
+                borderBottomWidth: `${formConfig.borderWidth ?? 3.5}px`
+              }}
               className={`flex items-center gap-3 ${
                 (formConfig.borderStyle || 'single_thick') === 'double'
-                  ? 'border-b-4 border-double border-slate-900'
-                  : 'border-b-[3.5px] border-solid border-slate-900'
+                  ? 'border-b-double border-slate-900'
+                  : 'border-b-solid border-slate-900'
               }`}
             >
               <img
