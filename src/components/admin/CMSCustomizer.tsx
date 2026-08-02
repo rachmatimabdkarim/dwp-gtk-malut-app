@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { KopSuratSettings } from './KopSuratSettings';
 import { useApp } from '../../context/AppContext';
 import { canEditCMSSection, CMSSection, getRoleDescription } from '../../utils/RoleAccessControl';
 import { ImageUploadCompressor } from '../common/ImageUploadCompressor';
@@ -334,6 +335,9 @@ export const CMSCustomizer: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* 2. Pengaturan Kop Surat Resmi DWP */}
+        <KopSuratSettings />
 
         {/* 2. Hero Section & Banner Background */}
         <div className={`bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm space-y-6 ${!canEditSection('hero') ? 'opacity-90' : ''}`}>

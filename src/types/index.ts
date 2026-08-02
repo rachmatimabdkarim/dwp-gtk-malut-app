@@ -223,6 +223,67 @@ export interface SiteConfig {
   primaryThemeColor: string;
   footerDescription?: string;
   copyrightText?: string;
+  kopSurat?: KopSuratConfig;
+}
+
+export interface KopSuratConfig {
+  logoUrl: string;
+  headerLine1: string;
+  headerLine2: string;
+  headerLine3: string;
+  address: string;
+  phone?: string;
+  email: string;
+  website: string;
+  showDoubleLine: boolean;
+}
+
+export type DocumentType = 'sk_panitia' | 'surat_tugas' | 'surat_undangan' | 'custom';
+export type DocumentStatus = 
+  | 'draft'
+  | 'pending_panitia_review'
+  | 'pending_sekretaris_verification'
+  | 'pending_waket_verification'
+  | 'pending_ketua_approval'
+  | 'approved_published'
+  | 'revision_requested';
+
+export interface DocumentLog {
+  id: string;
+  stageName: string;
+  actorName: string;
+  actorRole: string;
+  decision: 'submitted' | 'verified' | 'approved' | 'revision';
+  notes: string;
+  timestamp: string;
+}
+
+export interface ActivityDocument {
+  id: string;
+  proposalId: string;
+  documentType: DocumentType;
+  customTitle?: string;
+  assignedToMemberId?: string;
+  assignedToMemberName?: string;
+  status: DocumentStatus;
+  letterNumber?: string;
+  contentData: {
+    menimbang?: string[];
+    mengingat?: string[];
+    diktum?: string[];
+    maksudTugas?: string;
+    penerima?: string;
+    rundown?: string;
+    bodyText?: string;
+    letterDate?: string;
+    locationCity?: string;
+    signedByKetuaName?: string;
+    signedByKetuaNip?: string;
+    ketuaNotes?: string;
+  };
+  logs: DocumentLog[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 

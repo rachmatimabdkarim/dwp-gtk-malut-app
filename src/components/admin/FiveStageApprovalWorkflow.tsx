@@ -47,7 +47,13 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
     currentAccount,
     focusedProposalId,
     setFocusedProposalId,
-    focusedWorkspaceTab
+    focusedWorkspaceTab,
+    kopSuratConfig,
+    activityDocuments,
+    createOrUpdateActivityDocument,
+    assignDocumentTask,
+    advanceDocumentApproval,
+    deleteActivityDocument
   } = useApp();
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -59,6 +65,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
   // Activity Workspace Detail Modal State
   const [detailProposal, setDetailProposal] = useState<ActivityProposal | null>(null);
   const [activeTabWorkspace, setActiveTabWorkspace] = useState<'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj'>('usulan');
+  const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
 
   // Revision Inline Edit State
   const [isEditingProposal, setIsEditingProposal] = useState(false);
@@ -1195,33 +1202,571 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
 
               {/* TAB 3: PERSURATAN & SK */}
               {activeTabWorkspace === 'sk' && (
-                <div className="space-y-4">
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="font-bold text-slate-900">Dokumen Resmi DWP untuk Kegiatan Ini:</div>
-                    <div className="grid sm:grid-cols-3 gap-3">
-                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
-                        <span className="font-bold text-slate-800 block">📄 SK Panitia DWP</span>
-                        <p className="text-[10px] text-slate-500">SK Penetapan Susunan Panitia Pelaksana Resmi DWP GTK.</p>
-                        <button className="w-full bg-slate-900 hover:bg-dwp-burgundy text-dwp-gold text-[11px] font-bold py-1.5 rounded-lg">
-                          Cetak Draf SK
-                        </button>
+                <div className="space-y-6">
+                  {(() => {
+                    const currentDocs = activityDocuments.filter(d => d.proposalId === detailProposal.id);
+                    const commMembers = detailProposal.committeeMembers || [];
+                    const isSinglePanitia = commMembers.length === 1;
+                    const ketuaPanitiaItem = commMembers.find(c => c.roleTitle === 'Ketua Panitia') || commMembers[0];
+
+                    const activeDoc = currentDocs.find(d => d.id === selectedDocId) || currentDocs[0];
+
+                    const handleCreateDoc = (docType: 'sk_panitia' | 'surat_tugas' | 'surat_undangan' | 'custom', titleText?: string) => {
+                      const docTitle = titleText || (
+                        docType === 'sk_panitia' ? 'SK Penetapan Panitia Pelaksana' :
+                        docType === 'surat_tugas' ? 'Surat Tugas Panitia' :
+                        docType === 'surat_undangan' ? 'Surat Undangan Official DWP' : 'Dokumen Kustom'
+                      );
+
+                      const defaultNumber = docType === 'sk_panitia' ? `001/SK/DWP-GTK/MALUT/VIII/${new Date().getFullYear()}` :
+                                           docType === 'surat_tugas' ? `002/ST/DWP-GTK/MALUT/VIII/${new Date().getFullYear()}` :
+                                           docType === 'surat_undangan' ? `003/UND/DWP-GTK/MALUT/VIII/${new Date().getFullYear()}` :
+                                           `004/KUST/DWP-GTK/MALUT/VIII/${new Date().getFullYear()}`;
+
+                      const assignedId = isSinglePanitia && ketuaPanitiaItem ? ketuaPanitiaItem.memberId : (currentAccount?.id || 'admin');
+                      const assignedName = isSinglePanitia && ketuaPanitiaItem ? ketuaPanitiaItem.memberName : activePersona.name;
+
+                      const newDoc = {
+                        id: `doc-${Date.now()}`,
+                        proposalId: detailProposal.id,
+                        documentType: docType,
+                        customTitle: docTitle,
+                        assignedToMemberId: assignedId,
+                        assignedToMemberName: assignedName,
+                        status: 'draft' as const,
+                        letterNumber: defaultNumber,
+                        contentData: {
+                          letterDate: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+                          locationCity: 'Tidore Kepulauan',
+                          menimbang: [
+                            `Bahwa demi kelancaran dan suksesnya pelaksanaan kegiatan "${detailProposal.title}", maka dipandang perlu menetapkan Susunan Panitia Pelaksana.`,
+                            `Bahwa pengurus yang namanya tercantum dalam lampiran surat keputusan ini dianggap mampu dan memenuhi syarat untuk melaksanakan tugas.`
+                          ],
+                          mengingat: [
+                            `Anggaran Dasar dan Anggaran Rumah Tangga (AD/ART) Dharma Wanita Persatuan.`,
+                            `Program Kerja DWP GTK Provinsi Maluku Utara Tahun ${new Date().getFullYear()}.`,
+                            `Keputusan Rapat Pengurus DWP GTK Maluku Utara.`
+                          ],
+                          diktum: [
+                            `Menetapkan Susunan Panitia Pelaksana Kegiatan ${detailProposal.title} sebagaimana tercantum dalam lampiran keputusan ini.`,
+                            `Panitia Pelaksana bertanggung jawab melaporkan pelaksanaan kegiatan dan LPJ kepada Ketua DWP GTK Maluku Utara.`,
+                            `Keputusan ini berlaku sejak tanggal ditetapkan.`
+                          ],
+                          maksudTugas: `Melaksanakan koordinasi, persiapan, teknis lapangan, dan pelaksanaan kegiatan ${detailProposal.title} di ${detailProposal.location}.`,
+                          penerima: `Pengurus dan Seluruh Anggota Dharma Wanita Persatuan GTK Maluku Utara`,
+                          rundown: `1. Pembukaan\n2. Sambutan Ketua DWP GTK Malut\n3. Pelaksanaan Acara Utama\n4. Doa & Penutup`,
+                          bodyText: `Dengan ini diberitahukan bahwa sehubungan dengan pelaksanaan kegiatan ${detailProposal.title}, diharapkan perkenan Bapak/Ibu/Saudara/i untuk menghadiri dan berpartisipasi aktif dalam rangkaian kegiatan tersebut.`,
+                          signedByKetuaName: 'Ny. Hajjah Nurjanah S.Pd',
+                          signedByKetuaNip: '19780512 200501 2 003'
+                        }
+                      };
+
+                      createOrUpdateActivityDocument(newDoc);
+                      setSelectedDocId(newDoc.id);
+                    };
+
+                    return (
+                      <div className="space-y-6 text-xs">
+                        {/* Section A: Header Banner & Dynamic Document Selector */}
+                        <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-lg border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-5 h-5 text-dwp-gold" />
+                              <h3 className="font-serif font-bold text-lg text-dwp-gold">
+                                Modul Otomatisasi Persuratan & SK Official DWP
+                              </h3>
+                            </div>
+                            <p className="text-[11px] text-slate-300">
+                              Pilih dokumen yang dibutuhkan untuk kegiatan ini. Sistem mengisikan data secara otomatis dengan Kop Surat Resmi DWP GTK Malut.
+                            </p>
+                          </div>
+
+                          {/* Action Buttons to Add Documents */}
+                          <div className="flex items-center gap-2 flex-wrap shrink-0">
+                            {!currentDocs.some(d => d.documentType === 'sk_panitia') && (
+                              <button
+                                onClick={() => handleCreateDoc('sk_panitia')}
+                                className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-dwp-gold border border-dwp-gold/40 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> + SK Panitia
+                              </button>
+                            )}
+                            {!currentDocs.some(d => d.documentType === 'surat_tugas') && (
+                              <button
+                                onClick={() => handleCreateDoc('surat_tugas')}
+                                className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> + Surat Tugas
+                              </button>
+                            )}
+                            {!currentDocs.some(d => d.documentType === 'surat_undangan') && (
+                              <button
+                                onClick={() => handleCreateDoc('surat_undangan')}
+                                className="bg-sky-900 hover:bg-sky-800 text-sky-200 border border-sky-700 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                              >
+                                <Plus className="w-3.5 h-3.5" /> + Surat Undangan
+                              </button>
+                            )}
+                            <button
+                              onClick={() => {
+                                const title = prompt('Masukkan Judul Dokumen Kustom (misal: Surat Permohonan Izin Tempat):', 'Surat Permohonan Izin Tempat');
+                                if (title) handleCreateDoc('custom', title);
+                              }}
+                              className="bg-emerald-800 hover:bg-emerald-700 text-emerald-100 border border-emerald-600 px-3 py-1.5 rounded-xl font-bold text-[11px] flex items-center gap-1 transition-all cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" /> + Dokumen Kustom
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Notice for Single Panitia Mode */}
+                        {isSinglePanitia && (
+                          <div className="bg-amber-50 border border-amber-300 text-amber-900 p-3.5 rounded-2xl flex items-center justify-between gap-3 font-medium">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span>⚡ <strong>Mode Panitia Tunggal Detected:</strong> Kegiatan ini ditangani oleh Ketua Panitia (<strong>{ketuaPanitiaItem?.memberName}</strong>). Seluruh pengerjaan draf dokumen otomatis dialokasikan langsung.</span>
+                            </div>
+                            <span className="bg-amber-200 text-amber-950 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-400">Pengerjaan Langsung</span>
+                          </div>
+                        )}
+
+                        {/* Document List / Tabs Bar */}
+                        {currentDocs.length === 0 ? (
+                          <div className="bg-slate-50 border border-dashed border-slate-300 p-8 rounded-3xl text-center space-y-3">
+                            <FileText className="w-10 h-10 text-slate-400 mx-auto" />
+                            <div className="space-y-1">
+                              <h4 className="font-bold text-slate-700 text-sm">Belum Ada Dokumen Administrasi yang Dibuat</h4>
+                              <p className="text-slate-500 text-xs max-w-md mx-auto">
+                                Klik salah satu tombol di atas untuk membuat <strong>SK Panitia, Surat Tugas, Surat Undangan</strong> (untuk Rapat/Acara), atau <strong>Dokumen Kustom</strong>.
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {/* Document Tabs */}
+                            <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+                              {currentDocs.map((doc) => {
+                                const isSel = activeDoc?.id === doc.id;
+                                return (
+                                  <button
+                                    key={doc.id}
+                                    onClick={() => setSelectedDocId(doc.id)}
+                                    className={`px-4 py-2 rounded-2xl font-bold text-xs flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+                                      isSel 
+                                        ? 'bg-dwp-burgundy text-white shadow-md' 
+                                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                                    }`}
+                                  >
+                                    <span>
+                                      {doc.documentType === 'sk_panitia' ? '📜 SK Panitia' :
+                                       doc.documentType === 'surat_tugas' ? '📑 Surat Tugas' :
+                                       doc.documentType === 'surat_undangan' ? '✉️ Surat Undangan' :
+                                       `📄 ${doc.customTitle}`}
+                                    </span>
+                                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                                      doc.status === 'approved_published' ? 'bg-emerald-400 text-emerald-950' :
+                                      doc.status === 'pending_sekretaris_verification' ? 'bg-amber-300 text-amber-950' :
+                                      doc.status === 'pending_waket_verification' ? 'bg-sky-300 text-sky-950' :
+                                      doc.status === 'pending_ketua_approval' ? 'bg-purple-300 text-purple-950' :
+                                      'bg-slate-200 text-slate-800'
+                                    }`}>
+                                      {doc.status.replace('_', ' ')}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Active Document Workspace */}
+                            {activeDoc && (
+                              <div className="grid lg:grid-cols-12 gap-6 items-start">
+                                {/* Left Side: Workflow & Editor Form */}
+                                <div className="lg:col-span-6 bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                                  {/* Status & Approval Bar */}
+                                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-bold text-slate-800">Status & Tahap Approval Dokumen:</span>
+                                      <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${
+                                        activeDoc.status === 'approved_published' ? 'bg-emerald-100 border-emerald-300 text-emerald-900' :
+                                        activeDoc.status === 'pending_sekretaris_verification' ? 'bg-amber-100 border-amber-300 text-amber-900' :
+                                        activeDoc.status === 'pending_waket_verification' ? 'bg-sky-100 border-sky-300 text-sky-900' :
+                                        activeDoc.status === 'pending_ketua_approval' ? 'bg-purple-100 border-purple-300 text-purple-900' :
+                                        'bg-slate-200 border-slate-300 text-slate-800'
+                                      }`}>
+                                        {activeDoc.status === 'draft' ? '📝 Draf Panitia' :
+                                         activeDoc.status === 'pending_sekretaris_verification' ? '⏳ Menunggu Penomoran Sekretaris DWP' :
+                                         activeDoc.status === 'pending_waket_verification' ? '🛡️ Menunggu Verifikasi Wakil Ketua' :
+                                         activeDoc.status === 'pending_ketua_approval' ? '👑 Menunggu Pengesahan Ketua DWP' :
+                                         '✅ TERBIT RESMI (Digital Signed)'}
+                                      </span>
+                                    </div>
+
+                                    {/* Action Buttons for Document Stage */}
+                                    <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-slate-200">
+                                      {/* Submit to Sekretaris DWP */}
+                                      {(activeDoc.status === 'draft' || activeDoc.status === 'revision_requested') && (
+                                        <button
+                                          onClick={() => {
+                                            advanceDocumentApproval(activeDoc.id, 'pending_sekretaris_verification', 'Draf dokumen diserahkan ke Sekretaris DWP untuk penomoran resmi.');
+                                            alert('✅ Draf dokumen berhasil dikirimkan ke Sekretaris DWP untuk penomoran resmi!');
+                                          }}
+                                          className="bg-sky-700 hover:bg-sky-800 text-white font-bold px-3.5 py-1.5 rounded-xl shadow flex items-center gap-1.5 transition-all text-xs cursor-pointer"
+                                        >
+                                          <Send className="w-3.5 h-3.5" />
+                                          <span>Kirim Draf ke Sekretaris DWP</span>
+                                        </button>
+                                      )}
+
+                                      {/* Sekretaris DWP Action */}
+                                      {activeDoc.status === 'pending_sekretaris_verification' && (currentRole === 'sekretaris' || currentRole === 'admin_master') && (
+                                        <button
+                                          onClick={() => {
+                                            const num = prompt('Masukkan Nomor Surat Resmi DWP:', activeDoc.letterNumber || `001/SK/DWP-GTK/MALUT/VIII/${new Date().getFullYear()}`);
+                                            if (!num) return;
+                                            advanceDocumentApproval(activeDoc.id, 'pending_waket_verification', `Nomor Surat Resmi ${num} diterbitkan oleh Sekretaris DWP.`, num);
+                                            alert(`🛡️ Nomor Surat Resmi "${num}" berhasil dibubuhkan! Diteruskan ke Wakil Ketua DWP.`);
+                                          }}
+                                          className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3.5 py-1.5 rounded-xl shadow flex items-center gap-1.5 transition-all text-xs cursor-pointer"
+                                        >
+                                          <ShieldCheck className="w-3.5 h-3.5" />
+                                          <span>Bubuhkan Nomor Surat & Teruskan ke Wakil Ketua</span>
+                                        </button>
+                                      )}
+
+                                      {/* Wakil Ketua Action */}
+                                      {activeDoc.status === 'pending_waket_verification' && (currentRole === 'wakil_ketua' || currentRole === 'admin_master') && (
+                                        <button
+                                          onClick={() => {
+                                            const notes = prompt('Catatan Verifikasi Wakil Ketua (Opsional):', 'Dokumen terverifikasi layak dan sesuai format.');
+                                            if (notes === null) return;
+                                            advanceDocumentApproval(activeDoc.id, 'pending_ketua_approval', notes);
+                                            alert('🛡️ Dokumen terverifikasi oleh Wakil Ketua DWP! Diteruskan ke Ketua DWP untuk pengesahan akhir.');
+                                          }}
+                                          className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-3.5 py-1.5 rounded-xl shadow flex items-center gap-1.5 transition-all text-xs cursor-pointer"
+                                        >
+                                          <ShieldCheck className="w-3.5 h-3.5" />
+                                          <span>Verifikasi Kelayakan (Wakil Ketua)</span>
+                                        </button>
+                                      )}
+
+                                      {/* Ketua DWP Approval */}
+                                      {activeDoc.status === 'pending_ketua_approval' && (currentRole === 'ketua' || currentRole === 'admin_master') && (
+                                        <button
+                                          onClick={() => {
+                                            advanceDocumentApproval(activeDoc.id, 'approved_published', 'Disahkan dan ditandatangani secara resmi oleh Ketua DWP GTK Maluku Utara.');
+                                            alert('👑 Dokumen Berhasil Disahkan Resmi oleh Ketua DWP! Dokumen siap dicetak / diunduh PDF.');
+                                          }}
+                                          className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-bold px-4 py-1.5 rounded-xl shadow flex items-center gap-1.5 transition-all text-xs cursor-pointer"
+                                        >
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-dwp-gold" />
+                                          <span>Sah & Tanda Tangan Resmi (Ketua DWP)</span>
+                                        </button>
+                                      )}
+
+                                      <button
+                                        onClick={() => {
+                                          if (confirm('Apakah Anda yakin ingin menghapus dokumen ini?')) {
+                                            deleteActivityDocument(activeDoc.id);
+                                          }
+                                        }}
+                                        className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold px-3 py-1.5 rounded-xl border border-rose-200 text-xs flex items-center gap-1 ml-auto cursor-pointer"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" /> Hapus
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Editor Form */}
+                                  <div className="space-y-3 font-sans">
+                                    <div className="font-bold text-slate-800 text-xs flex items-center justify-between border-b border-slate-100 pb-2">
+                                      <span>Redaksi & Parameter Dokumen:</span>
+                                      <span className="text-[10px] text-slate-400">Auto-Prefilled dari Usulan</span>
+                                    </div>
+
+                                    <div>
+                                      <label className="font-bold text-slate-700 block mb-1">Nomor Surat Resmi DWP</label>
+                                      <input
+                                        type="text"
+                                        value={activeDoc.letterNumber || ''}
+                                        onChange={(e) => {
+                                          createOrUpdateActivityDocument({
+                                            ...activeDoc,
+                                            letterNumber: e.target.value
+                                          });
+                                        }}
+                                        placeholder="001/SK/DWP-GTK/MALUT/VIII/2026"
+                                        className="w-full p-2 border border-slate-300 rounded-xl font-mono text-xs focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
+                                      />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                      <div>
+                                        <label className="font-bold text-slate-700 block mb-1">Kota Penerbitan</label>
+                                        <input
+                                          type="text"
+                                          value={activeDoc.contentData.locationCity || 'Tidore Kepulauan'}
+                                          onChange={(e) => {
+                                            createOrUpdateActivityDocument({
+                                              ...activeDoc,
+                                              contentData: { ...activeDoc.contentData, locationCity: e.target.value }
+                                            });
+                                          }}
+                                          className="w-full p-2 border border-slate-300 rounded-xl text-xs"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="font-bold text-slate-700 block mb-1">Tanggal Surat</label>
+                                        <input
+                                          type="text"
+                                          value={activeDoc.contentData.letterDate || ''}
+                                          onChange={(e) => {
+                                            createOrUpdateActivityDocument({
+                                              ...activeDoc,
+                                              contentData: { ...activeDoc.contentData, letterDate: e.target.value }
+                                            });
+                                          }}
+                                          className="w-full p-2 border border-slate-300 rounded-xl text-xs"
+                                        />
+                                      </div>
+                                    </div>
+
+                                    {activeDoc.documentType === 'surat_undangan' && (
+                                      <div>
+                                        <label className="font-bold text-slate-700 block mb-1">Penerima Undangan</label>
+                                        <input
+                                          type="text"
+                                          value={activeDoc.contentData.penerima || ''}
+                                          onChange={(e) => {
+                                            createOrUpdateActivityDocument({
+                                              ...activeDoc,
+                                              contentData: { ...activeDoc.contentData, penerima: e.target.value }
+                                            });
+                                          }}
+                                          placeholder="Pengurus & Anggota DWP GTK Maluku Utara"
+                                          className="w-full p-2 border border-slate-300 rounded-xl text-xs"
+                                        />
+                                      </div>
+                                    )}
+
+                                    {activeDoc.documentType === 'surat_tugas' && (
+                                      <div>
+                                        <label className="font-bold text-slate-700 block mb-1">Maksud Penugasan</label>
+                                        <textarea
+                                          rows={2}
+                                          value={activeDoc.contentData.maksudTugas || ''}
+                                          onChange={(e) => {
+                                            createOrUpdateActivityDocument({
+                                              ...activeDoc,
+                                              contentData: { ...activeDoc.contentData, maksudTugas: e.target.value }
+                                            });
+                                          }}
+                                          className="w-full p-2 border border-slate-300 rounded-xl text-xs"
+                                        />
+                                      </div>
+                                    )}
+
+                                    {activeDoc.documentType === 'custom' && (
+                                      <div>
+                                        <label className="font-bold text-slate-700 block mb-1">Isi Dokumen Kustom</label>
+                                        <textarea
+                                          rows={5}
+                                          value={activeDoc.contentData.bodyText || ''}
+                                          onChange={(e) => {
+                                            createOrUpdateActivityDocument({
+                                              ...activeDoc,
+                                              contentData: { ...activeDoc.contentData, bodyText: e.target.value }
+                                            });
+                                          }}
+                                          className="w-full p-2 border border-slate-300 rounded-xl text-xs font-serif leading-relaxed"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Right Side: Render Kop Surat Official Paper View (Print Ready) */}
+                                <div className="lg:col-span-6 bg-white p-6 rounded-3xl border border-slate-300 shadow-md space-y-4">
+                                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                                    <span className="font-serif font-bold text-slate-900 text-sm">
+                                      📜 Tampilan Resmi Kop DWP & Hasil Cetak
+                                    </span>
+                                    <button
+                                      onClick={() => window.print()}
+                                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 shadow cursor-pointer"
+                                    >
+                                      🖨️ Cetak Dokumen / PDF
+                                    </button>
+                                  </div>
+
+                                  {/* Simulated Printable Paper */}
+                                  <div className="bg-white p-6 rounded-xl border border-slate-300 font-serif text-[11px] text-slate-900 leading-normal space-y-4 shadow-sm">
+                                    {/* Kop Surat Header */}
+                                    <div className="flex items-center gap-3 border-b-4 border-double border-slate-900 pb-3">
+                                      <img
+                                        src={kopSuratConfig.logoUrl}
+                                        alt="Logo DWP"
+                                        className="w-14 h-14 object-contain shrink-0"
+                                      />
+                                      <div className="text-center flex-1 space-y-0.5">
+                                        <h4 className="font-bold text-xs uppercase tracking-wide">
+                                          {kopSuratConfig.headerLine1}
+                                        </h4>
+                                        <h5 className="font-bold text-[10px] uppercase tracking-wide">
+                                          {kopSuratConfig.headerLine2}
+                                        </h5>
+                                        <h6 className="font-semibold text-[9px] uppercase tracking-wide">
+                                          {kopSuratConfig.headerLine3}
+                                        </h6>
+                                        <p className="text-[8px] font-sans text-slate-600 leading-tight">
+                                          {kopSuratConfig.address}
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {/* Document Title & Number */}
+                                    <div className="text-center space-y-1 py-2">
+                                      <h3 className="font-bold text-xs underline uppercase tracking-wider">
+                                        {activeDoc.documentType === 'sk_panitia' ? 'SURAT KEPUTUSAN KETUA DHARMA WANITA PERSATUAN' :
+                                         activeDoc.documentType === 'surat_tugas' ? 'SURAT TUGAS PANITIA PELAKSANA' :
+                                         activeDoc.documentType === 'surat_undangan' ? 'SURAT UNDANGAN OFFICIAL' :
+                                         (activeDoc.customTitle || 'DOKUMEN ORGANISASI').toUpperCase()}
+                                      </h3>
+                                      <p className="font-mono text-[10px] text-slate-700">
+                                        Nomor: {activeDoc.letterNumber || '.../DWP-GTK/MALUT/2026'}
+                                      </p>
+                                      {activeDoc.documentType === 'sk_panitia' && (
+                                        <p className="text-[10px] font-bold italic pt-1">
+                                          TENTANG PENETAPAN SUSUNAN PANITIA PELAKSANA {detailProposal.title.toUpperCase()}
+                                        </p>
+                                      )}
+                                    </div>
+
+                                    {/* Document Body Content */}
+                                    <div className="space-y-3 text-[10.5px]">
+                                      {activeDoc.documentType === 'sk_panitia' && (
+                                        <>
+                                          <div className="space-y-1">
+                                            <span className="font-bold block">Menimbang:</span>
+                                            <ul className="list-disc pl-5 space-y-0.5">
+                                              {activeDoc.contentData.menimbang?.map((m, idx) => (
+                                                <li key={idx}>{m}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+
+                                          <div className="space-y-1">
+                                            <span className="font-bold block">Mengingat:</span>
+                                            <ul className="list-disc pl-5 space-y-0.5">
+                                              {activeDoc.contentData.mengingat?.map((m, idx) => (
+                                                <li key={idx}>{m}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+
+                                          <div className="space-y-1 pt-1">
+                                            <span className="font-bold block text-center uppercase tracking-wider">MEMUTUSKAN:</span>
+                                            <span className="font-bold block">Menetapkan:</span>
+                                            <ul className="list-decimal pl-5 space-y-1">
+                                              {activeDoc.contentData.diktum?.map((d, idx) => (
+                                                <li key={idx}>{d}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        </>
+                                      )}
+
+                                      {activeDoc.documentType === 'surat_tugas' && (
+                                        <div className="space-y-2">
+                                          <p>Yang bertanda tangan di bawah ini Ketua Dharma Wanita Persatuan GTK Provinsi Maluku Utara menugaskan kepada:</p>
+                                          <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 space-y-1 text-[10px]">
+                                            {commMembers.map((c, idx) => (
+                                              <div key={idx} className="flex justify-between border-b border-slate-200 last:border-0 pb-1 font-sans">
+                                                <span><strong>{c.memberName}</strong> ({c.roleTitle})</span>
+                                                <span className="text-slate-500">{c.phone || '-'}</span>
+                                              </div>
+                                            ))}
+                                          </div>
+                                          <p><strong>Maksud Penugasan:</strong> {activeDoc.contentData.maksudTugas}</p>
+                                        </div>
+                                      )}
+
+                                      {activeDoc.documentType === 'surat_undangan' && (
+                                        <div className="space-y-2">
+                                          <p>Kepada Yth.<br /><strong>{activeDoc.contentData.penerima}</strong><br />di Tempat</p>
+                                          <p>{activeDoc.contentData.bodyText}</p>
+                                          <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-[10px] space-y-1 font-sans">
+                                            <div><strong>Kegiatan:</strong> {detailProposal.title}</div>
+                                            <div><strong>Waktu:</strong> {detailProposal.startDate} s.d {detailProposal.endDate}</div>
+                                            <div><strong>Lokasi:</strong> {detailProposal.location}</div>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      {activeDoc.documentType === 'custom' && (
+                                        <p className="whitespace-pre-line leading-relaxed">{activeDoc.contentData.bodyText}</p>
+                                      )}
+                                    </div>
+
+                                    {/* Committee Attachment Table if SK */}
+                                    {activeDoc.documentType === 'sk_panitia' && commMembers.length > 0 && (
+                                      <div className="pt-2 space-y-1">
+                                        <span className="font-bold block text-[10px]">Lampiran Susunan Panitia Pelaksana:</span>
+                                        <table className="w-full border-collapse border border-slate-300 text-[9.5px] font-sans">
+                                          <thead>
+                                            <tr className="bg-slate-100">
+                                              <th className="border border-slate-300 p-1 text-left">No</th>
+                                              <th className="border border-slate-300 p-1 text-left">Nama Panitia</th>
+                                              <th className="border border-slate-300 p-1 text-left">Jabatan Panitia</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {commMembers.map((c, idx) => (
+                                              <tr key={c.id}>
+                                                <td className="border border-slate-300 p-1">{idx + 1}</td>
+                                                <td className="border border-slate-300 p-1 font-bold">{c.memberName}</td>
+                                                <td className="border border-slate-300 p-1">{c.roleTitle}</td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    )}
+
+                                    {/* Signatures Block */}
+                                    <div className="pt-4 flex justify-end font-sans">
+                                      <div className="text-center space-y-1">
+                                        <p className="text-[10px]">
+                                          {activeDoc.contentData.locationCity || 'Tidore Kepulauan'}, {activeDoc.contentData.letterDate || '2 Agustus 2026'}
+                                        </p>
+                                        <p className="font-bold text-[10.5px] text-dwp-burgundy">
+                                          Ketua Dharma Wanita Persatuan<br />GTK Provinsi Maluku Utara
+                                        </p>
+                                        <div className="h-12 flex items-center justify-center">
+                                          {activeDoc.status === 'approved_published' ? (
+                                            <span className="bg-emerald-100 text-emerald-900 border border-emerald-400 font-bold text-[9px] px-3 py-1 rounded-full shadow flex items-center gap-1">
+                                              👑 TANDA TANGAN DIGITAL KETUA DWP
+                                            </span>
+                                          ) : (
+                                            <span className="text-[9px] text-slate-400 italic font-mono">[ Draf Menunggu Pengesahan ]</span>
+                                          )}
+                                        </div>
+                                        <p className="font-bold underline text-[11px]">
+                                          {activeDoc.contentData.signedByKetuaName || 'Ny. Hajjah Nurjanah S.Pd'}
+                                        </p>
+                                        <p className="text-[9px] text-slate-600 font-mono">
+                                          NIP. {activeDoc.contentData.signedByKetuaNip || '19780512 200501 2 003'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
-                        <span className="font-bold text-slate-800 block">📄 Surat Tugas Panitia</span>
-                        <p className="text-[10px] text-slate-500">Surat Tugas Resmi untuk Anggota Panitia Kegiatan.</p>
-                        <button className="w-full bg-slate-900 hover:bg-dwp-burgundy text-dwp-gold text-[11px] font-bold py-1.5 rounded-lg">
-                          Cetak Surat Tugas
-                        </button>
-                      </div>
-                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
-                        <span className="font-bold text-slate-800 block">✉️ Surat Undangan</span>
-                        <p className="text-[10px] text-slate-500">Undangan Digital / Fisik Kegiatan DWP GTK.</p>
-                        <button className="w-full bg-slate-900 hover:bg-dwp-burgundy text-dwp-gold text-[11px] font-bold py-1.5 rounded-lg">
-                          Cetak Undangan
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
               )}
 

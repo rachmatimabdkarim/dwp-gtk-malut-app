@@ -14,7 +14,12 @@ import {
   CommitteeMember,
   CommitteeStatus,
   CommitteeLog,
-  SystemAuditLogEntry
+  SystemAuditLogEntry,
+  KopSuratConfig,
+  ActivityDocument,
+  DocumentType,
+  DocumentStatus,
+  DocumentLog
 } from '../types';
 import { apiService } from '../services/apiService';
 import { 
@@ -608,6 +613,18 @@ const INITIAL_SITE_CONFIG: SiteConfig = {
 };
 
 
+export const defaultKopSuratConfig: KopSuratConfig = {
+  logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/4b/Logo_Dharma_Wanita_Persatuan.png',
+  headerLine1: 'DHARMA WANITA PERSATUAN',
+  headerLine2: 'KANTOR GURU DAN TENAGA KEPENDIDIKAN',
+  headerLine3: 'PROVINSI MALUKU UTARA',
+  address: 'Jl. Raya Rum Kecamatan Tidore Utara, Kota Tidore Kepulauan (Kompleks BPMP Provinsi Maluku Utara)',
+  email: 'dwp.gtk.malut@gmail.com',
+  website: 'dwp-gtk-malut.id',
+  phone: '(0921) 3123456',
+  showDoubleLine: true
+};
+
 interface AppContextType {
   isAuthenticated: boolean;
   currentAccount: UserAccount | null;
@@ -648,6 +665,15 @@ interface AppContextType {
   
   siteConfig: SiteConfig;
   updateSiteConfig: (newConfig: Partial<SiteConfig>) => void;
+
+  kopSuratConfig: KopSuratConfig;
+  updateKopSuratConfig: (newConfig: Partial<KopSuratConfig>) => void;
+
+  activityDocuments: ActivityDocument[];
+  createOrUpdateActivityDocument: (docData: Partial<ActivityDocument> & { proposalId: string; documentType: DocumentType }) => void;
+  assignDocumentTask: (documentId: string, memberId: string, memberName: string) => void;
+  advanceDocumentApproval: (documentId: string, status: DocumentStatus, notes?: string, letterNumber?: string) => void;
+  deleteActivityDocument: (documentId: string) => void;
 
   permissionMatrix: DynamicPermissionMatrix;
   updatePermissionMatrix: (matrix: DynamicPermissionMatrix) => void;
@@ -712,6 +738,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
     const saved = localStorage.getItem('dwp_site_config');
     return saved ? JSON.parse(saved) : INITIAL_SITE_CONFIG;
+  });
+
+  const [kopSuratConfig, setKopSuratConfig] = useState<KopSuratConfig>(() => {
+    const saved = localStorage.getItem('dwp_kop_surat_config');
+    return saved ? JSON.parse(saved) : defaultKopSuratConfig;
+  });
+
+  const [activityDocuments, setActivityDocuments] = useState<ActivityDocument[]>(() => {
+    const saved = localStorage.getItem('dwp_activity_documents');
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
@@ -1666,6 +1702,150 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const updateKopSuratConfig = (newCfg: Partial<KopSuratConfig>) => {
+    setKopSuratConfig(prev => {
+      const updated = { ...prev, ...newCfg };
+      localStorage.setItem('dwp_kop_surat_config', JSON.stringify(updated));
+      return updated;
+    });
+
+    addSystemAuditLog({
+      category: 'cms',
+      severity: 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Pembaruan Pengaturan Kop Surat Resmi',
+      details: `Pengaturan Header & Teks Kop Surat Resmi DWP GTK Maluku Utara telah diperbarui oleh ${activePersona.name}.`
+    });
+  };
+
+  const createOrUpdateActivityDocument = (docData: Partial<ActivityDocument> & { proposalId: string; documentType: DocumentType }) => {
+    const targetProp = proposals.find(p => p.id === docData.proposalId);
+    const pTitle = targetProp ? targetProp.title : docData.proposalId;
+    const nowStr = new Date().toLocaleString('id-ID');
+
+    setActivityDocuments(prev => {
+      const existingIndex = prev.findIndex(d => d.id === docData.id || (d.proposalId === docData.proposalId && d.documentType === docData.documentType && docData.documentType !== 'custom'));
+
+      if (existingIndex >= 0) {
+        const existing = prev[existingIndex];
+        const updatedDoc: ActivityDocument = {
+          ...existing,
+          ...docData,
+          contentData: {
+            ...existing.contentData,
+            ...docData.contentData
+          },
+          updatedAt: nowStr
+        };
+        const newList = [...prev];
+        newList[existingIndex] = updatedDoc;
+        return newList;
+      } else {
+        const newDoc: ActivityDocument = {
+          id: docData.id || `doc-${Date.now()}`,
+          proposalId: docData.proposalId,
+          documentType: docData.documentType,
+          customTitle: docData.customTitle,
+          assignedToMemberId: docData.assignedToMemberId,
+          assignedToMemberName: docData.assignedToMemberName,
+          status: docData.status || 'draft',
+          letterNumber: docData.letterNumber,
+          contentData: docData.contentData || {},
+          logs: docData.logs || [{
+            id: `doclog-${Date.now()}`,
+            stageName: 'Draf Dokumen Dibuat',
+            actorName: activePersona.name,
+            actorRole: currentRole,
+            decision: 'submitted',
+            notes: 'Draf dokumen berhasil dibuat dan disimpan.',
+            timestamp: nowStr
+          }],
+          createdAt: nowStr,
+          updatedAt: nowStr
+        };
+        return [newDoc, ...prev];
+      }
+    });
+
+    addSystemAuditLog({
+      category: 'proposal',
+      severity: 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Penyusunan Draf Persuratan / SK',
+      details: `Dokumen "${docData.customTitle || docData.documentType.toUpperCase()}" untuk kegiatan "${pTitle}" disimpan oleh ${activePersona.name}.`
+    });
+  };
+
+  const assignDocumentTask = (documentId: string, memberId: string, memberName: string) => {
+    setActivityDocuments(prev => prev.map(d => d.id === documentId ? {
+      ...d,
+      assignedToMemberId: memberId,
+      assignedToMemberName: memberName,
+      updatedAt: new Date().toLocaleString('id-ID')
+    } : d));
+  };
+
+  const advanceDocumentApproval = (documentId: string, status: DocumentStatus, notes?: string, letterNumber?: string) => {
+    const timestampStr = new Date().toLocaleString('id-ID');
+
+    setActivityDocuments(prev => prev.map(d => {
+      if (d.id !== documentId) return d;
+
+      let stageName = 'Pengajuan Draf Dokumen';
+      let decision: 'submitted' | 'verified' | 'approved' | 'revision' = 'submitted';
+
+      if (status === 'pending_sekretaris_verification') {
+        stageName = 'Penyerahan ke Sekretaris DWP';
+        decision = 'submitted';
+      } else if (status === 'pending_waket_verification') {
+        stageName = 'Verifikasi Nomor Sekretaris DWP';
+        decision = 'verified';
+      } else if (status === 'pending_ketua_approval') {
+        stageName = 'Verifikasi Wakil Ketua DWP';
+        decision = 'verified';
+      } else if (status === 'approved_published') {
+        stageName = 'Pengesahan Resmi Ketua DWP';
+        decision = 'approved';
+      } else if (status === 'revision_requested') {
+        stageName = 'Permintaan Revisi Dokumen';
+        decision = 'revision';
+      }
+
+      const newLog: DocumentLog = {
+        id: `doclog-${Date.now()}`,
+        stageName,
+        actorName: activePersona.name,
+        actorRole: currentRole,
+        decision,
+        notes: notes || (status === 'approved_published' ? 'Dokumen resmi disahkan oleh Ketua DWP.' : 'Proses verifikasi dokumen.'),
+        timestamp: timestampStr
+      };
+
+      return {
+        ...d,
+        status,
+        letterNumber: letterNumber || d.letterNumber,
+        logs: [...d.logs, newLog],
+        updatedAt: timestampStr
+      };
+    }));
+
+    addSystemAuditLog({
+      category: 'proposal',
+      severity: status === 'approved_published' ? 'success' : status === 'revision_requested' ? 'warning' : 'info',
+      actorName: activePersona.name,
+      actorRole: currentRole,
+      action: 'Verifikasi & Approval Persuratan',
+      details: `Status Dokumen ID ${documentId} -> ${status.toUpperCase()} | Catatan: "${notes || '-'}"`
+    });
+  };
+
+  const deleteActivityDocument = (documentId: string) => {
+    setActivityDocuments(prev => prev.filter(d => d.id !== documentId));
+  };
+
   return (
     <AppContext.Provider value={{
       isAuthenticated,
@@ -1700,6 +1880,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addNewsArticle,
       siteConfig,
       updateSiteConfig,
+      kopSuratConfig,
+      updateKopSuratConfig,
+      activityDocuments,
+      createOrUpdateActivityDocument,
+      assignDocumentTask,
+      advanceDocumentApproval,
+      deleteActivityDocument,
       permissionMatrix,
       updatePermissionMatrix,
       resetPermissionMatrix,
