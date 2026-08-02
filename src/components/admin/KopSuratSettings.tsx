@@ -291,10 +291,10 @@ export const KopSuratSettings: React.FC = () => {
                 />
               </div>
 
-              {/* Bottom Line Spacing (Margin/Padding to Double Line Border) */}
-              <div className="sm:col-span-2">
+              {/* Bottom Line Spacing (Margin/Padding to Border Line) */}
+              <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="font-bold text-slate-700">➖ Jarak Garis Pembatas Bawah dengan Teks Terakhir Kop</label>
+                  <label className="font-bold text-slate-700">➖ Jarak Garis Bawah dgn Teks</label>
                   <span className="font-mono text-slate-900 font-bold bg-white px-1.5 py-0.5 rounded border text-[10px]">
                     {formConfig.bottomLineSpacing ?? 12} px
                   </span>
@@ -308,6 +308,37 @@ export const KopSuratSettings: React.FC = () => {
                   onChange={(e) => updateField({ bottomLineSpacing: Number(e.target.value) })}
                   className="w-full accent-dwp-burgundy cursor-pointer"
                 />
+              </div>
+
+              {/* Border Style Selection (Satu Garis Tebal vs Dua Garis) */}
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">
+                  Model Garis Pembatas Bawah
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => updateField({ borderStyle: 'single_thick' })}
+                    className={`py-1.5 px-2.5 rounded-xl font-bold text-[11px] transition-all border cursor-pointer ${
+                      (formConfig.borderStyle || 'single_thick') === 'single_thick'
+                        ? 'bg-dwp-burgundy text-white border-dwp-burgundy shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    Satu Garis Tebal (Resmi)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateField({ borderStyle: 'double' })}
+                    className={`py-1.5 px-2.5 rounded-xl font-bold text-[11px] transition-all border cursor-pointer ${
+                      formConfig.borderStyle === 'double'
+                        ? 'bg-dwp-burgundy text-white border-dwp-burgundy shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    Dua Garis (Ganda)
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -404,7 +435,11 @@ export const KopSuratSettings: React.FC = () => {
           <div className="bg-slate-50 border border-slate-300 p-5 rounded-2xl shadow-inner font-serif space-y-3">
             <div 
               style={{ paddingBottom: `${formConfig.bottomLineSpacing ?? 12}px` }}
-              className="flex items-center gap-3 border-b-4 border-double border-slate-900"
+              className={`flex items-center gap-3 ${
+                (formConfig.borderStyle || 'single_thick') === 'double'
+                  ? 'border-b-4 border-double border-slate-900'
+                  : 'border-b-[3.5px] border-solid border-slate-900'
+              }`}
             >
               <img
                 src={formConfig.logoUrl || defaultKopSuratConfig.logoUrl}

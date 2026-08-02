@@ -1603,7 +1603,11 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                     {/* Kop Surat Header */}
                                      <div 
                                        style={{ paddingBottom: `${kopSuratConfig.bottomLineSpacing ?? 12}px` }}
-                                       className="flex items-center gap-3 border-b-4 border-double border-slate-900"
+                                       className={`flex items-center gap-3 ${
+                                         (kopSuratConfig.borderStyle || 'single_thick') === 'double'
+                                           ? 'border-b-4 border-double border-slate-900'
+                                           : 'border-b-[3.5px] border-solid border-slate-900'
+                                       }`}
                                      >
                                       <img
                                         src={kopSuratConfig.logoUrl}

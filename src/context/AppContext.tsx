@@ -629,7 +629,8 @@ export const defaultKopSuratConfig: KopSuratConfig = {
   headerLine3FontSize: 10,
   addressFontSize: 9,
   headerLineSpacing: 2,
-  bottomLineSpacing: 12
+  bottomLineSpacing: 12,
+  borderStyle: 'single_thick'
 };
 
 interface AppContextType {
