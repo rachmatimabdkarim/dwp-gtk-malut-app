@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp, defaultKopSuratConfig } from '../../context/AppContext';
 import { KopSuratConfig } from '../../types';
 import { ImageUploadCompressor } from '../common/ImageUploadCompressor';
@@ -22,8 +22,19 @@ export const KopSuratSettings: React.FC = () => {
   const [formConfig, setFormConfig] = useState<KopSuratConfig>(kopSuratConfig || defaultKopSuratConfig);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (kopSuratConfig) {
+      setFormConfig(kopSuratConfig);
+    }
+  }, [kopSuratConfig]);
+
+  const updateField = (updated: Partial<KopSuratConfig>) => {
+    const nextCfg = { ...formConfig, ...updated };
+    setFormConfig(nextCfg);
+    updateKopSuratConfig(nextCfg);
+  };
+
+  const handleSave = () => {
     updateKopSuratConfig(formConfig);
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
@@ -73,8 +84,8 @@ export const KopSuratSettings: React.FC = () => {
       )}
 
       <div className="grid lg:grid-cols-12 gap-6 items-start">
-        {/* Settings Form */}
-        <form onSubmit={handleSubmit} className="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 text-xs">
+        {/* Settings Form Container */}
+        <div className="lg:col-span-7 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-5 text-xs">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
             <Sliders className="w-4 h-4 text-dwp-burgundy" />
             <h3 className="font-serif font-bold text-slate-900 text-base">
@@ -91,7 +102,7 @@ export const KopSuratSettings: React.FC = () => {
               </label>
               <button
                 type="button"
-                onClick={() => setFormConfig({ ...formConfig, logoUrl: defaultKopSuratConfig.logoUrl })}
+                onClick={() => updateField({ logoUrl: defaultKopSuratConfig.logoUrl })}
                 className="px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-[10px] cursor-pointer transition-all shrink-0"
               >
                 Gunakan Logo Official DWP
@@ -101,7 +112,7 @@ export const KopSuratSettings: React.FC = () => {
             <ImageUploadCompressor
               label="Pilih File Gambar Logo (PNG / SVG / WebP Transparan)"
               value={formConfig.logoUrl}
-              onChange={(dataUrl) => setFormConfig({ ...formConfig, logoUrl: dataUrl })}
+              onChange={(dataUrl) => updateField({ logoUrl: dataUrl })}
               maxWidth={600}
               maxHeight={600}
               quality={0.9}
@@ -119,7 +130,7 @@ export const KopSuratSettings: React.FC = () => {
                 type="text"
                 required
                 value={formConfig.headerLine1}
-                onChange={(e) => setFormConfig({ ...formConfig, headerLine1: e.target.value })}
+                onChange={(e) => updateField({ headerLine1: e.target.value })}
                 placeholder="DHARMA WANITA PERSATUAN"
                 className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-bold uppercase text-slate-900"
               />
@@ -133,7 +144,7 @@ export const KopSuratSettings: React.FC = () => {
                 type="text"
                 required
                 value={formConfig.headerLine2}
-                onChange={(e) => setFormConfig({ ...formConfig, headerLine2: e.target.value })}
+                onChange={(e) => updateField({ headerLine2: e.target.value })}
                 placeholder="KANTOR GURU DAN TENAGA KEPENDIDIKAN"
                 className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-bold uppercase text-slate-900"
               />
@@ -147,7 +158,7 @@ export const KopSuratSettings: React.FC = () => {
                 type="text"
                 required
                 value={formConfig.headerLine3}
-                onChange={(e) => setFormConfig({ ...formConfig, headerLine3: e.target.value })}
+                onChange={(e) => updateField({ headerLine3: e.target.value })}
                 placeholder="PROVINSI MALUKU UTARA"
                 className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-semibold uppercase text-slate-800"
               />
@@ -180,7 +191,7 @@ export const KopSuratSettings: React.FC = () => {
                   max={120}
                   step={2}
                   value={formConfig.logoSize || 56}
-                  onChange={(e) => setFormConfig({ ...formConfig, logoSize: Number(e.target.value) })}
+                  onChange={(e) => updateField({ logoSize: Number(e.target.value) })}
                   className="w-full accent-dwp-burgundy cursor-pointer"
                 />
               </div>
@@ -199,7 +210,7 @@ export const KopSuratSettings: React.FC = () => {
                   max={24}
                   step={1}
                   value={formConfig.headerLine1FontSize || 14}
-                  onChange={(e) => setFormConfig({ ...formConfig, headerLine1FontSize: Number(e.target.value) })}
+                  onChange={(e) => updateField({ headerLine1FontSize: Number(e.target.value) })}
                   className="w-full accent-dwp-burgundy cursor-pointer"
                 />
               </div>
@@ -218,7 +229,7 @@ export const KopSuratSettings: React.FC = () => {
                   max={20}
                   step={1}
                   value={formConfig.headerLine2FontSize || 11}
-                  onChange={(e) => setFormConfig({ ...formConfig, headerLine2FontSize: Number(e.target.value) })}
+                  onChange={(e) => updateField({ headerLine2FontSize: Number(e.target.value) })}
                   className="w-full accent-dwp-burgundy cursor-pointer"
                 />
               </div>
@@ -237,7 +248,7 @@ export const KopSuratSettings: React.FC = () => {
                   max={18}
                   step={1}
                   value={formConfig.headerLine3FontSize || 10}
-                  onChange={(e) => setFormConfig({ ...formConfig, headerLine3FontSize: Number(e.target.value) })}
+                  onChange={(e) => updateField({ headerLine3FontSize: Number(e.target.value) })}
                   className="w-full accent-dwp-burgundy cursor-pointer"
                 />
               </div>
@@ -256,7 +267,7 @@ export const KopSuratSettings: React.FC = () => {
                   max={14}
                   step={0.5}
                   value={formConfig.addressFontSize || 9}
-                  onChange={(e) => setFormConfig({ ...formConfig, addressFontSize: Number(e.target.value) })}
+                  onChange={(e) => updateField({ addressFontSize: Number(e.target.value) })}
                   className="w-full accent-dwp-burgundy cursor-pointer"
                 />
               </div>
@@ -274,7 +285,7 @@ export const KopSuratSettings: React.FC = () => {
                 rows={2}
                 required
                 value={formConfig.address}
-                onChange={(e) => setFormConfig({ ...formConfig, address: e.target.value })}
+                onChange={(e) => updateField({ address: e.target.value })}
                 placeholder="Jl. Raya Rum Kecamatan Tidore Utara, Kota Tidore Kepulauan..."
                 className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium text-slate-800"
               />
@@ -289,7 +300,7 @@ export const KopSuratSettings: React.FC = () => {
                 <input
                   type="email"
                   value={formConfig.email}
-                  onChange={(e) => setFormConfig({ ...formConfig, email: e.target.value })}
+                  onChange={(e) => updateField({ email: e.target.value })}
                   placeholder="dwp.gtk.malut@gmail.com"
                   className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                 />
@@ -303,7 +314,7 @@ export const KopSuratSettings: React.FC = () => {
                 <input
                   type="text"
                   value={formConfig.website}
-                  onChange={(e) => setFormConfig({ ...formConfig, website: e.target.value })}
+                  onChange={(e) => updateField({ website: e.target.value })}
                   placeholder="dwp-gtk-malut.id"
                   className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                 />
@@ -318,7 +329,7 @@ export const KopSuratSettings: React.FC = () => {
               <input
                 type="text"
                 value={formConfig.phone || ''}
-                onChange={(e) => setFormConfig({ ...formConfig, phone: e.target.value })}
+                onChange={(e) => updateField({ phone: e.target.value })}
                 placeholder="(0921) 3123456"
                 className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
               />
@@ -327,14 +338,15 @@ export const KopSuratSettings: React.FC = () => {
 
           <div className="pt-3 border-t border-slate-100 flex justify-end">
             <button
-              type="submit"
+              type="button"
+              onClick={handleSave}
               className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white font-bold px-6 py-2.5 rounded-xl shadow-lg flex items-center gap-2 transition-all cursor-pointer"
             >
               <Save className="w-4 h-4 text-dwp-gold" />
               <span>Simpan Pengaturan Kop Surat</span>
             </button>
           </div>
-        </form>
+        </div>
 
         {/* Live Visual Preview Box */}
         <div className="lg:col-span-5 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 text-xs sticky top-4">
