@@ -1605,19 +1605,35 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                       <img
                                         src={kopSuratConfig.logoUrl}
                                         alt="Logo DWP"
-                                        className="w-14 h-14 object-contain shrink-0"
+                                        style={{
+                                          width: `${kopSuratConfig.logoSize || 56}px`,
+                                          height: `${kopSuratConfig.logoSize || 56}px`
+                                        }}
+                                        className="object-contain shrink-0"
                                       />
                                       <div className="text-center flex-1 space-y-0.5">
-                                        <h4 className="font-bold text-xs uppercase tracking-wide">
+                                        <h4 
+                                          style={{ fontSize: `${kopSuratConfig.headerLine1FontSize || 14}px` }}
+                                          className="font-bold uppercase tracking-wide"
+                                        >
                                           {kopSuratConfig.headerLine1}
                                         </h4>
-                                        <h5 className="font-bold text-[10px] uppercase tracking-wide">
+                                        <h5 
+                                          style={{ fontSize: `${kopSuratConfig.headerLine2FontSize || 11}px` }}
+                                          className="font-bold uppercase tracking-wide"
+                                        >
                                           {kopSuratConfig.headerLine2}
                                         </h5>
-                                        <h6 className="font-semibold text-[9px] uppercase tracking-wide">
+                                        <h6 
+                                          style={{ fontSize: `${kopSuratConfig.headerLine3FontSize || 10}px` }}
+                                          className="font-semibold uppercase tracking-wide"
+                                        >
                                           {kopSuratConfig.headerLine3}
                                         </h6>
-                                        <p className="text-[8px] font-sans text-slate-600 leading-tight">
+                                        <p 
+                                          style={{ fontSize: `${kopSuratConfig.addressFontSize || 9}px` }}
+                                          className="font-sans text-slate-600 leading-tight"
+                                        >
                                           {kopSuratConfig.address}
                                         </p>
                                       </div>

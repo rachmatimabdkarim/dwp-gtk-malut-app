@@ -154,6 +154,115 @@ export const KopSuratSettings: React.FC = () => {
             </div>
           </div>
 
+          {/* Sizing & Proportion Settings (Font & Logo Sizes) */}
+          <div className="space-y-4 pt-3 border-t border-slate-100 bg-amber-50/70 p-4 rounded-2xl border border-amber-200">
+            <div className="flex items-center justify-between border-b border-amber-200/80 pb-2">
+              <span className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                <span>📐 Pengaturan Ukuran Huruf & Logo Kop Surat</span>
+              </span>
+              <span className="text-[10px] bg-amber-200 text-amber-950 font-bold px-2 py-0.5 rounded">
+                Presisi & Proporsional
+              </span>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3 text-xs">
+              {/* Logo Size */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-bold text-slate-700">Ukuran Logo Kop</label>
+                  <span className="font-mono text-slate-900 font-bold bg-white px-1.5 py-0.5 rounded border text-[10px]">
+                    {formConfig.logoSize || 56} px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={32}
+                  max={120}
+                  step={2}
+                  value={formConfig.logoSize || 56}
+                  onChange={(e) => setFormConfig({ ...formConfig, logoSize: Number(e.target.value) })}
+                  className="w-full accent-dwp-burgundy cursor-pointer"
+                />
+              </div>
+
+              {/* Header 1 Font Size */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-bold text-slate-700">Font Header Baris 1</label>
+                  <span className="font-mono text-slate-900 font-bold bg-white px-1.5 py-0.5 rounded border text-[10px]">
+                    {formConfig.headerLine1FontSize || 14} px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={10}
+                  max={24}
+                  step={1}
+                  value={formConfig.headerLine1FontSize || 14}
+                  onChange={(e) => setFormConfig({ ...formConfig, headerLine1FontSize: Number(e.target.value) })}
+                  className="w-full accent-dwp-burgundy cursor-pointer"
+                />
+              </div>
+
+              {/* Header 2 Font Size */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-bold text-slate-700">Font Header Baris 2</label>
+                  <span className="font-mono text-slate-900 font-bold bg-white px-1.5 py-0.5 rounded border text-[10px]">
+                    {formConfig.headerLine2FontSize || 11} px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={8}
+                  max={20}
+                  step={1}
+                  value={formConfig.headerLine2FontSize || 11}
+                  onChange={(e) => setFormConfig({ ...formConfig, headerLine2FontSize: Number(e.target.value) })}
+                  className="w-full accent-dwp-burgundy cursor-pointer"
+                />
+              </div>
+
+              {/* Header 3 Font Size */}
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-bold text-slate-700">Font Header Baris 3</label>
+                  <span className="font-mono text-slate-900 font-bold bg-white px-1.5 py-0.5 rounded border text-[10px]">
+                    {formConfig.headerLine3FontSize || 10} px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={8}
+                  max={18}
+                  step={1}
+                  value={formConfig.headerLine3FontSize || 10}
+                  onChange={(e) => setFormConfig({ ...formConfig, headerLine3FontSize: Number(e.target.value) })}
+                  className="w-full accent-dwp-burgundy cursor-pointer"
+                />
+              </div>
+
+              {/* Address Font Size */}
+              <div className="sm:col-span-2">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="font-bold text-slate-700">Font Teks Alamat & Kontak Sekretariat</label>
+                  <span className="font-mono text-slate-900 font-bold bg-white px-1.5 py-0.5 rounded border text-[10px]">
+                    {formConfig.addressFontSize || 9} px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={7}
+                  max={14}
+                  step={0.5}
+                  value={formConfig.addressFontSize || 9}
+                  onChange={(e) => setFormConfig({ ...formConfig, addressFontSize: Number(e.target.value) })}
+                  className="w-full accent-dwp-burgundy cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Address & Contact */}
           <div className="space-y-3 pt-1 border-t border-slate-100">
             <div>
@@ -247,26 +356,45 @@ export const KopSuratSettings: React.FC = () => {
               <img
                 src={formConfig.logoUrl || defaultKopSuratConfig.logoUrl}
                 alt="Logo Kop DWP"
-                className="w-14 h-14 object-contain shrink-0"
+                style={{
+                  width: `${formConfig.logoSize || 56}px`,
+                  height: `${formConfig.logoSize || 56}px`
+                }}
+                className="object-contain shrink-0"
                 onError={(e: any) => {
                   e.target.src = defaultKopSuratConfig.logoUrl;
                 }}
               />
 
               <div className="text-center flex-1 space-y-0.5 text-slate-900">
-                <h4 className="font-bold text-sm tracking-wide leading-tight">
+                <h4 
+                  style={{ fontSize: `${formConfig.headerLine1FontSize || 14}px` }}
+                  className="font-bold tracking-wide leading-tight"
+                >
                   {formConfig.headerLine1 || 'DHARMA WANITA PERSATUAN'}
                 </h4>
-                <h5 className="font-bold text-[11px] tracking-wide leading-tight">
+                <h5 
+                  style={{ fontSize: `${formConfig.headerLine2FontSize || 11}px` }}
+                  className="font-bold tracking-wide leading-tight"
+                >
                   {formConfig.headerLine2 || 'KANTOR GURU DAN TENAGA KEPENDIDIKAN'}
                 </h5>
-                <h6 className="font-semibold text-[10px] tracking-wide leading-tight">
+                <h6 
+                  style={{ fontSize: `${formConfig.headerLine3FontSize || 10}px` }}
+                  className="font-semibold tracking-wide leading-tight"
+                >
                   {formConfig.headerLine3 || 'PROVINSI MALUKU UTARA'}
                 </h6>
-                <p className="text-[9px] font-sans text-slate-600 leading-tight mt-1">
+                <p 
+                  style={{ fontSize: `${formConfig.addressFontSize || 9}px` }}
+                  className="font-sans text-slate-600 leading-tight mt-1"
+                >
                   {formConfig.address || 'Jl. Raya Rum Kecamatan Tidore Utara, Kota Tidore Kepulauan (Kompleks BPMP Provinsi Maluku Utara)'}
                 </p>
-                <div className="text-[8px] font-sans text-slate-500 flex items-center justify-center gap-2 flex-wrap">
+                <div 
+                  style={{ fontSize: `${Math.max(7, (formConfig.addressFontSize || 9) - 1)}px` }}
+                  className="font-sans text-slate-500 flex items-center justify-center gap-2 flex-wrap"
+                >
                   {formConfig.phone && <span>Telp: {formConfig.phone}</span>}
                   {formConfig.email && <span>Email: {formConfig.email}</span>}
                   {formConfig.website && <span>Web: {formConfig.website}</span>}

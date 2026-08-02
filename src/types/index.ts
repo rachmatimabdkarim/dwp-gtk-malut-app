@@ -236,6 +236,11 @@ export interface KopSuratConfig {
   email: string;
   website: string;
   showDoubleLine: boolean;
+  logoSize?: number; // in px
+  headerLine1FontSize?: number; // in px
+  headerLine2FontSize?: number; // in px
+  headerLine3FontSize?: number; // in px
+  addressFontSize?: number; // in px
 }
 
 export type DocumentType = 'sk_panitia' | 'surat_tugas' | 'surat_undangan' | 'custom';

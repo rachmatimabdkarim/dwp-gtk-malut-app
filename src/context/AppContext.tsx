@@ -622,7 +622,12 @@ export const defaultKopSuratConfig: KopSuratConfig = {
   email: 'dwp.gtk.malut@gmail.com',
   website: 'dwp-gtk-malut.id',
   phone: '(0921) 3123456',
-  showDoubleLine: true
+  showDoubleLine: true,
+  logoSize: 56,
+  headerLine1FontSize: 14,
+  headerLine2FontSize: 11,
+  headerLine3FontSize: 10,
+  addressFontSize: 9
 };
 
 interface AppContextType {
