@@ -122,13 +122,13 @@ export const SystemAuditLogs: React.FC = () => {
     // 4. System Storage & Auto-Purge Logs
     logs.push({
       id: 'log-sys-storage',
-      timestamp: new Date().toLocaleString('id-ID'),
+      timestamp: '01/08/2026 08:00:00',
       category: 'system',
       severity: 'success',
       actorName: 'Auto-Purge Storage Cleanup Engine',
       actorRole: 'system',
       action: 'Pembersihan Memori & Revoke Blob URL',
-      details: 'Pembersihan otomatis file gambar lama saat pergantian foto profil/logo. Server 0% file sampah.',
+      details: 'Pembersihan otomatis file gambar lama saat pergantian foto profil/logo. RAM Browser 0% file sampah.',
       ipAddress: '127.0.0.1 (Local Runtime)'
     });
 
