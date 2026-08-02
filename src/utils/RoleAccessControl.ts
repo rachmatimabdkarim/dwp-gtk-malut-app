@@ -9,6 +9,27 @@ export type AdminSubTab =
   | 'logs'
   | 'profile';
 
+export const getRoleDisplayName = (role: UserRole): string => {
+  switch (role) {
+    case 'admin_master':
+      return 'Super Admin IT';
+    case 'admin_bidang':
+      return 'Ketua Bidang';
+    case 'sekretaris':
+      return 'Sekretaris DWP';
+    case 'bendahara':
+      return 'Bendahara DWP';
+    case 'wakil_ketua':
+      return 'Wakil Ketua DWP';
+    case 'ketua':
+      return 'Ketua DWP';
+    case 'anggota':
+      return 'Anggota DWP';
+    default:
+      return 'Pengurus DWP';
+  }
+};
+
 export type CMSSection = 
   | 'identitas' 
   | 'hero' 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { hasTabAccess } from '../../utils/RoleAccessControl';
+import { hasTabAccess, getRoleDisplayName } from '../../utils/RoleAccessControl';
 import { formatDateRangeDDMMYYYY } from '../../utils/dateFormatter';
 import { 
   Users, 
@@ -66,7 +66,7 @@ export const DashboardOverview: React.FC = () => {
             </h2>
           </div>
           <p className="text-xs text-slate-300 font-medium">
-            Role Aktif: <strong className="text-white bg-white/10 px-2 py-0.5 rounded-md border border-white/20">{activePersona.title}</strong> — Sistem Informasi Manajemen Terpadu Dharma Wanita Persatuan GTK Maluku Utara.
+            Role Aktif: <strong className="text-white bg-white/10 px-2 py-0.5 rounded-md border border-white/20">{getRoleDisplayName(currentRole)}</strong> — Sistem Informasi Manajemen Terpadu Dharma Wanita Persatuan GTK Maluku Utara.
           </p>
         </div>
 
@@ -87,7 +87,7 @@ export const DashboardOverview: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="font-bold text-slate-900 text-xs flex items-center gap-2">
               <BellRing className="w-4 h-4 text-dwp-burgundy" />
-              <span>Notifikasi Aksi Role: {activePersona.title}</span>
+              <span>Notifikasi Aksi Role: {getRoleDisplayName(currentRole)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="bg-dwp-burgundy text-dwp-gold font-bold text-[10px] px-2.5 py-0.5 rounded-full">

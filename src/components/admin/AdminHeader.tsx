@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { UserRole } from '../../types';
+import { getRoleDisplayName } from '../../utils/RoleAccessControl';
 import { Shield, Eye, UserCheck, LogOut, Sparkles, Bell, CheckCheck, X, Trash2 } from 'lucide-react';
 
 export const AdminHeader: React.FC = () => {
@@ -195,7 +196,7 @@ export const AdminHeader: React.FC = () => {
               <span>{activePersona.name}</span>
               <span className="text-[9px] bg-dwp-gold/20 text-dwp-gold px-1 rounded">Profil</span>
             </div>
-            <div className="text-[10px] text-dwp-gold font-medium">{activePersona.title}</div>
+            <div className="text-[10px] text-dwp-gold font-medium">{getRoleDisplayName(currentRole)}</div>
           </div>
         </div>
 

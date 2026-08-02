@@ -110,7 +110,7 @@ export const USER_PERSONAS: Record<UserRole, UserPersona> = {
   admin_master: {
     role: 'admin_master',
     name: 'Tim IT Super Admin',
-    title: 'Administrator Utama (Non-Anggota)',
+    title: 'Super Admin IT',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
   },
   admin_bidang: {
@@ -123,28 +123,28 @@ export const USER_PERSONAS: Record<UserRole, UserPersona> = {
   sekretaris: {
     role: 'sekretaris',
     name: 'Ny. Fitriani Nurdin, S.E',
-    title: 'Sekretaris DWP GTK',
+    title: 'Sekretaris DWP',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
     memberId: 'dwp-003'
   },
   bendahara: {
     role: 'bendahara',
     name: 'Ny. Hasnah Usman, S.E',
-    title: 'Bendahara DWP GTK',
+    title: 'Bendahara DWP',
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
     memberId: 'dwp-005'
   },
   wakil_ketua: {
     role: 'wakil_ketua',
     name: 'Ny. Dra. Endang Kusuma',
-    title: 'Wakil Ketua DWP GTK Prov. Maluku Utara',
+    title: 'Wakil Ketua DWP',
     avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&auto=format&fit=crop&q=80',
     memberId: 'dwp-002'
   },
   ketua: {
     role: 'ketua',
     name: 'Ny. Hj. Rahmiati Ahmad, M.Pd',
-    title: 'Ketua DWP Kantor GTK Provinsi Maluku Utara',
+    title: 'Ketua DWP',
     avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&auto=format&fit=crop&q=80',
     memberId: 'dwp-001'
   },
@@ -873,7 +873,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const linkedMem = members.find(m => m.id === basePersona.memberId);
     if (linkedMem) {
       activePersona.name = linkedMem.name;
-      activePersona.title = linkedMem.jabatan;
+      activePersona.title = basePersona.title || linkedMem.jabatan;
       if (linkedMem.avatar) activePersona.avatar = linkedMem.avatar;
     }
   }
