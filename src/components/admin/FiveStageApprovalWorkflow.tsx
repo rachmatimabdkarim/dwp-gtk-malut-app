@@ -94,9 +94,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
       if (targetP) {
         setDetailProposal(targetP);
         setActiveTabWorkspace(focusedWorkspaceTab);
+        setFocusedProposalId(null);
       }
     }
-  }, [focusedProposalId, focusedWorkspaceTab, proposals]);
+  }, [focusedProposalId, focusedWorkspaceTab, proposals, setFocusedProposalId]);
 
   // Committee Modal State
   const [showAddCommitteeModal, setShowAddCommitteeModal] = useState(false);
