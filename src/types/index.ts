@@ -167,6 +167,9 @@ export interface AppNotification {
   isRead: boolean;
   type: 'approved' | 'revision' | 'rejected' | 'new_proposal' | 'rab_pencairan' | 'sk_pengarsipan';
   proposalId?: string;
+  nextStepAction?: string;
+  targetTab?: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj';
+  actionButtonText?: string;
 }
 
 export interface NewsArticle {

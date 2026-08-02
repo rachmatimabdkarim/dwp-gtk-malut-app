@@ -119,25 +119,19 @@ export const AdminHeader: React.FC = () => {
                           setShowNotifDropdown(false);
 
                           if (n.proposalId) {
-                            let targetTab: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj' = 'usulan';
-                            if (n.title.toLowerCase().includes('panitia')) {
-                              targetTab = 'panitia';
-                            } else if (n.type === 'sk_pengarsipan' || n.title.toLowerCase().includes('sk')) {
-                              targetTab = 'sk';
-                            }
-                            openProposalWorkspace(n.proposalId, targetTab);
+                            openProposalWorkspace(n.proposalId, n.targetTab || 'usulan');
                           } else {
                             setAdminSubTab('proposals');
                           }
                         }}
-                        className={`p-3.5 transition-all cursor-pointer space-y-1.5 border-l-4 ${
+                        className={`p-3.5 transition-all cursor-pointer space-y-2 border-l-4 ${
                           !n.isRead 
-                            ? 'bg-amber-100/90 border-dwp-burgundy hover:bg-amber-100 shadow-sm' 
-                            : 'bg-slate-50/50 border-slate-200 opacity-60 hover:opacity-100 hover:bg-slate-100/80'
+                            ? 'bg-amber-50/90 border-dwp-burgundy hover:bg-amber-100/90 shadow-sm' 
+                            : 'bg-slate-50/50 border-slate-200 opacity-70 hover:opacity-100 hover:bg-slate-100/80'
                         }`}
                       >
                         <div className="flex items-center justify-between font-bold text-xs gap-2">
-                          <span className={!n.isRead ? 'text-slate-950 font-extrabold' : 'text-slate-600 font-semibold'}>
+                          <span className={!n.isRead ? 'text-slate-950 font-extrabold' : 'text-slate-700 font-semibold'}>
                             {n.title}
                           </span>
                           {!n.isRead ? (
@@ -150,11 +144,25 @@ export const AdminHeader: React.FC = () => {
                             </span>
                           )}
                         </div>
-                        <p className={`text-[11px] leading-relaxed ${!n.isRead ? 'text-slate-900 font-medium' : 'text-slate-500'}`}>
+
+                        <p className={`text-[11px] leading-relaxed ${!n.isRead ? 'text-slate-900 font-medium' : 'text-slate-600'}`}>
                           {n.message}
                         </p>
-                        <div className="text-[9px] font-mono text-slate-400 text-right">
-                          {n.timestamp}
+
+                        {/* Next Step Instruction Box */}
+                        {n.nextStepAction && (
+                          <div className="bg-amber-100/90 border border-amber-300 text-amber-950 p-2.5 rounded-xl text-[10.5px] font-bold shadow-sm leading-snug">
+                            {n.nextStepAction}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-1 text-[10px]">
+                          <span className="font-bold text-dwp-burgundy group-hover:underline flex items-center gap-1">
+                            {n.actionButtonText || 'Buka Kegiatan ➔'}
+                          </span>
+                          <span className="font-mono text-slate-400">
+                            {n.timestamp}
+                          </span>
                         </div>
                       </div>
                     ))

@@ -466,7 +466,10 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     timestamp: '20/07/2026 09:00',
     isRead: false,
     type: 'new_proposal',
-    proposalId: 'prop-001'
+    proposalId: 'prop-001',
+    nextStepAction: '👉 Langkah Selanjutnya: Mohon telaah & verifikasi kesesuaian usulan kegiatan dan anggaran.',
+    targetTab: 'usulan',
+    actionButtonText: 'Verifikasi Usulan ➔'
   },
   {
     id: 'notif-ketua-001',
@@ -476,7 +479,10 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     timestamp: '19/07/2026 16:20',
     isRead: false,
     type: 'new_proposal',
-    proposalId: 'prop-002'
+    proposalId: 'prop-002',
+    nextStepAction: '👉 Langkah Selanjutnya: Berikan persetujuan akhir usulan kegiatan.',
+    targetTab: 'usulan',
+    actionButtonText: 'Buka Persetujuan Ketua ➔'
   },
   {
     id: 'notif-001',
@@ -486,7 +492,10 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     timestamp: '05/07/2026 10:00',
     isRead: false,
     type: 'rab_pencairan',
-    proposalId: 'prop-003'
+    proposalId: 'prop-003',
+    nextStepAction: '👉 Langkah Selanjutnya: Siapkan pencairan anggaran sesuai RAB disetujui.',
+    targetTab: 'usulan',
+    actionButtonText: 'Lihat RAB Disetujui ➔'
   },
   {
     id: 'notif-002',
@@ -496,7 +505,10 @@ const INITIAL_NOTIFICATIONS: AppNotification[] = [
     timestamp: '05/07/2026 10:00',
     isRead: false,
     type: 'sk_pengarsipan',
-    proposalId: 'prop-003'
+    proposalId: 'prop-003',
+    nextStepAction: '👉 Langkah Selanjutnya: Tentukan Ketua Panitia & Tim Panitia Pelaksana di Tab Panitia.',
+    targetTab: 'panitia',
+    actionButtonText: 'Susun Panitia ➔'
   }
 ];
 
@@ -1200,7 +1212,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             timestamp: timestampStr,
             isRead: false,
             type: 'new_proposal',
-            proposalId: newProp.id
+            proposalId: newProp.id,
+            nextStepAction: '👉 Langkah Selanjutnya: Mohon telaah & verifikasi kelayakan usulan kegiatan & RAB.',
+            targetTab: 'usulan',
+            actionButtonText: 'Verifikasi Usulan ➔'
           },
           ...prevNotifs
         ]);
@@ -1214,7 +1229,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             timestamp: timestampStr,
             isRead: false,
             type: 'new_proposal',
-            proposalId: newProp.id
+            proposalId: newProp.id,
+            nextStepAction: '👉 Langkah Selanjutnya: Berikan persetujuan akhir usulan kegiatan.',
+            targetTab: 'usulan',
+            actionButtonText: 'Buka Persetujuan Ketua ➔'
           },
           ...prevNotifs
         ]);
@@ -1288,7 +1306,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               timestamp: timestampStr,
               isRead: false,
               type: 'new_proposal',
-              proposalId: p.id
+              proposalId: p.id,
+              nextStepAction: '👉 Langkah Selanjutnya: Berikan persetujuan akhir usulan kegiatan.',
+              targetTab: 'usulan',
+              actionButtonText: 'Buka Persetujuan Ketua ➔'
             },
             ...prevNotifs
           ]);
@@ -1304,7 +1325,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               timestamp: timestampStr,
               isRead: false,
               type: 'rab_pencairan',
-              proposalId: p.id
+              proposalId: p.id,
+              nextStepAction: '👉 Langkah Selanjutnya: Siapkan pencairan anggaran sesuai RAB disetujui.',
+              targetTab: 'usulan',
+              actionButtonText: 'Lihat RAB Disetujui ➔'
             },
             {
               id: `notif-sekretaris-${Date.now() + 1}`,
@@ -1314,7 +1338,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               timestamp: timestampStr,
               isRead: false,
               type: 'sk_pengarsipan',
-              proposalId: p.id
+              proposalId: p.id,
+              nextStepAction: '👉 Langkah Selanjutnya: Tentukan Ketua Panitia & Tim Panitia Pelaksana di Tab Panitia.',
+              targetTab: 'panitia',
+              actionButtonText: 'Susun Panitia ➔'
             },
             {
               id: `notif-pengusul-${Date.now() + 2}`,
@@ -1324,7 +1351,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               timestamp: timestampStr,
               isRead: false,
               type: 'approved',
-              proposalId: p.id
+              proposalId: p.id,
+              nextStepAction: '👉 Langkah Selanjutnya: Pantau pembentukan panitia pelaksana & draf dokumen kegiatan.',
+              targetTab: 'usulan',
+              actionButtonText: 'Buka Detail Usulan ➔'
             },
             ...prevNotifs
           ]);
@@ -1340,7 +1370,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               timestamp: timestampStr,
               isRead: false,
               type: 'revision',
-              proposalId: p.id
+              proposalId: p.id,
+              nextStepAction: '👉 Langkah Selanjutnya: Perbaiki poin-poin yang dicatat pada draf usulan lalu ajukan kembali.',
+              targetTab: 'usulan',
+              actionButtonText: 'Perbaiki Usulan ➔'
             },
             ...prevNotifs
           ]);
@@ -1356,7 +1389,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               timestamp: timestampStr,
               isRead: false,
               type: 'rejected',
-              proposalId: p.id
+              proposalId: p.id,
+              nextStepAction: '👉 Usulan kegiatan ini ditolak. Anda dapat meninjau alasan penolakan pada log usulan.',
+              targetTab: 'usulan',
+              actionButtonText: 'Lihat Detail Log ➔'
             },
             ...prevNotifs
           ]);
@@ -1867,6 +1903,97 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         notes: notes || (status === 'approved_published' ? 'Dokumen resmi disahkan oleh Ketua DWP.' : 'Proses verifikasi dokumen.'),
         timestamp: timestampStr
       };
+
+      // Dispatch targeted real-time notifications with next-step guidance
+      setTimeout(() => {
+        const docTitle = d.customTitle || d.documentType.toUpperCase();
+        if (status === 'pending_sekretaris_verification') {
+          setNotifications(prevNotifs => [
+            {
+              id: `notif-doc-sekretaris-${Date.now()}`,
+              targetRole: 'sekretaris',
+              title: '📝 Draf Dokumen Perlu Penomoran Surat',
+              message: `Draf dokumen "${docTitle}" diserahkan panitia untuk penomoran surat resmi.`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'sk_pengarsipan',
+              proposalId: d.proposalId,
+              nextStepAction: '👉 Langkah Selanjutnya: Sekretaris DWP menginput Nomor Surat Resmi Organisasi.',
+              targetTab: 'sk',
+              actionButtonText: 'Input Nomor Surat ➔'
+            },
+            ...prevNotifs
+          ]);
+        } else if (status === 'pending_waket_verification') {
+          setNotifications(prevNotifs => [
+            {
+              id: `notif-doc-waket-${Date.now()}`,
+              targetRole: 'wakil_ketua',
+              title: '🛡️ Dokumen Perlu Verifikasi Redaksi',
+              message: `Nomor Surat "${letterNumber || d.letterNumber || '...'}" telah diisi oleh Sekretaris DWP.`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'sk_pengarsipan',
+              proposalId: d.proposalId,
+              nextStepAction: '👉 Langkah Selanjutnya: Wakil Ketua memverifikasi redaksi & kelengkapan lampiran surat.',
+              targetTab: 'sk',
+              actionButtonText: 'Verifikasi Redaksi Surat ➔'
+            },
+            ...prevNotifs
+          ]);
+        } else if (status === 'pending_ketua_approval') {
+          setNotifications(prevNotifs => [
+            {
+              id: `notif-doc-ketua-${Date.now()}`,
+              targetRole: 'ketua',
+              title: '✍️ Dokumen Perlu Pengesahan & Cap Stempel',
+              message: `Dokumen "${docTitle}" telah diverifikasi oleh Wakil Ketua DWP dan siap disahkan.`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'sk_pengarsipan',
+              proposalId: d.proposalId,
+              nextStepAction: '👉 Langkah Selanjutnya: Ketua DWP memberikan pengesahan Tanda Tangan Digital & Cap Stempel Resmi.',
+              targetTab: 'sk',
+              actionButtonText: 'Tandatangani & Cap Surat ➔'
+            },
+            ...prevNotifs
+          ]);
+        } else if (status === 'approved_published') {
+          setNotifications(prevNotifs => [
+            {
+              id: `notif-doc-pub-${Date.now()}`,
+              targetRole: 'all',
+              title: '🖨️ Dokumen Resmi Berhasil Diterbitkan',
+              message: `Dokumen "${docTitle}" telah resmi disahkan oleh Ketua DWP dan siap dicetak.`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'approved',
+              proposalId: d.proposalId,
+              nextStepAction: '👉 Langkah Selanjutnya: Cetak / Unduh PDF Surat dan laksanakan kegiatan. Setelah selesai, kumpulkan LPJ di Tab LPJ.',
+              targetTab: 'sk',
+              actionButtonText: 'Cetak Dokumen / Tab LPJ ➔'
+            },
+            ...prevNotifs
+          ]);
+        } else if (status === 'revision_requested') {
+          setNotifications(prevNotifs => [
+            {
+              id: `notif-doc-rev-${Date.now()}`,
+              targetRole: 'all',
+              title: '⚠️ Dokumen Kegiatan Perlu Perbaikan Redaksi',
+              message: `Dokumen "${docTitle}" memerlukan revisi: "${notes || '-'}"`,
+              timestamp: timestampStr,
+              isRead: false,
+              type: 'revision',
+              proposalId: d.proposalId,
+              nextStepAction: '👉 Langkah Selanjutnya: Perbaiki redaksi dokumen sesuai catatan verifikator lalu ajukan kembali.',
+              targetTab: 'sk',
+              actionButtonText: 'Perbaiki Dokumen ➔'
+            },
+            ...prevNotifs
+          ]);
+        }
+      }, 50);
 
       return {
         ...d,

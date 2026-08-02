@@ -7,7 +7,8 @@ import {
   Trash2, 
   Search, 
   ExternalLink,
-  Inbox
+  Inbox,
+  ArrowRight
 } from 'lucide-react';
 
 export const NotificationCenter: React.FC = () => {
@@ -47,13 +48,7 @@ export const NotificationCenter: React.FC = () => {
   const handleNotificationClick = (n: typeof roleNotifs[0]) => {
     markNotificationAsRead(n.id);
     if (n.proposalId) {
-      let targetTab: 'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj' = 'usulan';
-      if (n.title.toLowerCase().includes('panitia')) {
-        targetTab = 'panitia';
-      } else if (n.type === 'sk_pengarsipan' || n.title.toLowerCase().includes('sk')) {
-        targetTab = 'sk';
-      }
-      openProposalWorkspace(n.proposalId, targetTab);
+      openProposalWorkspace(n.proposalId, n.targetTab || 'usulan');
     } else {
       setAdminSubTab('proposals');
     }
@@ -62,30 +57,28 @@ export const NotificationCenter: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-dwp-burgundy via-slate-900 to-dwp-burgundy p-6 rounded-3xl text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-slate-900 via-dwp-burgundy to-slate-900 p-6 md:p-8 rounded-3xl text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-dwp-gold/30">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-dwp-gold/20 rounded-xl border border-dwp-gold/40 text-dwp-gold">
-              <Bell className="w-6 h-6" />
-            </div>
-            <h2 className="font-serif text-xl sm:text-2xl font-bold text-dwp-gold">
-              Pusat Notifikasi & Pemberitahuan Sistem
+            <Bell className="w-6 h-6 text-dwp-gold" />
+            <h2 className="font-serif font-bold text-xl md:text-2xl text-dwp-gold">
+              Pusat Notifikasi & Instruksi Alur Kerja
             </h2>
           </div>
-          <p className="text-xs text-slate-300 font-medium">
-            Akses Khusus Role: <strong className="text-white bg-white/10 px-2 py-0.5 rounded-md border border-white/20">{getRoleDisplayName(currentRole)}</strong> — Pemberitahuan verifikasi kegiatan, persetujuan panitia, dan penerbitan SK.
+          <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+            Pantau seluruh pemberitahuan pengajuan, verifikasi, surat keputusan, pencairan dana, dan pengumpulan LPJ lengkap dengan <strong>Petunjuk Langkah Selanjutnya & Tombol Navigasi Langsung</strong>.
           </p>
         </div>
 
-        {/* Global Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 shrink-0">
           {unreadNotifs.length > 0 && (
             <button
               onClick={() => markAllNotificationsAsRead()}
-              className="bg-dwp-gold hover:bg-amber-400 text-slate-950 px-3.5 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all"
+              className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white border border-dwp-gold/40 px-3.5 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all cursor-pointer"
+              title="Tandai semua notifikasi telah dibaca"
             >
-              <CheckCheck className="w-4 h-4" />
+              <CheckCheck className="w-4 h-4 text-dwp-gold" />
               <span>Tandai Semua Dibaca</span>
             </button>
           )}
@@ -93,7 +86,7 @@ export const NotificationCenter: React.FC = () => {
           {readNotifs.length > 0 && (
             <button
               onClick={() => clearReadNotifications()}
-              className="bg-rose-900/80 hover:bg-rose-800 text-rose-100 border border-rose-700/60 px-3.5 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all"
+              className="bg-rose-900/80 hover:bg-rose-800 text-rose-100 border border-rose-700/60 px-3.5 py-2 rounded-xl text-xs font-bold shadow flex items-center gap-1.5 transition-all cursor-pointer"
               title="Hapus semua pemberitahuan yang sudah dibaca"
             >
               <Trash2 className="w-4 h-4 text-rose-300" />
@@ -110,7 +103,7 @@ export const NotificationCenter: React.FC = () => {
         <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 text-xs font-bold">
           <button
             onClick={() => setFilterState('all')}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
               filterState === 'all' 
                 ? 'bg-slate-900 text-white shadow' 
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -122,7 +115,7 @@ export const NotificationCenter: React.FC = () => {
 
           <button
             onClick={() => setFilterState('unread')}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
               filterState === 'unread' 
                 ? 'bg-dwp-burgundy text-dwp-gold shadow' 
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -136,26 +129,26 @@ export const NotificationCenter: React.FC = () => {
 
           <button
             onClick={() => setFilterState('read')}
-            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer ${
               filterState === 'read' 
-                ? 'bg-slate-700 text-white shadow' 
+                ? 'bg-slate-900 text-white shadow' 
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            <span>Telah Dibaca</span>
+            <span>Sudah Dibaca</span>
             <span className="bg-white/20 text-[10px] px-1.5 py-0.2 rounded-full">{readNotifs.length}</span>
           </button>
         </div>
 
-        {/* Search Input */}
+        {/* Search Bar */}
         <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Cari kata kunci notifikasi..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-dwp-burgundy transition-all"
+            placeholder="Cari notifikasi kegiatan..."
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:ring-2 focus:ring-dwp-burgundy focus:outline-none transition-all"
           />
         </div>
       </div>
@@ -183,13 +176,13 @@ export const NotificationCenter: React.FC = () => {
             <div
               key={n.id}
               onClick={() => handleNotificationClick(n)}
-              className={`p-4 rounded-2xl border transition-all cursor-pointer shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-l-4 ${
+              className={`p-5 rounded-2xl border transition-all cursor-pointer shadow-sm space-y-3 border-l-4 ${
                 !n.isRead 
-                  ? 'bg-amber-100/90 border-dwp-burgundy border-t-amber-300 border-r-amber-300 border-b-amber-300 hover:bg-amber-100 hover:shadow-md' 
+                  ? 'bg-amber-50/90 border-dwp-burgundy border-t-amber-200 border-r-amber-200 border-b-amber-200 hover:bg-amber-100/90 hover:shadow-md' 
                   : 'bg-white border-slate-200 text-slate-600 opacity-75 hover:opacity-100 hover:bg-slate-50'
               }`}
             >
-              <div className="space-y-1">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className={!n.isRead ? 'text-slate-950 font-black text-sm' : 'text-slate-700 font-bold text-sm'}>
                     {n.title}
@@ -206,20 +199,30 @@ export const NotificationCenter: React.FC = () => {
                   )}
                 </div>
 
-                <p className={`text-xs leading-relaxed ${!n.isRead ? 'text-slate-900 font-medium' : 'text-slate-600'}`}>
-                  {n.message}
-                </p>
-              </div>
-
-              <div className="flex items-center sm:flex-col items-end justify-between sm:justify-center gap-2 shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200/60">
-                <span className="text-[10px] text-slate-400 font-mono font-medium">
+                <span className="text-[10px] text-slate-400 font-mono font-medium shrink-0">
                   {n.timestamp}
                 </span>
+              </div>
 
-                <span className="text-[11px] font-bold text-dwp-burgundy hover:underline flex items-center gap-1">
-                  <span>Buka Tindak Lanjut</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </span>
+              <p className={`text-xs leading-relaxed ${!n.isRead ? 'text-slate-900 font-medium' : 'text-slate-600'}`}>
+                {n.message}
+              </p>
+
+              {/* Next Step Instruction Highlight Box */}
+              {n.nextStepAction && (
+                <div className="bg-amber-100/90 border border-amber-300 text-amber-950 p-3 rounded-xl text-xs font-bold shadow-sm leading-snug">
+                  {n.nextStepAction}
+                </div>
+              )}
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  className="bg-dwp-burgundy hover:bg-dwp-darkBurgundy text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <ArrowRight className="w-3.5 h-3.5 text-dwp-gold" />
+                  <span>{n.actionButtonText || 'Buka Tindak Lanjut ➔'}</span>
+                </button>
               </div>
             </div>
           ))
