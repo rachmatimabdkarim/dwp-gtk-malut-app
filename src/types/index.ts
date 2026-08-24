@@ -28,6 +28,7 @@ export interface UserAccount {
 
 export interface Member {
   id: string;
+  nik?: string;
   nip?: string;
   name: string;
   jabatan: string; // e.g. "Ketua Bidang Pendidikan", "Anggota", "Sekretaris II"

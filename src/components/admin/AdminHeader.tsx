@@ -17,7 +17,9 @@ export const AdminHeader: React.FC = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     clearReadNotifications,
-    openProposalWorkspace
+    openProposalWorkspace,
+    isCloudSyncing,
+    reloadFromCloud
   } = useApp();
 
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
@@ -55,6 +57,16 @@ export const AdminHeader: React.FC = () => {
         {/* Right Side: Role Selector & Controls */}
         <div className="flex items-center gap-3">
           
+          {/* Cloud Sync Status Badge */}
+          <button
+            onClick={() => reloadFromCloud()}
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-800/80 border border-slate-700/80 text-[11px] font-medium text-slate-300 hover:text-white hover:border-dwp-gold/50 transition-all cursor-pointer shadow-sm"
+            title="Klik untuk memuat ulang data dari Supabase Cloud"
+          >
+            <span className={`w-2 h-2 rounded-full shrink-0 ${isCloudSyncing ? 'bg-amber-400 animate-ping' : 'bg-emerald-400'}`} />
+            <span>{isCloudSyncing ? 'Sinkron Cloud...' : 'Supabase Cloud'}</span>
+          </button>
+
           {/* Notification Bell Widget */}
           <div className="relative">
             <button

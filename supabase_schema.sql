@@ -8,8 +8,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 2. TABEL DATA ANGGOTA DWP (members)
 CREATE TABLE IF NOT EXISTS members (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    nik VARCHAR(20) UNIQUE,
-    nip VARCHAR(30) UNIQUE,
+    nik VARCHAR(20),
+    nip VARCHAR(30),
     name VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(20),
@@ -92,6 +92,56 @@ CREATE TABLE IF NOT EXISTS site_config (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 7. TABEL WARTA & BERITA KEGIATAN (news)
+CREATE TABLE IF NOT EXISTS news (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    category VARCHAR(100) NOT NULL DEFAULT 'Sosial Budaya',
+    author VARCHAR(100) NOT NULL,
+    date VARCHAR(50) NOT NULL,
+    summary TEXT NOT NULL,
+    content TEXT NOT NULL,
+    main_image TEXT,
+    is_published BOOLEAN DEFAULT true,
+    source_report_id VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. TABEL ABSENSI DIGITAL & TANDA TANGAN (attendance_records)
+CREATE TABLE IF NOT EXISTS attendance_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    activity_id UUID REFERENCES activity_proposals(id) ON DELETE CASCADE,
+    member_id UUID REFERENCES members(id) ON DELETE SET NULL,
+    participant_name VARCHAR(150) NOT NULL,
+    nip VARCHAR(50),
+    jabatan VARCHAR(100) NOT NULL,
+    phone VARCHAR(30),
+    check_in_time VARCHAR(50) NOT NULL,
+    signature_url TEXT NOT NULL,
+    status VARCHAR(30) DEFAULT 'verified',
+    verified_by VARCHAR(100),
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 9. TABEL LAPORAN PERTANGGUNGJAWABAN / LPJ (execution_reports)
+CREATE TABLE IF NOT EXISTS execution_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    activity_id UUID REFERENCES activity_proposals(id) ON DELETE CASCADE,
+    activity_title VARCHAR(255) NOT NULL,
+    report_title VARCHAR(255) NOT NULL,
+    background TEXT,
+    execution_summary TEXT NOT NULL,
+    total_participants INT DEFAULT 0,
+    actual_budget NUMERIC(15, 2) DEFAULT 0,
+    outcome_results TEXT,
+    photo_urls JSONB,
+    status VARCHAR(50) DEFAULT 'draft',
+    ketua_notes TEXT,
+    created_at DATE DEFAULT CURRENT_DATE,
+    updated_at DATE DEFAULT CURRENT_DATE
+);
+
 -- ====================================================================
 -- INITIAL SEED DATA (DATA AWAL RESMI)
 -- ====================================================================
@@ -99,22 +149,22 @@ CREATE TABLE IF NOT EXISTS site_config (
 -- Seed Members Initial Data
 INSERT INTO members (id, name, nip, email, phone, jabatan, bidang, unit_kerja, status)
 VALUES 
-  ('11111111-1111-1111-1111-111111111111', 'Ny. Rahmiati S.Pd', '197805122003122001', 'rahmiati.ketua@malut.go.id', '081234567890', 'Ketua', 'Pengurus Inti', 'Kantor GTK Prov. Maluku Utara', 'Aktif'),
-  ('22222222-2222-2222-2222-222222222222', 'Ny. Hj. Fatimah M.Pd', '198003152005012003', 'fatimah.waket@malut.go.id', '081298765432', 'Wakil Ketua', 'Pengurus Inti', 'Kantor GTK Prov. Maluku Utara', 'Aktif'),
-  ('33333333-3333-3333-3333-333333333333', 'Ny. Dra. Salmawati', '198211042006042002', 'salmawati.sekr@malut.go.id', '081345678901', 'Sekretaris', 'Pengurus Inti', 'Kantor GTK Prov. Maluku Utara', 'Aktif'),
-  ('44444444-4444-4444-4444-444444444444', 'Ny. Nurhayati S.E', '198507202008022004', 'nurhayati.bend@malut.go.id', '081356789012', 'Bendahara', 'Pengurus Inti', 'Kantor GTK Prov. Maluku Utara', 'Aktif'),
-  ('55555555-5555-5555-5555-555555555555', 'Ny. Hasnah S.Pd', '198809102010012005', 'hasnah.pendidikan@malut.go.id', '081367890123', 'Ketua Bidang Pendidikan', 'Pendidikan', 'Kantor GTK Prov. Maluku Utara', 'Aktif')
+  ('11111111-1111-1111-1111-111111111111', 'Ny. Hj. Rahmiati Ahmad, M.Pd', '197805122003122001', 'rahmiati.dwpgtk@malut.go.id', '0812-4567-8901', 'Ketua', '-', 'Kantor GTK Prov. Maluku Utara', 'Aktif'),
+  ('22222222-2222-2222-2222-222222222222', 'Ny. Dra. Endang Kusuma', '198203152008012004', 'endang.dwp@malut.go.id', '0813-9876-5432', 'Wakil Ketua', '-', 'Subbag Umum & Tata Usaha BGP Malut', 'Aktif'),
+  ('33333333-3333-3333-3333-333333333333', 'Ny. Fitriani Nurdin, S.E', '198511202010122008', 'fitriani.sekretaris@malut.go.id', '0821-3344-5566', 'Sekretaris', '-', 'Kantor GTK Sofifi', 'Aktif'),
+  ('44444444-4444-4444-4444-444444444444', 'Ny. Hasnah Usman, S.E', '198604122012012009', 'hasnah.bendahara@malut.go.id', '0812-6677-8899', 'Bendahara', '-', 'BGP Provinsi Maluku Utara', 'Aktif'),
+  ('55555555-5555-5555-5555-555555555555', 'Ny. Hj. Siti Aminah, S.Pd', '198804182012042002', 'siti.aminah@malut.go.id', '0852-1122-3344', 'Ketua Bidang Pendidikan', 'Pendidikan', 'Dinas Pendidikan Prov. Maluku Utara', 'Aktif')
 ON CONFLICT (email) DO NOTHING;
 
 -- Seed User Accounts Initial Data
 INSERT INTO user_accounts (username, email, password_hash, role, member_id, status)
 VALUES 
-  ('admin.it', 'admin.it@malut.go.id', '$2a$10$e8T1w1...bcrypt_hash', 'admin_master', NULL, 'aktif'),
-  ('rahmiati.ketua', 'rahmiati.ketua@malut.go.id', '$2a$10$e8T1w1...bcrypt_hash', 'ketua', '11111111-1111-1111-1111-111111111111', 'aktif'),
-  ('fatimah.waket', 'fatimah.waket@malut.go.id', '$2a$10$e8T1w1...bcrypt_hash', 'wakil_ketua', '22222222-2222-2222-2222-222222222222', 'aktif'),
-  ('salmawati.sekr', 'salmawati.sekr@malut.go.id', '$2a$10$e8T1w1...bcrypt_hash', 'sekretaris', '33333333-3333-3333-3333-333333333333', 'aktif'),
-  ('nurhayati.bend', 'nurhayati.bend@malut.go.id', '$2a$10$e8T1w1...bcrypt_hash', 'bendahara', '44444444-4444-4444-4444-444444444444', 'aktif'),
-  ('hasnah.pendidikan', 'hasnah.pendidikan@malut.go.id', '$2a$10$e8T1w1...bcrypt_hash', 'admin_bidang', '55555555-5555-5555-5555-555555555555', 'aktif')
+  ('admin', 'admin.it@malut.go.id', 'admin123', 'admin_master', NULL, 'aktif'),
+  ('ketua', 'rahmiati.dwpgtk@malut.go.id', 'dwp2026!', 'ketua', '11111111-1111-1111-1111-111111111111', 'aktif'),
+  ('waket', 'endang.dwp@malut.go.id', 'dwp2026!', 'wakil_ketua', '22222222-2222-2222-2222-222222222222', 'aktif'),
+  ('sekretaris', 'fitriani.sekretaris@malut.go.id', 'dwp2026!', 'sekretaris', '33333333-3333-3333-3333-333333333333', 'aktif'),
+  ('bendahara', 'hasnah.bendahara@malut.go.id', 'dwp2026!', 'bendahara', '44444444-4444-4444-4444-444444444444', 'aktif'),
+  ('kabid_pendidikan', 'siti.aminah@malut.go.id', 'dwp2026!', 'admin_bidang', '55555555-5555-5555-5555-555555555555', 'aktif')
 ON CONFLICT (username) DO NOTHING;
 
 -- Seed Initial Site Config

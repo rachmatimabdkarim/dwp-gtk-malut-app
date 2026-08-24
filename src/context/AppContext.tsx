@@ -24,6 +24,7 @@ import {
   JobDeskLog
 } from '../types';
 import { apiService } from '../services/apiService';
+import { cloudSync, ensureUUID, generateUUID } from '../services/cloudSync';
 import { 
   DynamicPermissionMatrix, 
   getDynamicPermissions, 
@@ -59,7 +60,7 @@ export const getEffectiveRole = (user: UserAccount, membersList: Member[]): User
 
 export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
   {
-    id: 'usr-001',
+    id: '09d3f668-c647-4156-97de-ab059e1f9800',
     username: 'admin',
     password: 'admin123',
     email: 'admin.it@malut.go.id',
@@ -69,82 +70,82 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
     createdAt: '2026-01-01'
   },
   {
-    id: 'usr-002',
+    id: '12b747b5-07f3-41e6-a59f-edfd54b84402',
     username: 'ketua',
     password: 'dwp2026!',
     email: 'rahmiati.dwpgtk@malut.go.id',
     role: 'ketua',
-    memberId: 'dwp-001', // Linked ke Ketua DWP
+    memberId: '11111111-1111-1111-1111-111111111111', // Linked ke Ketua DWP
     status: 'aktif',
     createdAt: '2026-01-05'
   },
   {
-    id: 'usr-003',
+    id: '1ebffcb5-1da3-4878-9f3e-01edc0c87423',
     username: 'waket',
     password: 'dwp2026!',
     email: 'endang.dwp@malut.go.id',
     role: 'wakil_ketua',
-    memberId: 'dwp-002', // Linked ke Wakil Ketua
+    memberId: '22222222-2222-2222-2222-222222222222', // Linked ke Wakil Ketua
     status: 'aktif',
     createdAt: '2026-01-10'
   },
   {
-    id: 'usr-004',
+    id: '7f7046c1-1389-4c38-a036-4bf640cb1537',
     username: 'sekretaris',
     password: 'dwp2026!',
     email: 'fitriani.sekretaris@malut.go.id',
     role: 'sekretaris',
-    memberId: 'dwp-003', // Linked ke Sekretaris
+    memberId: '33333333-3333-3333-3333-333333333333', // Linked ke Sekretaris
     status: 'aktif',
     createdAt: '2026-01-12'
   },
   {
-    id: 'usr-005',
+    id: '9097a2f5-1584-4570-844a-fd8ed68ee814',
     username: 'bendahara',
     password: 'dwp2026!',
     email: 'hasnah.bendahara@malut.go.id',
     role: 'bendahara',
-    memberId: 'dwp-005', // Linked ke Bendahara
+    memberId: '44444444-4444-4444-4444-444444444444', // Linked ke Bendahara
     status: 'aktif',
     createdAt: '2026-01-14'
   },
   {
-    id: 'usr-006',
+    id: '879a9725-f247-4378-a6e8-e0648196105c',
     username: 'kabid_pendidikan',
     password: 'dwp2026!',
     email: 'siti.aminah@malut.go.id',
     role: 'admin_bidang',
-    memberId: 'dwp-006', // Linked ke Ketua Bidang Pendidikan
+    memberId: '55555555-5555-5555-5555-555555555555', // Linked ke Ketua Bidang Pendidikan
     status: 'aktif',
     createdAt: '2026-01-15'
   },
   {
-    id: 'usr-007',
+    id: '23a9b8c7-d6e5-4f3a-2b1c-0d9e8f7a6b5c',
     username: 'kabid_ekonomi',
     password: 'dwp2026!',
     email: 'fatimah.ekonomi@malut.go.id',
     role: 'admin_bidang',
-    memberId: 'dwp-007', // Linked ke Ketua Bidang Ekonomi
+    memberId: '66666666-6666-6666-6666-666666666666', // Linked ke Ketua Bidang Ekonomi
     status: 'aktif',
     createdAt: '2026-01-16'
   },
   {
-    id: 'usr-008',
+    id: '34b0c9d8-e7f6-5a4b-3c2d-1e0f9a8b7c6d',
     username: 'kabid_sosbud',
     password: 'dwp2026!',
     email: 'hawa.sosbud@malut.go.id',
     role: 'admin_bidang',
-    memberId: 'dwp-008', // Linked ke Ketua Bidang Sosbud
+    memberId: '77777777-7777-7777-7777-777777777777', // Linked ke Ketua Bidang Sosbud
     status: 'aktif',
     createdAt: '2026-01-17'
   },
   {
-    id: 'usr-009',
+    id: '45c1dae9-f8a7-6b5c-4d3e-2f1a0b9c8d7e',
     username: 'anggota',
     password: 'dwp2026!',
     email: 'halimah.anggota@malut.go.id',
     role: 'anggota',
-    memberId: 'dwp-009', // Linked ke Anggota DWP
+    memberId: '88888888-8888-8888-8888-888888888888', // Linked ke Anggota DWP
     status: 'aktif',
     createdAt: '2026-01-18'
   }
@@ -162,48 +163,48 @@ export const USER_PERSONAS: Record<UserRole, UserPersona> = {
     name: 'Ny. Hj. Siti Aminah, S.Pd',
     title: 'Ketua Bidang Pendidikan',
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
-    memberId: 'dwp-006'
+    memberId: '55555555-5555-5555-5555-555555555555'
   },
   sekretaris: {
     role: 'sekretaris',
     name: 'Ny. Fitriani Nurdin, S.E',
     title: 'Sekretaris DWP',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-    memberId: 'dwp-003'
+    memberId: '33333333-3333-3333-3333-333333333333'
   },
   bendahara: {
     role: 'bendahara',
     name: 'Ny. Hasnah Usman, S.E',
     title: 'Bendahara DWP',
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
-    memberId: 'dwp-005'
+    memberId: '44444444-4444-4444-4444-444444444444'
   },
   wakil_ketua: {
     role: 'wakil_ketua',
     name: 'Ny. Dra. Endang Kusuma',
     title: 'Wakil Ketua DWP',
     avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&auto=format&fit=crop&q=80',
-    memberId: 'dwp-002'
+    memberId: '22222222-2222-2222-2222-222222222222'
   },
   ketua: {
     role: 'ketua',
     name: 'Ny. Hj. Rahmiati Ahmad, M.Pd',
     title: 'Ketua DWP',
     avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&auto=format&fit=crop&q=80',
-    memberId: 'dwp-001'
+    memberId: '11111111-1111-1111-1111-111111111111'
   },
   anggota: {
     role: 'anggota',
     name: 'Ny. Sitti Maryam Subhan',
     title: 'Anggota DWP',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    memberId: 'dwp-004'
+    memberId: '88888888-8888-8888-8888-888888888888'
   }
 };
 
 const INITIAL_MEMBERS: Member[] = [
   {
-    id: 'dwp-001',
+    id: '11111111-1111-1111-1111-111111111111',
     nip: '19780512 200312 2 001',
     name: 'Ny. Hj. Rahmiati Ahmad, M.Pd',
     jabatan: 'Ketua',
@@ -220,7 +221,7 @@ const INITIAL_MEMBERS: Member[] = [
     avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&auto=format&fit=crop&q=80'
   },
   {
-    id: 'dwp-002',
+    id: '22222222-2222-2222-2222-222222222222',
     nip: '19820315 200801 2 004',
     name: 'Ny. Dra. Endang Kusuma',
     jabatan: 'Wakil Ketua',
@@ -237,7 +238,7 @@ const INITIAL_MEMBERS: Member[] = [
     avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&auto=format&fit=crop&q=80'
   },
   {
-    id: 'dwp-003',
+    id: '33333333-3333-3333-3333-333333333333',
     nip: '19851120 201012 2 008',
     name: 'Ny. Fitriani Nurdin, S.E',
     jabatan: 'Sekretaris',
@@ -245,7 +246,6 @@ const INITIAL_MEMBERS: Member[] = [
     pekerjaan: 'Pegawai Negeri Sipil (PNS)',
     golonganDarah: 'B',
     namaSuami: "Nurdin Syafi'i, S.T",
-
     namaAnak: '1. Farah Nurdin, 2. Fadel Nurdin',
     bidang: '-',
     phone: '0821-3344-5566',
@@ -255,7 +255,7 @@ const INITIAL_MEMBERS: Member[] = [
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80'
   },
   {
-    id: 'dwp-004',
+    id: '88888888-8888-8888-8888-888888888888',
     nip: '19870914 201103 2 005',
     name: 'Ny. Sitti Maryam Subhan, S.Pd',
     jabatan: 'Wakil Sekretaris',
@@ -272,7 +272,7 @@ const INITIAL_MEMBERS: Member[] = [
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
   },
   {
-    id: 'dwp-005',
+    id: '44444444-4444-4444-4444-444444444444',
     nip: '19860412 201201 2 009',
     name: 'Ny. Hasnah Usman, S.E',
     jabatan: 'Bendahara',
@@ -289,7 +289,7 @@ const INITIAL_MEMBERS: Member[] = [
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80'
   },
   {
-    id: 'dwp-006',
+    id: '55555555-5555-5555-5555-555555555555',
     nip: '19880418 201204 2 002',
     name: 'Ny. Hj. Siti Aminah, S.Pd',
     jabatan: 'Ketua Bidang Pendidikan',
@@ -306,7 +306,7 @@ const INITIAL_MEMBERS: Member[] = [
     avatar: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=150&auto=format&fit=crop&q=80'
   },
   {
-    id: 'dwp-007',
+    id: '66666666-6666-6666-6666-666666666666',
     nip: '19900902 201503 2 007',
     name: 'Ny. Fatimah Az-Zahra, SE',
     jabatan: 'Ketua Bidang Ekonomi',
@@ -323,7 +323,7 @@ const INITIAL_MEMBERS: Member[] = [
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   },
   {
-    id: 'dwp-008',
+    id: '77777777-7777-7777-7777-777777777777',
     nip: '19930711 201902 2 005',
     name: 'Ny. Mariam Syaiful, S.Sos',
     jabatan: 'Ketua Bidang Sosial Budaya',
@@ -340,7 +340,7 @@ const INITIAL_MEMBERS: Member[] = [
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
   },
   {
-    id: 'dwp-009',
+    id: '99999999-9999-9999-9999-999999999999',
     nip: '19910214 201604 2 003',
     name: 'Ny. Dra. Halimah Mansur',
     jabatan: 'Anggota',
@@ -358,12 +358,9 @@ const INITIAL_MEMBERS: Member[] = [
   }
 ];
 
-
-
-
 const INITIAL_PROPOSALS: ActivityProposal[] = [
   {
-    id: 'prop-001',
+    id: 'a0000001-0000-0000-0000-000000000001',
     title: 'Pelatihan Literasi Digital & Parenting Bagi Anggota DWP GTK Maluku Utara',
     bidang: 'Pendidikan',
     organizer: 'Bidang Pendidikan DWP GTK',
@@ -379,7 +376,7 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
     creatorRole: 'admin_bidang',
     logs: [
       {
-        id: 'log-1',
+        id: 'b0000001-0000-0000-0000-000000000001',
         stageName: 'Usulan Dibuat',
         actorRole: 'admin_bidang',
         actorName: 'Ny. Hj. Siti Aminah, S.Pd',
@@ -392,7 +389,7 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
     createdAt: '2026-07-20'
   },
   {
-    id: 'prop-002',
+    id: 'a0000002-0000-0000-0000-000000000002',
     title: 'Bazaar Usaha Mikro DWP & Pelatihan Kewirausahaan Produk Lokal Maluku Utara',
     bidang: 'Ekonomi',
     organizer: 'Bidang Ekonomi DWP GTK',
@@ -408,7 +405,7 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
     creatorRole: 'admin_bidang',
     logs: [
       {
-        id: 'log-21',
+        id: 'b0000002-0000-0000-0000-000000000001',
         stageName: 'Usulan Dibuat',
         actorRole: 'admin_bidang',
         actorName: 'Ny. Fatimah Az-Zahra, SE',
@@ -417,7 +414,7 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
         timestamp: '2026-07-15 08:30'
       },
       {
-        id: 'log-23',
+        id: 'b0000002-0000-0000-0000-000000000002',
         stageName: 'Verifikasi Wakil Ketua',
         actorRole: 'wakil_ketua',
         actorName: 'Ny. Dra. Endang Kusuma',
@@ -430,7 +427,7 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
     createdAt: '2026-07-15'
   },
   {
-    id: 'prop-003',
+    id: 'a0000003-0000-0000-0000-000000000003',
     title: 'Bakti Sosial DWP GTK Peduli Pendidikan Anak Pesisir Halmahera',
     bidang: 'Sosial Budaya',
     organizer: 'Bidang Sosial Budaya DWP GTK',
@@ -445,7 +442,7 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
     stageProgress: 5,
     logs: [
       {
-        id: 'log-31',
+        id: 'b0000003-0000-0000-0000-000000000001',
         stageName: 'Persetujuan Ketua',
         actorRole: 'ketua',
         actorName: 'Ny. Hj. Rahmiati Ahmad, M.Pd',
@@ -461,53 +458,53 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
 
 const INITIAL_NOTIFICATIONS: AppNotification[] = [
   {
-    id: 'notif-waket-001',
+    id: 'e0000001-0000-0000-0000-000000000001',
     targetRole: 'wakil_ketua',
     title: '🛡️ Usulan Kegiatan Baru Perlu Verifikasi',
     message: 'Usulan Kegiatan "Pelatihan Literasi Digital Anggota DWP GTK Maluku Utara" dari Ny. Hj. Siti Aminah, S.Pd (Bidang Pendidikan) memerlukan Verifikasi awal dari Anda.',
     timestamp: '20/07/2026 09:00',
     isRead: false,
     type: 'new_proposal',
-    proposalId: 'prop-001',
+    proposalId: 'a0000001-0000-0000-0000-000000000001',
     nextStepAction: '👉 Langkah Selanjutnya: Mohon telaah & verifikasi kesesuaian usulan kegiatan dan anggaran.',
     targetTab: 'usulan',
     actionButtonText: 'Verifikasi Usulan ➔'
   },
   {
-    id: 'notif-ketua-001',
+    id: 'e0000002-0000-0000-0000-000000000002',
     targetRole: 'ketua',
     title: '👑 Usulan Kegiatan Perlu Persetujuan Akhir',
     message: 'Usulan Kegiatan "Bazaar Usaha Mikro DWP & Pelatihan Kewirausahaan Produk Lokal Maluku Utara" telah diverifikasi oleh Wakil Ketua dan membutuhkan Persetujuan Akhir dari Anda.',
     timestamp: '19/07/2026 16:20',
     isRead: false,
     type: 'new_proposal',
-    proposalId: 'prop-002',
+    proposalId: 'a0000002-0000-0000-0000-000000000002',
     nextStepAction: '👉 Langkah Selanjutnya: Berikan persetujuan akhir usulan kegiatan.',
     targetTab: 'usulan',
     actionButtonText: 'Buka Persetujuan Ketua ➔'
   },
   {
-    id: 'notif-001',
+    id: 'e0000003-0000-0000-0000-000000000003',
     targetRole: 'bendahara',
     title: '💰 Pemberitahuan Pencairan Dana RAB',
-    message: 'Usulan Kegiatan "Bhakti Sosial Peringatan Hari Kartini & Penyerahan Beasiswa DWP" telah disetujui resmi oleh Ketua DWP. Anggaran Rp 25.000.000 siap diproses.',
+    message: 'Usulan Kegiatan "Bakti Sosial DWP GTK Peduli Pendidikan Anak Pesisir Halmahera" telah disetujui resmi oleh Ketua DWP. Anggaran Rp 25.000.000 siap diproses.',
     timestamp: '05/07/2026 10:00',
     isRead: false,
     type: 'rab_pencairan',
-    proposalId: 'prop-003',
+    proposalId: 'a0000003-0000-0000-0000-000000000003',
     nextStepAction: '👉 Langkah Selanjutnya: Siapkan pencairan anggaran sesuai RAB disetujui.',
     targetTab: 'usulan',
     actionButtonText: 'Lihat RAB Disetujui ➔'
   },
   {
-    id: 'notif-002',
+    id: 'e0000004-0000-0000-0000-000000000004',
     targetRole: 'sekretaris',
     title: '📜 Pemberitahuan Persuratan & SK',
-    message: 'Usulan Kegiatan "Bhakti Sosial Peringatan Hari Kartini & Penyerahan Beasiswa DWP" telah disetujui resmi oleh Ketua DWP. Draf SK Panitia, Surat Tugas, & Undangan siap dibuat.',
+    message: 'Usulan Kegiatan "Bakti Sosial DWP GTK Peduli Pendidikan Anak Pesisir Halmahera" telah disetujui resmi oleh Ketua DWP. Draf SK Panitia, Surat Tugas, & Undangan siap dibuat.',
     timestamp: '05/07/2026 10:00',
     isRead: false,
     type: 'sk_pengarsipan',
-    proposalId: 'prop-003',
+    proposalId: 'a0000003-0000-0000-0000-000000000003',
     nextStepAction: '👉 Langkah Selanjutnya: Tentukan Ketua Panitia & Tim Panitia Pelaksana di Tab Panitia.',
     targetTab: 'panitia',
     actionButtonText: 'Susun Panitia ➔'
@@ -519,9 +516,9 @@ const MOCK_SIGNATURE = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/20
 
 const INITIAL_ATTENDANCE: AttendanceRecord[] = [
   {
-    id: 'att-1',
-    activityId: 'prop-003',
-    memberId: 'dwp-001',
+    id: 'd0000001-0000-0000-0000-000000000001',
+    activityId: 'a0000003-0000-0000-0000-000000000003',
+    memberId: '11111111-1111-1111-1111-111111111111',
     participantName: 'Ny. Hj. Rahmiati Ahmad, M.Pd',
     nip: '19780512 200312 2 001',
     jabatan: 'Ketua Pengurus DWP',
@@ -532,9 +529,9 @@ const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     verifiedBy: 'Panitia Sekretariat'
   },
   {
-    id: 'att-2',
-    activityId: 'prop-003',
-    memberId: 'dwp-004',
+    id: 'd0000002-0000-0000-0000-000000000002',
+    activityId: 'a0000003-0000-0000-0000-000000000003',
+    memberId: '55555555-5555-5555-5555-555555555555',
     participantName: 'Ny. Hj. Siti Aminah, S.Pd',
     nip: '19880418 201204 2 002',
     jabatan: 'Ketua Bidang Pendidikan',
@@ -545,9 +542,9 @@ const INITIAL_ATTENDANCE: AttendanceRecord[] = [
     verifiedBy: 'Panitia Sekretariat'
   },
   {
-    id: 'att-3',
-    activityId: 'prop-003',
-    memberId: 'dwp-006',
+    id: 'd0000003-0000-0000-0000-000000000003',
+    activityId: 'a0000003-0000-0000-0000-000000000003',
+    memberId: '77777777-7777-7777-7777-777777777777',
     participantName: 'Ny. Mariam Syaiful, S.Sos',
     nip: '19930711 201902 2 005',
     jabatan: 'Ketua Bidang Sosial Budaya',
@@ -561,8 +558,8 @@ const INITIAL_ATTENDANCE: AttendanceRecord[] = [
 
 const INITIAL_REPORTS: ExecutionReport[] = [
   {
-    id: 'rep-001',
-    activityId: 'prop-003',
+    id: 'f0000001-0000-0000-0000-000000000001',
+    activityId: 'a0000003-0000-0000-0000-000000000003',
     activityTitle: 'Bakti Sosial DWP GTK Peduli Pendidikan Anak Pesisir Halmahera',
     reportTitle: 'LAPORAN PELAKSANAAN KEGIATAN BAKTI SOSIAL DWP KANTOR GTK PROVINSI MALUKU UTARA TAHUN 2026',
     background: 'Kegiatan Bakti Sosial diselenggarakan sebagai bentuk keperdulian pengurus DWP Kantor GTK Maluku Utara dalam meningkatkan kualitas sarana belajar anak-anak di pesisir.',
@@ -583,7 +580,7 @@ const INITIAL_REPORTS: ExecutionReport[] = [
 
 const INITIAL_NEWS: NewsArticle[] = [
   {
-    id: 'news-1',
+    id: 'c0000001-0000-0000-0000-000000000001',
     title: 'DWP Kantor GTK Maluku Utara Salurkan 200 Paket Perlengkapan Sekolah di Halmahera Barat',
     category: 'Sosial Budaya',
     author: 'Humas DWP GTK Malut',
@@ -592,10 +589,10 @@ const INITIAL_NEWS: NewsArticle[] = [
     content: `Jelbar, Halmahera Barat — Pengurus Dharma Wanita Persatuan (DWP) Kantor Balai Guru Penggerak / GTK Provinsi Maluku Utara sukses melaksanakan kegiatan Bakti Sosial Peduli Pendidikan Anak Pesisir.\n\nKetua DWP Kantor GTK Maluku Utara, Ny. Hj. Rahmiati Ahmad, M.Pd menyatakan bahwa paket bantuan berupa tas sekolah, buku tulis, alat tulis, dan seragam diserahkan secara simbolis kepada perwakilan siswa.\n\n"Semoga bantuan ini dapat memacu semangat belajar anak-anak generasi penerus Maluku Utara di wilayah pesisir," ujar Ny. Rahmiati.`,
     mainImage: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=800&auto=format&fit=crop&q=80',
     isPublished: true,
-    sourceReportId: 'rep-001'
+    sourceReportId: 'f0000001-0000-0000-0000-000000000001'
   },
   {
-    id: 'news-2',
+    id: 'c0000002-0000-0000-0000-000000000002',
     title: 'Persiapan Pelatihan Literasi Digital DWP GTK Malut Hadapi Era Edukasi Modern',
     category: 'Pendidikan',
     author: 'Bidang Pendidikan DWP',
@@ -747,6 +744,10 @@ interface AppContextType {
   systemAuditLogs: SystemAuditLogEntry[];
   addSystemAuditLog: (entry: Omit<SystemAuditLogEntry, 'id' | 'timestamp'>) => void;
   
+  isCloudSyncing: boolean;
+  isInitialized: boolean;
+  reloadFromCloud: () => Promise<void>;
+
   activeTab: 'public' | 'admin';
   setActiveTab: (tab: 'public' | 'admin') => void;
   adminSubTab: AdminSubTab;
@@ -930,22 +931,137 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     window.history.pushState(null, '', '/login');
   };
 
-  // Save to localStorage on state changes
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
+
+  const reloadFromCloud = async () => {
+    setIsCloudSyncing(true);
+    try {
+      const cloudData = await cloudSync.fetchAllInitialData();
+      if (!cloudData) return;
+
+      if (cloudData.members && cloudData.members.length > 0) {
+        setMembers(cloudData.members);
+      }
+      if (cloudData.userAccounts && cloudData.userAccounts.length > 0) {
+        setUserAccounts(cloudData.userAccounts);
+      }
+      if (cloudData.proposals && cloudData.proposals.length > 0) {
+        setProposals(cloudData.proposals);
+      }
+      if (cloudData.siteConfig) {
+        setSiteConfig(prev => ({ ...prev, ...cloudData.siteConfig }));
+      }
+      if (cloudData.news && cloudData.news.length > 0) {
+        setNews(cloudData.news);
+      }
+      if (cloudData.attendance && cloudData.attendance.length > 0) {
+        setAttendanceRecords(cloudData.attendance);
+      }
+    } catch (err) {
+      console.warn('Reload from cloud error:', err);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  // Load initial data from Supabase Cloud on application launch
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadInitialCloudData = async () => {
+      setIsCloudSyncing(true);
+      try {
+        const cloudData = await cloudSync.fetchAllInitialData();
+        if (!isMounted || !cloudData) return;
+
+        if (cloudData.members && cloudData.members.length > 0) {
+          setMembers(cloudData.members);
+          localStorage.setItem('dwp_members', JSON.stringify(cloudData.members));
+        } else {
+          cloudSync.syncMembers(INITIAL_MEMBERS);
+        }
+
+        if (cloudData.userAccounts && cloudData.userAccounts.length > 0) {
+          setUserAccounts(cloudData.userAccounts);
+          localStorage.setItem('dwp_user_accounts', JSON.stringify(cloudData.userAccounts));
+        } else {
+          cloudSync.syncUserAccounts(INITIAL_USER_ACCOUNTS);
+        }
+
+        if (cloudData.proposals && cloudData.proposals.length > 0) {
+          setProposals(cloudData.proposals);
+          localStorage.setItem('dwp_proposals', JSON.stringify(cloudData.proposals));
+        } else {
+          cloudSync.syncProposals(INITIAL_PROPOSALS);
+        }
+
+        if (cloudData.siteConfig) {
+          setSiteConfig(prev => {
+            const merged = { ...prev, ...cloudData.siteConfig };
+            localStorage.setItem('dwp_site_config', JSON.stringify(merged));
+            return merged;
+          });
+        }
+
+        if (cloudData.news && cloudData.news.length > 0) {
+          setNews(cloudData.news);
+          localStorage.setItem('dwp_news', JSON.stringify(cloudData.news));
+        } else {
+          cloudSync.syncNews(INITIAL_NEWS);
+        }
+
+        if (cloudData.attendance && cloudData.attendance.length > 0) {
+          setAttendanceRecords(cloudData.attendance);
+          localStorage.setItem('dwp_attendance', JSON.stringify(cloudData.attendance));
+        } else {
+          cloudSync.syncAttendance(INITIAL_ATTENDANCE);
+        }
+      } catch (err) {
+        console.warn('Initial cloud data loading error, fallback to local data:', err);
+      } finally {
+        if (isMounted) {
+          setIsInitialized(true);
+          setIsCloudSyncing(false);
+        }
+      }
+    };
+
+    loadInitialCloudData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Save to localStorage & automatically upsert to Supabase Cloud on state changes
   useEffect(() => {
     localStorage.setItem('dwp_user_accounts', JSON.stringify(userAccounts));
-  }, [userAccounts]);
+    if (isInitialized) {
+      cloudSync.syncUserAccounts(userAccounts);
+    }
+  }, [userAccounts, isInitialized]);
 
   useEffect(() => {
     localStorage.setItem('dwp_members', JSON.stringify(members));
-  }, [members]);
+    if (isInitialized) {
+      cloudSync.syncMembers(members);
+    }
+  }, [members, isInitialized]);
 
   useEffect(() => {
     localStorage.setItem('dwp_proposals', JSON.stringify(proposals));
-  }, [proposals]);
+    if (isInitialized) {
+      cloudSync.syncProposals(proposals);
+    }
+  }, [proposals, isInitialized]);
 
   useEffect(() => {
     localStorage.setItem('dwp_attendance', JSON.stringify(attendanceRecords));
-  }, [attendanceRecords]);
+    if (isInitialized) {
+      cloudSync.syncAttendance(attendanceRecords);
+    }
+  }, [attendanceRecords, isInitialized]);
 
   useEffect(() => {
     localStorage.setItem('dwp_reports', JSON.stringify(reports));
@@ -953,7 +1069,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     localStorage.setItem('dwp_news', JSON.stringify(news));
-  }, [news]);
+    if (isInitialized) {
+      cloudSync.syncNews(news);
+    }
+  }, [news, isInitialized]);
 
   useEffect(() => {
     localStorage.setItem('dwp_site_config', JSON.stringify(siteConfig));
@@ -967,7 +1086,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       faviconLink.href = siteConfig.faviconUrl;
     }
-  }, [siteConfig]);
+    if (isInitialized) {
+      cloudSync.syncSiteConfig(siteConfig);
+    }
+  }, [siteConfig, isInitialized]);
 
   useEffect(() => {
     localStorage.setItem('dwp_notifications', JSON.stringify(notifications));
@@ -1028,7 +1150,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newAcc: UserAccount = {
       ...accData,
       email: finalEmail,
-      id: `usr-${Date.now().toString().slice(-4)}`,
+      id: generateUUID(),
       createdAt: new Date().toISOString().split('T')[0]
     };
     setUserAccounts(prev => [newAcc, ...prev]);
@@ -1075,6 +1197,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const uname = targetUser ? targetUser.username : id;
 
     setUserAccounts(prev => prev.filter(u => u.id !== id));
+    cloudSync.deleteUserAccount(id);
 
     addSystemAuditLog({
       category: 'user',
@@ -1089,7 +1212,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addMember = (newMem: Omit<Member, 'id' | 'dateJoined'>) => {
     const created: Member = {
       ...newMem,
-      id: `dwp-${Date.now().toString().slice(-4)}`,
+      id: generateUUID(),
       dateJoined: new Date().toISOString().split('T')[0]
     };
     setMembers(prev => [created, ...prev]);
@@ -1129,6 +1252,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const mName = targetMem ? targetMem.name : id;
 
     setMembers(prev => prev.filter(m => m.id !== id));
+    cloudSync.deleteMember(id);
 
     addSystemAuditLog({
       category: 'member',
@@ -1158,7 +1282,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const newProp: ActivityProposal = {
       ...propData,
-      id: `prop-${Date.now().toString().slice(-4)}`,
+      id: generateUUID(),
       currentStage: initialStage,
       stageProgress: initialProgress,
       createdBy: propData.createdBy || activePersona.name,
@@ -1166,7 +1290,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString().split('T')[0],
       logs: [
         {
-          id: `log-${Date.now()}`,
+          id: generateUUID(),
           stageName: 'Usulan Dibuat',
           actorRole: activePersona.role,
           actorName: activePersona.name,
@@ -1180,7 +1304,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // If auto-approved by Ketua, add notification log to Bendahara & Sekretaris
     if (role === 'ketua') {
       newProp.logs.push({
-        id: `log-notif-${Date.now()}`,
+        id: generateUUID(),
         stageName: 'Tembusan Otomatis',
         actorRole: 'ketua',
         actorName: 'Sistem Organisasi DWP',
@@ -1726,6 +1850,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem('dwp_proposals', JSON.stringify(updated));
       return updated;
     });
+    cloudSync.deleteProposal(proposalId);
 
     // Record Deletion Event in System Audit Logs
     addSystemAuditLog({
@@ -1741,7 +1866,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addAttendanceRecord = (rec: Omit<AttendanceRecord, 'id' | 'status'>) => {
     const newRecord: AttendanceRecord = {
       ...rec,
-      id: `att-${Date.now()}`,
+      id: generateUUID(),
+      activityId: ensureUUID(rec.activityId),
+      memberId: rec.memberId ? ensureUUID(rec.memberId) : undefined,
       status: 'verified', // Auto verified if submitted
       checkInTime: new Date().toLocaleString('id-ID')
     };
@@ -1763,8 +1890,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setReports(prev => prev.map(r => r.id === existing.id ? { ...r, ...repData, updatedAt: nowStr } : r));
     } else {
       const newRep: ExecutionReport = {
-        id: `rep-${Date.now()}`,
-        activityId: repData.activityId,
+        id: generateUUID(),
+        activityId: ensureUUID(repData.activityId),
         activityTitle: proposal ? proposal.title : 'Kegiatan DWP GTK Malut',
         reportTitle: repData.reportTitle || `LAPORAN PELAKSANAAN KEGIATAN ${proposal?.title.toUpperCase()}`,
         background: repData.background || proposal?.background || '',
@@ -1796,7 +1923,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 2. Automatically generate News Article for Public Web!
     const newArticle: NewsArticle = {
-      id: `news-${Date.now()}`,
+      id: generateUUID(),
       title: targetReport.reportTitle.replace('LAPORAN PELAKSANAAN KEGIATAN', 'DWP GTK Malut Success:'),
       category: 'Warta Kegiatan',
       author: 'Pengurus DWP GTK Malut',
@@ -1821,7 +1948,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addNewsArticle = (art: Omit<NewsArticle, 'id'>) => {
-    setNews(prev => [{ ...art, id: `news-${Date.now()}` }, ...prev]);
+    setNews(prev => [{ ...art, id: generateUUID() }, ...prev]);
     addSystemAuditLog({
       category: 'cms',
       severity: 'info',
@@ -2159,6 +2286,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       permissionMatrix,
       updatePermissionMatrix,
       resetPermissionMatrix,
+      isCloudSyncing,
+      isInitialized,
+      reloadFromCloud,
       activeTab,
       setActiveTab,
       adminSubTab,
