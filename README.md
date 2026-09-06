@@ -1,116 +1,75 @@
 # Dharma Wanita Persatuan — Kantor GTK Provinsi Maluku Utara
 
-Aplikasi Web Portal Resmi dan Sistem Informasi Manajemen Internal Dharma Wanita Persatuan (DWP) Kantor Balai Guru Penggerak / GTK Provinsi Maluku Utara.
+Aplikasi Web Portal Resmi + Sistem Informasi Manajemen Internal **DWP Kantor GTK Provinsi Maluku Utara**
+(Kantor Guru dan Tenaga Kependidikan, Kemendikdasmen).
+
+- **Situs live:** https://dwp-gtk-malut-app.vercel.app
+- **Alamat kantor:** Jl. Raya Rum, RT.01 RW.01, Kec. Tidore Utara, Kota Tidore Kepulauan, Provinsi Maluku Utara
 
 ---
 
-## 🚀 Teknologi Utama
+## 🚀 Teknologi
+- **Frontend:** React 18 + TypeScript + Vite
+- **Styling:** Tailwind CSS + Lucide React
+- **Backend/Auth:** Supabase (PostgreSQL + Auth + RLS) — database cloud `ucbjqyqxqmgaixepngtx` (ap-southeast-1)
+- **Hosting:** Vercel (auto-deploy dari `origin/main`)
 
-- **Framework**: React 18 (Vite)
-- **Bahasa**: TypeScript
-- **Styling**: Tailwind CSS (Modern, Responsive, Compact UI Layout)
-- **Ikon**: Lucide React Icons
-- **Penyimpanan Data**: LocalStorage (Persistensi Otomatis)
-
----
-
-## 🏛️ Arsitektur & Struktur Direktori
-
+## 🗂️ Struktur Direktori
 ```text
-dharma-wanita-app/
-├── src/
-│   ├── components/
-│   │   ├── admin/             # Portal Admin Backoffice
-│   │   │   ├── MemberManagement.tsx   # Single Source of Truth Data Anggota & Pengurus
-│   │   │   ├── CMSCustomizer.tsx      # Customizer Teks & Pengaturan Web Publik
-│   │   │   ├── ProposalManagement.tsx # Workflow Persetujuan Proposal 5-Tahap
-│   │   │   ├── ExecutionReportManagement.tsx
-│   │   │   └── NewsManagement.tsx
-│   │   └── public/            # Tampilan Situs Web Publik
-│   │       ├── Hero.tsx               # Banner Utama & Tombol CTA Dinamis
-│   │       ├── SambutanKetua.tsx      # Kata Sambutan (Auto-pull dari Member Management)
-│   │       ├── VisiMisi.tsx           # Visi & Misi Organisasi
-│   │       ├── OrgChart.tsx           # Bagan Struktur Organisasi 9 Jabatan
-│   │       ├── NewsSection.tsx        # Warta & Publikasi Kegiatan
-│   │       ├── AgendaSection.tsx      # Agenda & Absensi Tanda Tangan Digital
-│   │       ├── Navbar.tsx
-│   │       └── Footer.tsx
-│   ├── context/
-│   │   └── AppContext.tsx     # State Manager & Initial Data Store
-│   ├── types/
-│   │   └── index.ts           # Definisi Tipe Data TypeScript
-│   ├── App.tsx
-│   └── main.tsx
-├── README.md
-├── package.json
-└── vite.config.ts
+src/
+├── components/
+│   ├── admin/     # Dashboard, Anggota, Workflow Proposal 5-Tahap, Absensi, Dokumen SK/ST, LPJ, CMS, Log
+│   ├── auth/      # LoginPage
+│   ├── common/    # Komponen umum (CustomDateInput, ImageUploadCompressor, dll)
+│   └── public/    # Halaman publik (Hero, Sambutan, VisiMisi, Struktur, Berita, Agenda, Footer)
+├── context/       # AppContext.tsx — state global + seed + sinkronisasi
+├── lib/           # supabase.ts — inisialisasi client Supabase
+├── services/      # apiService.ts (sesi/auth), cloudSync.ts (adapter CRUD cloud)
+├── types/         # Definisi tipe TypeScript
+└── utils/         # dateFormatter, RoleAccessControl (RBAC), dll
 ```
 
----
+## 🔐 Keamanan & Otentikasi (penting — sudah diterapkan)
+- **Login = Supabase Auth** (email + password). Tidak ada lagi password plaintext, sesi palsu, atau
+  password universal cadangan.
+- **6 akun pengurus** (super admin, ketua, wakil ketua, sekretaris, bendahara, ketua bidang) terdaftar di
+  Supabase Auth; peran tersimpan di `app_metadata.dwp_role` (JWT) — sumber kebenaran server.
+- **RLS aktif di semua tabel.** Anonim hanya bisa membaca: `news` yang terbit, `site_config`, dan dua
+  *view* publik (`v_members_publik`, `v_kegiatan_publik`) yang TIDAK memuat data pribadi (NIP, kontak,
+  golongan darah, keluarga, anggaran). Semua tulis/ubah wajib login sesuai peran.
+- Data privat (anggota, proposal, absensi, LPJ, log, akun, dokumen, notifikasi) hanya untuk pengguna login.
+- Kolom `password_hash` sudah dihapus dari `user_accounts`.
 
-## 📝 Catatan Perubahan & Pembaruan Terlengkap (Changelog)
+> Catatan teknis: validator email Supabase menolak domain `@malut.go.id`, sehingga email login memakai
+> alias `dwpgtk.<username>@gmail.com`. Username & peran di aplikasi tidak berubah.
 
-### 1. Single Source of Truth Data Profil & Foto Pengurus
-- Seluruh data anggota, pengurus inti, hingga Ketua DWP dikelola **100% dari Manajemen Anggota** (`MemberManagement.tsx`).
-- Foto profil yang diunggah di Manajemen Anggota secara otomatis terhubung dan tampil di halaman publik (**Sambutan Ketua** dan **Bagan Struktur Organisasi**).
+## 💾 Penyimpanan Data
+Arsitektur **lokal-cache + cloud**:
+- Data publik & kerja disinkronkan ke Supabase (11 tabel: `members`, `activity_proposals`, `news`,
+  `site_config`, `attendance_records`, `execution_reports`, `approval_logs`, `user_accounts`,
+  `activity_documents`, `notifications`, `kop_surat_config`).
+- Mode anonim/offline: baca publik via view + cache LocalStorage; **tidak ada tulis cloud**.
+- Seed demo hanya di-push ke cloud saat tabel terkait masih kosong; notifikasi seed demo tidak pernah
+  dikirim ke cloud.
 
-### 2. Penyesuaian 9 Struktur Jabatan Resmi DWP
-Struktur hirarki jabatan di seluruh aplikasi mengikut 9 susunan resmi:
-1. `Ketua`
-2. `Wakil Ketua`
-3. `Sekretaris`
-4. `Wakil Sekretaris`
-5. `Bendahara`
-6. `Ketua Bidang Pendidikan`
-7. `Ketua Bidang Ekonomi`
-8. `Ketua Bidang Sosial Budaya`
-9. `Anggota`
+## 🛠️ Menjalankan di Local (localhost-first)
+```bash
+npm install
+npm run dev -- --host 0.0.0.0 --port 4000   # akses http://localhost:4000
+npm run build                                # quality gate: tsc + vite, Zero TS Error
+```
+Env lokal (`.env.local`): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
 
-### 3. Validasi Jabatan Tunggal (Bebas Duplikasi)
-- 8 Jabatan Pengurus bersifat **Tunggal**. Sistem secara otomatis memblokir simpan apabila terjadi duplikasi pengurus pada posisi yang sama.
+## 🚦 Alur Rilis (WAJIB — lihat AGENTS.md)
+1. Semua pengembangan & uji dilakukan di **localhost:4000**.
+2. Lolos `npm run build` (Zero TS Error) + verifikasi visual/QA.
+3. **Push ke `origin/main` hanya dengan izin tertulis pemilik** → Vercel auto-deploy (±1–2 menit).
+4. Skema Supabase diubah hanya via SQL terverifikasi (kompatibel mundur / zero-downtime).
 
-### 4. Pemetaan Otomatis Kolom Bidang Organisasi
-- **Ketua, Wakil Ketua, Sekretaris, Wakil Sekretaris, Bendahara** ➔ Otomatis `-` (*Blank / Tanpa Bidang*).
-- **Ketua Bidang Pendidikan** ➔ Otomatis `Pendidikan`.
-- **Ketua Bidang Ekonomi** ➔ Otomatis `Ekonomi`.
-- **Ketua Bidang Sosial Budaya** ➔ Otomatis `Sosial Budaya`.
-- **Anggota** ➔ Bebas memilih bidang (Pendidikan, Ekonomi, Sosbud, `-`).
-- Opsi `Sekretariat` telah dihapus dari pilihan bidang.
-
-### 5. Penyesuaian & Penambahan Field Profil Anggota
-- **Pekerjaan / Profesi**: Diisi dengan diketik manual *(opsional)*.
-- **Instansi / Tempat Bekerja**: Diisi dengan diketik manual.
-- **Gol. Darah**: Pilih dropdown (`-`, `A`, `B`, `AB`, `O`) milik Anggota DWP.
-- **Nama Suami**: Diisi dengan diketik manual.
-- **Nama Anak-Anak**: Diisi dengan diketik manual.
-- **Urutan Field Formulir**: Pekerjaan ➔ Instansi ➔ Gol. Darah ➔ Nama Suami ➔ Nama Anak-Anak.
-- Tampilan modal formulir dirancang proporsional, tanpa box grouping, dan menggunakan scroll internal (`max-h-[92vh]`) agar tidak ada field yang terpotong.
-
-### 6. Kustomisasi Dinamis Tombol Utama Hero (CTA Button)
-- Label Teks dan Aksi/Fungsi Klik tombol utama Hero dapat disunting bebas dari menu **CMS Customizer** (*Scroll Berita, Agenda, Sambutan, Visi Misi, Struktur, Masuk Admin, atau URL Khusus*).
-
-### 7. Penyederhanaan & Pembersihan Elemen Tampilan
-- Menghapus Top Notice Banner ("Situs Resmi...").
-- Menghapus Pill Badge ("Portal Resmi DWP...").
-- Menghapus Ringkasan Organisasi dari Hero section.
-- Menghapus Tombol Workflow Approval dari Hero section.
-- Menghapus Subteks berulang di bawah Sambutan Ketua dan Visi Misi.
-- Menghapus badge "Ketua Pengurus" dan subteks unit kerja pada kartu Ketua DWP di Bagan Struktur Organisasi.
-
----
-
-## 🛠️ Cara Menjalankan di Antigravity IDE
-
-1. **Buka Folder Proyek** di Antigravity IDE:
-   `File -> Open Folder` ➔ `C:\Users\rachmat\.gemini\antigravity\scratch\dharma-wanita-app`
-2. **Jalankan Dev Server**:
-   Buka Terminal di Antigravity IDE (`Ctrl + ~`) lalu jalankan:
-   ```bash
-   npm run dev
-   ```
-3. **Akses Aplikasi**:
-   Buka peramban di `http://localhost:3000`.
-4. **Kompilasi Production**:
-   ```bash
-   npm run build
-   ```
+## 📝 Catatan Rilis Terbaru
+- **Keamanan (RLS + Auth):** login Supabase Auth asli, akun Auth 6 pengurus, RLS 8(+3) tabel, view publik
+  aman, hapus backdoor password & kolom password_hash.
+- **Sinkron cloud:** dokumen kegiatan (SK/ST/undangan), notifikasi, kop surat kini tersimpan di Supabase.
+- **Perbaikan data:** normalisasi tanggal ISO (anti `RangeError`), seed absensi selaras proposal.
+- **Branding & SEO:** hapus semua sisa "Balai Guru Penggerak"/Kemendikbudristek; alamat resmi Tidore
+  Kepulauan konsisten; meta description, Open Graph, Twitter card.
