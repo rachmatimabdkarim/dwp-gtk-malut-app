@@ -58,8 +58,6 @@ export const UserManagement: React.FC = () => {
   // Form State
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [memberId, setMemberId] = useState<string>('');
   const [manualRole, setManualRole] = useState<UserRole>('admin_master');
   const [status, setStatus] = useState<'aktif' | 'non-aktif'>('aktif');
@@ -150,16 +148,13 @@ export const UserManagement: React.FC = () => {
         role: targetRole,
         status
       };
-      if (password.trim()) {
-        updateData.password = password.trim();
-      }
       updateUserAccount(editingUser.id, updateData);
       setEditingUser(null);
     } else {
       addUserAccount({
         username,
         email,
-        password: password.trim() || 'dwp123',
+        password: '',
         memberId: memberId || undefined,
         role: targetRole,
         status
@@ -169,8 +164,6 @@ export const UserManagement: React.FC = () => {
     setShowAddModal(false);
     setUsername('');
     setEmail('');
-    setPassword('');
-    setShowPassword(false);
     setMemberId('');
     setManualRole('admin_master');
     setStatus('aktif');
@@ -180,8 +173,6 @@ export const UserManagement: React.FC = () => {
     setEditingUser(null);
     setUsername('');
     setEmail('');
-    setPassword('dwp123');
-    setShowPassword(false);
     setMemberId('');
     setManualRole('admin_master');
     setStatus('aktif');
@@ -192,8 +183,6 @@ export const UserManagement: React.FC = () => {
     setEditingUser(u);
     setUsername(u.username);
     setEmail(u.email);
-    setPassword(u.password || '');
-    setShowPassword(false);
     setMemberId(u.memberId || '');
     setManualRole(u.role);
     setStatus(u.status);
@@ -449,22 +438,19 @@ export const UserManagement: React.FC = () => {
                               <button
                                 onClick={() => startEdit(u)}
                                 className="p-1.5 text-slate-600 hover:text-dwp-burgundy hover:bg-slate-100 rounded-lg transition-colors"
-                                title="Edit Akun User & Ganti Password"
+                                title="Edit Akun User"
                               >
                                 <Edit2 className="w-4 h-4" />
                               </button>
 
                               <button
                                 onClick={() => {
-                                  if (confirm(`Apakah Anda yakin ingin mereset password akun "${u.username}" menjadi password default "dwp123"?`)) {
-                                    updateUserAccount(u.id, { password: 'dwp123' });
-                                    alert(`✅ Password untuk akun "${u.username}" telah berhasil di-reset menjadi "dwp123".`);
-                                  }
+                                  alert('ℹ️ Akun dikelola Superadmin via Supabase Auth.\n\nPengubahan atau reset password dilakukan secara terpusat melalui Supabase Auth.');
                                 }}
-                                className="p-1.5 text-slate-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                                title="Reset Password Akun ke Default (dwp123)"
+                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                title="Akun dikelola Superadmin via Supabase Auth"
                               >
-                                <Key className="w-4 h-4 text-amber-600" />
+                                <Key className="w-4 h-4 text-slate-400" />
                               </button>
                               {u.username !== 'admin.it' && (
                                 <button
@@ -785,43 +771,21 @@ export const UserManagement: React.FC = () => {
                 />
               </div>
 
-              {/* Password & Reset Password Section */}
-              <div className="space-y-1.5 bg-amber-500/10 p-4 rounded-2xl border border-amber-200">
-                <div className="flex items-center justify-between">
-                  <label className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
-                    <Key className="w-4 h-4 text-dwp-burgundy" />
-                    <span>Password / Reset Password Akun</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setPassword('dwp123')}
-                    className="text-[10px] font-bold text-dwp-burgundy bg-white px-2 py-0.5 rounded-lg border border-slate-300 hover:bg-slate-100 transition-colors flex items-center gap-1 shadow-sm"
-                  >
-                    <RefreshCw className="w-3 h-3 text-dwp-gold" />
-                    <span>Set Password Default ("dwp123")</span>
-                  </button>
+              {/* Kredensial Akun via Supabase Auth */}
+              <div className="space-y-1.5 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <label className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
+                  <ShieldCheck className="w-4 h-4 text-dwp-burgundy" />
+                  <span>Kredensial & Autentikasi Akun</span>
+                </label>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-start gap-2.5">
+                  <Lock className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-amber-900">Akun dikelola Superadmin via Supabase Auth</p>
+                    <p className="text-[11px] text-amber-700 mt-0.5 leading-relaxed">
+                      Password dan kredensial login dikelola secara terpusat melalui Supabase Auth demi keamanan RLS. Pembuatan atau pengubahan password plaintext dinonaktifkan.
+                    </p>
+                  </div>
                 </div>
-
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={editingUser ? "Kosongkan jika tidak ingin mengubah password..." : "Masukkan password login akun baru..."}
-                    className="w-full p-2.5 pr-10 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-mono font-bold text-slate-900 bg-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-700"
-                    title={showPassword ? "Sembunyikan Password" : "Tampilkan Password"}
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                <p className="text-[10px] text-slate-500 italic pt-0.5">
-                  {editingUser ? "* Kosongkan jika password saat ini tidak ingin diubah." : "* Password ini digunakan untuk login masuk ke portal admin."}
-                </p>
               </div>
 
               {/* Tautan Data Anggota DWP */}

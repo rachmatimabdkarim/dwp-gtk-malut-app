@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { 
   UserRole, 
   UserPersona, 
@@ -754,6 +754,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Guard refs: Cegah push otomatis saat menerima data dari cloud atau perubahan auth
+  const isReceivingFromCloudRef = useRef<boolean>(false);
+  const prevUserAccountsRef = useRef<UserAccount[]>(userAccounts);
+  const prevMembersRef = useRef<Member[]>(members);
+  const prevProposalsRef = useRef<ActivityProposal[]>(proposals);
+  const prevAttendanceRef = useRef<AttendanceRecord[]>(attendanceRecords);
+  const prevNewsRef = useRef<NewsArticle[]>(news);
+  const prevSiteConfigRef = useRef<SiteConfig>(siteConfig);
+
   useEffect(() => {
     localStorage.setItem('dwp_system_audit_logs', JSON.stringify(systemAuditLogs));
   }, [systemAuditLogs]);
@@ -891,11 +900,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const authSession = await apiService.login(usernameInput, passwordInput);
     if (!authSession || !authSession.user) return false;
 
-    const acc = buildUserAccountFromSession(authSession.user, userAccounts);
+    // Muat data cloud terbaru terlebih dahulu sebelum set auth untuk mencegah benturan data demo
+    isReceivingFromCloudRef.current = true;
+    await reloadFromCloud(true);
+
+    const savedUsers = localStorage.getItem('dwp_user_accounts');
+    const localUsers: UserAccount[] = savedUsers ? JSON.parse(savedUsers) : userAccounts;
+    const acc = buildUserAccountFromSession(authSession.user, localUsers);
+
     setIsAuthenticated(true);
     setCurrentAccount(acc);
 
-    const effRole = (authSession.user.app_metadata?.dwp_role as UserRole) || getEffectiveRole(acc, members);
+    const savedMembers = localStorage.getItem('dwp_members');
+    const currentMembers: Member[] = savedMembers ? JSON.parse(savedMembers) : members;
+    const effRole = (authSession.user.app_metadata?.dwp_role as UserRole) || getEffectiveRole(acc, currentMembers);
     setCurrentRole(effRole);
 
     addSystemAuditLog({
@@ -936,39 +954,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentRole('anggota');
     setActiveTab('public');
     window.history.pushState(null, '', '/login');
+    // Muat kembali data versi publik setelah logout
+    reloadFromCloud(false);
   };
 
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
 
-  const reloadFromCloud = async () => {
+  const reloadFromCloud = async (overrideAuth?: boolean) => {
     setIsCloudSyncing(true);
+    isReceivingFromCloudRef.current = true;
     try {
-      const cloudData = await cloudSync.fetchAllInitialData();
+      let hasAuth = overrideAuth;
+      if (hasAuth === undefined) {
+        const { data: { session } } = await supabase.auth.getSession();
+        hasAuth = !!session?.user;
+      }
+      const cloudData = await cloudSync.fetchAllInitialData(hasAuth);
       if (!cloudData) return;
 
       if (cloudData.members && cloudData.members.length > 0) {
         setMembers(cloudData.members);
+        prevMembersRef.current = cloudData.members;
+        localStorage.setItem('dwp_members', JSON.stringify(cloudData.members));
       }
       if (cloudData.userAccounts && cloudData.userAccounts.length > 0) {
         setUserAccounts(cloudData.userAccounts);
+        prevUserAccountsRef.current = cloudData.userAccounts;
+        localStorage.setItem('dwp_user_accounts', JSON.stringify(cloudData.userAccounts));
       }
       if (cloudData.proposals && cloudData.proposals.length > 0) {
         setProposals(cloudData.proposals);
+        prevProposalsRef.current = cloudData.proposals;
+        localStorage.setItem('dwp_proposals', JSON.stringify(cloudData.proposals));
       }
       if (cloudData.siteConfig) {
-        setSiteConfig(prev => ({ ...prev, ...cloudData.siteConfig }));
+        setSiteConfig(prev => {
+          const merged = { ...prev, ...cloudData.siteConfig };
+          prevSiteConfigRef.current = merged;
+          localStorage.setItem('dwp_site_config', JSON.stringify(merged));
+          return merged;
+        });
       }
       if (cloudData.news && cloudData.news.length > 0) {
         setNews(cloudData.news);
+        prevNewsRef.current = cloudData.news;
+        localStorage.setItem('dwp_news', JSON.stringify(cloudData.news));
       }
       if (cloudData.attendance && cloudData.attendance.length > 0) {
         setAttendanceRecords(cloudData.attendance);
+        prevAttendanceRef.current = cloudData.attendance;
+        localStorage.setItem('dwp_attendance', JSON.stringify(cloudData.attendance));
       }
     } catch (err) {
       console.warn('Reload from cloud error:', err);
     } finally {
       setIsCloudSyncing(false);
+      setTimeout(() => {
+        isReceivingFromCloudRef.current = false;
+      }, 50);
     }
   };
 
@@ -978,51 +1022,86 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const loadInitialCloudData = async () => {
       setIsCloudSyncing(true);
+      isReceivingFromCloudRef.current = true;
       try {
-        const cloudData = await cloudSync.fetchAllInitialData();
+        const { data: { session } } = await supabase.auth.getSession();
+        const hasAuth = !!session?.user;
+        const cloudData = await cloudSync.fetchAllInitialData(hasAuth);
         if (!isMounted || !cloudData) return;
 
+        // 1. Members
         if (cloudData.members && cloudData.members.length > 0) {
           setMembers(cloudData.members);
+          prevMembersRef.current = cloudData.members;
           localStorage.setItem('dwp_members', JSON.stringify(cloudData.members));
-        } else {
-          cloudSync.syncMembers(INITIAL_MEMBERS);
+        } else if (hasAuth && cloudData.members !== null && cloudData.members.length === 0) {
+          // Hanya auto-seed jika tabel cloud benar-benar KOSONG (0 baris)
+          await cloudSync.syncMembers(INITIAL_MEMBERS);
+          setMembers(INITIAL_MEMBERS);
+          prevMembersRef.current = INITIAL_MEMBERS;
+          localStorage.setItem('dwp_members', JSON.stringify(INITIAL_MEMBERS));
         }
 
+        // 2. User Accounts
         if (cloudData.userAccounts && cloudData.userAccounts.length > 0) {
           setUserAccounts(cloudData.userAccounts);
+          prevUserAccountsRef.current = cloudData.userAccounts;
           localStorage.setItem('dwp_user_accounts', JSON.stringify(cloudData.userAccounts));
-        } else {
-          cloudSync.syncUserAccounts(INITIAL_USER_ACCOUNTS);
+        } else if (hasAuth && cloudData.userAccounts !== null && cloudData.userAccounts.length === 0) {
+          // Hanya auto-seed jika tabel cloud benar-benar KOSONG (0 baris)
+          await cloudSync.syncUserAccounts(INITIAL_USER_ACCOUNTS);
+          setUserAccounts(INITIAL_USER_ACCOUNTS);
+          prevUserAccountsRef.current = INITIAL_USER_ACCOUNTS;
+          localStorage.setItem('dwp_user_accounts', JSON.stringify(INITIAL_USER_ACCOUNTS));
         }
 
+        // 3. Proposals
         if (cloudData.proposals && cloudData.proposals.length > 0) {
           setProposals(cloudData.proposals);
+          prevProposalsRef.current = cloudData.proposals;
           localStorage.setItem('dwp_proposals', JSON.stringify(cloudData.proposals));
-        } else {
-          cloudSync.syncProposals(INITIAL_PROPOSALS);
+        } else if (hasAuth && cloudData.proposals !== null && cloudData.proposals.length === 0) {
+          // Hanya auto-seed jika tabel cloud benar-benar KOSONG (0 baris)
+          await cloudSync.syncProposals(INITIAL_PROPOSALS);
+          setProposals(INITIAL_PROPOSALS);
+          prevProposalsRef.current = INITIAL_PROPOSALS;
+          localStorage.setItem('dwp_proposals', JSON.stringify(INITIAL_PROPOSALS));
         }
 
+        // 4. Site Config
         if (cloudData.siteConfig) {
           setSiteConfig(prev => {
             const merged = { ...prev, ...cloudData.siteConfig };
+            prevSiteConfigRef.current = merged;
             localStorage.setItem('dwp_site_config', JSON.stringify(merged));
             return merged;
           });
         }
 
+        // 5. News
         if (cloudData.news && cloudData.news.length > 0) {
           setNews(cloudData.news);
+          prevNewsRef.current = cloudData.news;
           localStorage.setItem('dwp_news', JSON.stringify(cloudData.news));
-        } else {
-          cloudSync.syncNews(INITIAL_NEWS);
+        } else if (hasAuth && cloudData.news !== null && cloudData.news.length === 0) {
+          // Hanya auto-seed jika tabel cloud benar-benar KOSONG (0 baris)
+          await cloudSync.syncNews(INITIAL_NEWS);
+          setNews(INITIAL_NEWS);
+          prevNewsRef.current = INITIAL_NEWS;
+          localStorage.setItem('dwp_news', JSON.stringify(INITIAL_NEWS));
         }
 
+        // 6. Attendance
         if (cloudData.attendance && cloudData.attendance.length > 0) {
           setAttendanceRecords(cloudData.attendance);
+          prevAttendanceRef.current = cloudData.attendance;
           localStorage.setItem('dwp_attendance', JSON.stringify(cloudData.attendance));
-        } else {
-          cloudSync.syncAttendance(INITIAL_ATTENDANCE);
+        } else if (hasAuth && cloudData.attendance !== null && cloudData.attendance.length === 0) {
+          // Hanya auto-seed jika tabel cloud benar-benar KOSONG (0 baris)
+          await cloudSync.syncAttendance(INITIAL_ATTENDANCE);
+          setAttendanceRecords(INITIAL_ATTENDANCE);
+          prevAttendanceRef.current = INITIAL_ATTENDANCE;
+          localStorage.setItem('dwp_attendance', JSON.stringify(INITIAL_ATTENDANCE));
         }
       } catch (err) {
         console.warn('Initial cloud data loading error, fallback to local data:', err);
@@ -1030,6 +1109,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (isMounted) {
           setIsInitialized(true);
           setIsCloudSyncing(false);
+          setTimeout(() => {
+            isReceivingFromCloudRef.current = false;
+          }, 50);
         }
       }
     };
@@ -1041,34 +1123,66 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  // Save to localStorage & automatically upsert to Supabase Cloud on state changes
+  // Save to localStorage & automatically upsert to Supabase Cloud on state changes (Hanya saat login & bukan saat menerima data cloud)
   useEffect(() => {
     localStorage.setItem('dwp_user_accounts', JSON.stringify(userAccounts));
-    if (isInitialized) {
+    if (isReceivingFromCloudRef.current) {
+      prevUserAccountsRef.current = userAccounts;
+      return;
+    }
+    if (prevUserAccountsRef.current === userAccounts) {
+      return;
+    }
+    prevUserAccountsRef.current = userAccounts;
+    if (isInitialized && isAuthenticated) {
       cloudSync.syncUserAccounts(userAccounts);
     }
-  }, [userAccounts, isInitialized]);
+  }, [userAccounts, isInitialized, isAuthenticated]);
 
   useEffect(() => {
     localStorage.setItem('dwp_members', JSON.stringify(members));
-    if (isInitialized) {
+    if (isReceivingFromCloudRef.current) {
+      prevMembersRef.current = members;
+      return;
+    }
+    if (prevMembersRef.current === members) {
+      return;
+    }
+    prevMembersRef.current = members;
+    if (isInitialized && isAuthenticated) {
       cloudSync.syncMembers(members);
     }
-  }, [members, isInitialized]);
+  }, [members, isInitialized, isAuthenticated]);
 
   useEffect(() => {
     localStorage.setItem('dwp_proposals', JSON.stringify(proposals));
-    if (isInitialized) {
+    if (isReceivingFromCloudRef.current) {
+      prevProposalsRef.current = proposals;
+      return;
+    }
+    if (prevProposalsRef.current === proposals) {
+      return;
+    }
+    prevProposalsRef.current = proposals;
+    if (isInitialized && isAuthenticated) {
       cloudSync.syncProposals(proposals);
     }
-  }, [proposals, isInitialized]);
+  }, [proposals, isInitialized, isAuthenticated]);
 
   useEffect(() => {
     localStorage.setItem('dwp_attendance', JSON.stringify(attendanceRecords));
-    if (isInitialized) {
+    if (isReceivingFromCloudRef.current) {
+      prevAttendanceRef.current = attendanceRecords;
+      return;
+    }
+    if (prevAttendanceRef.current === attendanceRecords) {
+      return;
+    }
+    prevAttendanceRef.current = attendanceRecords;
+    if (isInitialized && isAuthenticated) {
       cloudSync.syncAttendance(attendanceRecords);
     }
-  }, [attendanceRecords, isInitialized]);
+  }, [attendanceRecords, isInitialized, isAuthenticated]);
 
   useEffect(() => {
     localStorage.setItem('dwp_reports', JSON.stringify(reports));
@@ -1076,10 +1190,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     localStorage.setItem('dwp_news', JSON.stringify(news));
-    if (isInitialized) {
+    if (isReceivingFromCloudRef.current) {
+      prevNewsRef.current = news;
+      return;
+    }
+    if (prevNewsRef.current === news) {
+      return;
+    }
+    prevNewsRef.current = news;
+    if (isInitialized && isAuthenticated) {
       cloudSync.syncNews(news);
     }
-  }, [news, isInitialized]);
+  }, [news, isInitialized, isAuthenticated]);
 
   useEffect(() => {
     localStorage.setItem('dwp_site_config', JSON.stringify(siteConfig));
@@ -1093,10 +1215,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       faviconLink.href = siteConfig.faviconUrl;
     }
-    if (isInitialized) {
+    if (isReceivingFromCloudRef.current) {
+      prevSiteConfigRef.current = siteConfig;
+      return;
+    }
+    if (prevSiteConfigRef.current === siteConfig) {
+      return;
+    }
+    prevSiteConfigRef.current = siteConfig;
+    if (isInitialized && isAuthenticated) {
       cloudSync.syncSiteConfig(siteConfig);
     }
-  }, [siteConfig, isInitialized]);
+  }, [siteConfig, isInitialized, isAuthenticated]);
 
   useEffect(() => {
     localStorage.setItem('dwp_notifications', JSON.stringify(notifications));

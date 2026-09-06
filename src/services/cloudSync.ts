@@ -71,22 +71,97 @@ export const ensureUUID = (id?: string): string => {
   return newUuid;
 };
 
+/**
+ * Cek apakah terdapat sesi login aktif di Supabase Auth.
+ */
+export const hasActiveAuthSession = async (): Promise<boolean> => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session?.user) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Menangani error Supabase dengan tenang (terutama 403 / 42501 RLS restriction).
+ * Menghindari error merah di console pengguna.
+ */
+const handleSupabaseError = (context: string, error: any) => {
+  if (!error) return;
+  const isRlsRestriction = 
+    error.code === '42501' || 
+    error.status === 403 || 
+    (error.message && (
+      error.message.toLowerCase().includes('row-level security') ||
+      error.message.toLowerCase().includes('permission denied') ||
+      error.message.toLowerCase().includes('violates row-level security')
+    ));
+
+  if (isRlsRestriction) {
+    console.info(`[RLS Policy] Akses dibatasi pada ${context}: ${error.message}`);
+  } else {
+    console.warn(`Supabase ${context} warning:`, error.message);
+  }
+};
+
 export const cloudSync = {
   // ==========================================
   // 1. DATA ANGGOTA / MEMBERS
   // ==========================================
-  async fetchMembers(): Promise<Member[] | null> {
+  async fetchMembers(isLoggedIn?: boolean): Promise<Member[] | null> {
     try {
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
+
+      if (!isAuth) {
+        // Mode Anonim: HANYA baca view publik v_members_publik
+        const { data, error } = await supabase
+          .from('v_members_publik')
+          .select('id, name, jabatan, bidang, unit_kerja, avatar')
+          .order('name', { ascending: true });
+
+        if (error) {
+          handleSupabaseError('fetchMembers (v_members_publik)', error);
+          return null;
+        }
+        if (!data) return null;
+        if (data.length === 0) return [];
+
+        return data.map((row: any): Member => ({
+          id: row.id,
+          nik: undefined,
+          nip: undefined,
+          name: row.name,
+          email: '',
+          phone: '',
+          jabatan: row.jabatan || 'Anggota',
+          bidang: (row.bidang as any) || '-',
+          unitKerja: row.unit_kerja || '',
+          pekerjaan: undefined,
+          golonganDarah: '-',
+          namaSuami: undefined,
+          namaAnak: undefined,
+          status: 'Aktif',
+          avatar: row.avatar || undefined,
+          dateJoined: ''
+        }));
+      }
+
+      // Mode Login: Baca tabel privat members lengkap
       const { data, error } = await supabase
         .from('members')
         .select('*')
         .order('name', { ascending: true });
 
       if (error) {
-        console.warn('Supabase fetchMembers error:', error.message);
+        handleSupabaseError('fetchMembers (members table)', error);
         return null;
       }
-      if (!data || data.length === 0) return null;
+      if (!data) return null;
+      if (data.length === 0) return [];
 
       return data.map((row: any): Member => ({
         id: row.id,
@@ -114,8 +189,12 @@ export const cloudSync = {
 
   async syncMembers(members: Member[]) {
     try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
       if (!members || members.length === 0) return;
-      const rows = members.map(m => ({
+      // Jangan pernah push data anggota tanpa email valid (mis. dari view publik v_members_publik)
+      const validMembers = members.filter(m => m.email && m.email.trim() !== '');
+      if (validMembers.length === 0) return;
+      const rows = validMembers.map(m => ({
         id: ensureUUID(m.id),
         nik: m.nik || null,
         nip: m.nip || null,
@@ -135,7 +214,7 @@ export const cloudSync = {
       }));
 
       const { error } = await supabase.from('members').upsert(rows, { onConflict: 'id' });
-      if (error) console.warn('Supabase syncMembers error:', error.message);
+      if (error) handleSupabaseError('syncMembers', error);
     } catch (e) {
       console.warn('Sync members error:', e);
     }
@@ -143,34 +222,41 @@ export const cloudSync = {
 
   async deleteMember(id: string) {
     try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
       const uuid = ensureUUID(id);
-      await supabase.from('members').delete().eq('id', uuid);
+      const { error } = await supabase.from('members').delete().eq('id', uuid);
+      if (error) handleSupabaseError('deleteMember', error);
     } catch (e) {
       console.warn('Delete member error:', e);
     }
   },
 
   // ==========================================
-  // 2. DATA AKUN / USER ACCOUNTS
-  // ==========================================
-  async fetchUserAccounts(): Promise<UserAccount[] | null> {
+  async fetchUserAccounts(isLoggedIn?: boolean): Promise<UserAccount[] | null> {
     try {
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
+      if (!isAuth) {
+        // Mode Anonim: JANGAN baca user_accounts dari Supabase (cegah 403 RLS console error)
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('user_accounts')
         .select('*')
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.warn('Supabase fetchUserAccounts error:', error.message);
+        handleSupabaseError('fetchUserAccounts', error);
         return null;
       }
-      if (!data || data.length === 0) return null;
+      if (!data) return null;
+      if (data.length === 0) return [];
 
       return data.map((row: any): UserAccount => ({
         id: row.id,
         username: row.username,
         email: row.email,
-        password: row.password_hash || (row.role === 'admin_master' ? 'admin123' : 'dwp2026!'),
+        password: '', // Keamanan RLS: jangan simpan password/hash ke state lokal
         role: row.role as UserRole,
         memberId: row.member_id || undefined,
         status: row.status === 'non-aktif' ? 'non-aktif' : 'aktif',
@@ -184,12 +270,13 @@ export const cloudSync = {
 
   async syncUserAccounts(users: UserAccount[]) {
     try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
       if (!users || users.length === 0) return;
+      // Jangan simpan atau push plaintext password ke kolom password_hash
       const rows = users.map(u => ({
         id: ensureUUID(u.id),
         username: u.username,
         email: u.email,
-        password_hash: u.password || 'admin123',
         role: u.role,
         member_id: u.memberId ? ensureUUID(u.memberId) : null,
         status: u.status || 'aktif',
@@ -197,7 +284,7 @@ export const cloudSync = {
       }));
 
       const { error } = await supabase.from('user_accounts').upsert(rows, { onConflict: 'id' });
-      if (error) console.warn('Supabase syncUserAccounts error:', error.message);
+      if (error) handleSupabaseError('syncUserAccounts', error);
     } catch (e) {
       console.warn('Sync user accounts error:', e);
     }
@@ -205,8 +292,10 @@ export const cloudSync = {
 
   async deleteUserAccount(id: string) {
     try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
       const uuid = ensureUUID(id);
-      await supabase.from('user_accounts').delete().eq('id', uuid);
+      const { error } = await supabase.from('user_accounts').delete().eq('id', uuid);
+      if (error) handleSupabaseError('deleteUserAccount', error);
     } catch (e) {
       console.warn('Delete user account error:', e);
     }
@@ -215,18 +304,55 @@ export const cloudSync = {
   // ==========================================
   // 3. PROPOSAL KEGIATAN & LOG APPROVAL
   // ==========================================
-  async fetchProposals(): Promise<ActivityProposal[] | null> {
+  async fetchProposals(isLoggedIn?: boolean): Promise<ActivityProposal[] | null> {
     try {
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
+
+      if (!isAuth) {
+        // Mode Anonim: HANYA baca view publik v_kegiatan_publik (tanpa approval_logs privat)
+        const { data, error } = await supabase
+          .from('v_kegiatan_publik')
+          .select('id, title, bidang, organizer, location, start_date, end_date, current_stage');
+
+        if (error) {
+          handleSupabaseError('fetchProposals (v_kegiatan_publik)', error);
+          return null;
+        }
+        if (!data) return null;
+        if (data.length === 0) return [];
+
+        return data.map((row: any): ActivityProposal => ({
+          id: row.id,
+          title: row.title,
+          bidang: row.bidang || 'Pendidikan',
+          organizer: row.organizer || '',
+          background: '',
+          objective: '',
+          targetAudience: '',
+          estimatedBudget: 0,
+          location: row.location || '',
+          startDate: row.start_date || '',
+          endDate: row.end_date || '',
+          currentStage: (row.current_stage as ProposalStage) || 'approved',
+          stageProgress: 5,
+          createdBy: row.organizer || 'Admin DWP',
+          createdAt: row.start_date || '',
+          logs: []
+        }));
+      }
+
+      // Mode Login: Baca tabel privat activity_proposals & approval_logs lengkap
       const { data, error } = await supabase
         .from('activity_proposals')
         .select('*, approval_logs(*)')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.warn('Supabase fetchProposals error:', error.message);
+        handleSupabaseError('fetchProposals (activity_proposals)', error);
         return null;
       }
-      if (!data || data.length === 0) return null;
+      if (!data) return null;
+      if (data.length === 0) return [];
 
       return data.map((row: any): ActivityProposal => {
         const rawLogs = Array.isArray(row.approval_logs) ? row.approval_logs : [];
@@ -279,6 +405,7 @@ export const cloudSync = {
 
   async syncProposals(proposals: ActivityProposal[]) {
     try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
       if (!proposals || proposals.length === 0) return;
 
       for (const p of proposals) {
@@ -304,7 +431,7 @@ export const cloudSync = {
         }, { onConflict: 'id' });
 
         if (pErr) {
-          console.warn('Upsert proposal error:', pErr.message);
+          handleSupabaseError('syncProposals (activity_proposals)', pErr);
           continue;
         }
 
@@ -322,7 +449,7 @@ export const cloudSync = {
           }));
 
           const { error: lErr } = await supabase.from('approval_logs').upsert(logRows, { onConflict: 'id' });
-          if (lErr) console.warn('Upsert approval logs error:', lErr.message);
+          if (lErr) handleSupabaseError('syncProposals (approval_logs)', lErr);
         }
       }
     } catch (e) {
@@ -332,9 +459,11 @@ export const cloudSync = {
 
   async deleteProposal(id: string) {
     try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
       const propId = ensureUUID(id);
       await supabase.from('approval_logs').delete().eq('proposal_id', propId);
-      await supabase.from('activity_proposals').delete().eq('id', propId);
+      const { error } = await supabase.from('activity_proposals').delete().eq('id', propId);
+      if (error) handleSupabaseError('deleteProposal', error);
     } catch (e) {
       console.warn('Delete proposal error:', e);
     }
@@ -351,7 +480,7 @@ export const cloudSync = {
         .limit(1);
 
       if (error) {
-        console.warn('Supabase fetchSiteConfig error:', error.message);
+        handleSupabaseError('fetchSiteConfig', error);
         return null;
       }
       if (!data || data.length === 0) return null;
@@ -383,6 +512,7 @@ export const cloudSync = {
 
   async syncSiteConfig(config: SiteConfig) {
     try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
       if (!config) return;
       const { error } = await supabase.from('site_config').upsert({
         id: 1,
@@ -405,7 +535,7 @@ export const cloudSync = {
         updated_at: new Date().toISOString()
       }, { onConflict: 'id' });
 
-      if (error) console.warn('Supabase syncSiteConfig error:', error.message);
+      if (error) handleSupabaseError('syncSiteConfig', error);
     } catch (e) {
       console.warn('Sync site config error:', e);
     }
@@ -414,18 +544,24 @@ export const cloudSync = {
   // ==========================================
   // 5. WARTA & BERITA KEGIATAN (NEWS)
   // ==========================================
-  async fetchNews(): Promise<NewsArticle[] | null> {
+  async fetchNews(isLoggedIn?: boolean): Promise<NewsArticle[] | null> {
     try {
-      const { data, error } = await supabase
-        .from('news')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
+      let query = supabase.from('news').select('*');
+
+      // Jika anonim, hanya query artikel yang dipublikasikan (is_published = true)
+      if (!isAuth) {
+        query = query.eq('is_published', true);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
-        // Table might not be created in Supabase yet
+        handleSupabaseError('fetchNews', error);
         return null;
       }
-      if (!data || data.length === 0) return null;
+      if (!data) return null;
+      if (data.length === 0) return [];
 
       return data.map((row: any): NewsArticle => ({
         id: row.id,
@@ -446,6 +582,7 @@ export const cloudSync = {
 
   async syncNews(newsList: NewsArticle[]) {
     try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
       if (!newsList || newsList.length === 0) return;
       const rows = newsList.map(n => ({
         id: ensureUUID(n.id),
@@ -462,7 +599,7 @@ export const cloudSync = {
 
       const { error } = await supabase.from('news').upsert(rows, { onConflict: 'id' });
       if (error && !error.message.includes('not find')) {
-        console.warn('Supabase syncNews error:', error.message);
+        handleSupabaseError('syncNews', error);
       }
     } catch (e) {
       // Ignored if table doesn't exist
@@ -471,8 +608,10 @@ export const cloudSync = {
 
   async deleteNews(id: string) {
     try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
       const uuid = ensureUUID(id);
-      await supabase.from('news').delete().eq('id', uuid);
+      const { error } = await supabase.from('news').delete().eq('id', uuid);
+      if (error) handleSupabaseError('deleteNews', error);
     } catch (e) {
       console.warn('Delete news error:', e);
     }
@@ -481,18 +620,25 @@ export const cloudSync = {
   // ==========================================
   // 6. ABSENSI DIGITAL (ATTENDANCE)
   // ==========================================
-  async fetchAttendance(): Promise<AttendanceRecord[] | null> {
+  async fetchAttendance(isLoggedIn?: boolean): Promise<AttendanceRecord[] | null> {
     try {
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
+      if (!isAuth) {
+        // Mode Anonim: JANGAN baca tabel absensi privat dari Supabase
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('attendance_records')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        // Table might not be created in Supabase yet
+        handleSupabaseError('fetchAttendance', error);
         return null;
       }
-      if (!data || data.length === 0) return null;
+      if (!data) return null;
+      if (data.length === 0) return [];
 
       return data.map((row: any): AttendanceRecord => ({
         id: row.id,
@@ -515,6 +661,7 @@ export const cloudSync = {
 
   async syncAttendance(records: AttendanceRecord[]) {
     try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
       if (!records || records.length === 0) return;
       const rows = records.map(r => ({
         id: ensureUUID(r.id),
@@ -533,7 +680,7 @@ export const cloudSync = {
 
       const { error } = await supabase.from('attendance_records').upsert(rows, { onConflict: 'id' });
       if (error && !error.message.includes('not find')) {
-        console.warn('Supabase syncAttendance error:', error.message);
+        handleSupabaseError('syncAttendance', error);
       }
     } catch (e) {
       // Ignored if table doesn't exist
@@ -543,8 +690,9 @@ export const cloudSync = {
   // ==========================================
   // 7. INITIAL BULK LOADER
   // ==========================================
-  async fetchAllInitialData() {
+  async fetchAllInitialData(isLoggedIn?: boolean) {
     try {
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
       const [
         membersRes,
         userAccountsRes,
@@ -553,12 +701,12 @@ export const cloudSync = {
         newsRes,
         attendanceRes
       ] = await Promise.allSettled([
-        this.fetchMembers(),
-        this.fetchUserAccounts(),
-        this.fetchProposals(),
+        this.fetchMembers(isAuth),
+        this.fetchUserAccounts(isAuth),
+        this.fetchProposals(isAuth),
         this.fetchSiteConfig(),
-        this.fetchNews(),
-        this.fetchAttendance()
+        this.fetchNews(isAuth),
+        this.fetchAttendance(isAuth)
       ]);
 
       return {
