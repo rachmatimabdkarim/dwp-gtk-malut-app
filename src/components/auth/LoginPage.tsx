@@ -22,6 +22,34 @@ export const LoginPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Konversi pesan error Supabase / autentikasi ke Bahasa Indonesia yang ramah
+  const getFriendlyErrorMessage = (err: any): string => {
+    const msg = (err?.message || '').toLowerCase();
+
+    if (msg.includes('invalid login credentials') || msg.includes('invalid_grant')) {
+      return 'Username / Email atau Password yang Anda masukkan tidak cocok.';
+    }
+    if (msg.includes('email not confirmed')) {
+      return 'Email Anda belum dikonfirmasi. Silakan periksa inbox email Anda untuk verifikasi.';
+    }
+    if (msg.includes('too many requests') || msg.includes('rate limit')) {
+      return 'Terlalu banyak percobaan login yang gagal. Silakan coba kembali dalam beberapa saat.';
+    }
+    if (msg.includes('user not found')) {
+      return 'Akun pengguna tidak ditemukan.';
+    }
+    if (msg.includes('password') && (msg.includes('invalid') || msg.includes('salah') || msg.includes('cocok'))) {
+      return 'Password yang Anda masukkan tidak cocok.';
+    }
+    if (msg.includes('status non-aktif') || msg.includes('non-aktif')) {
+      return 'Akun Anda dalam status Non-Aktif. Hubungi Superadmin IT.';
+    }
+    if (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('offline')) {
+      return 'Tidak dapat terhubung ke server autentikasi (koneksi offline/gangguan jaringan).';
+    }
+    return err?.message || 'Gagal melakukan autentikasi login. Silakan periksa kembali data Anda.';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -30,10 +58,10 @@ export const LoginPage: React.FC = () => {
     try {
       const success = await login(username, password);
       if (!success) {
-        setErrorMsg('Username atau Password yang Anda masukkan tidak cocok.');
+        setErrorMsg('Username / Email atau Password yang Anda masukkan tidak cocok.');
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Gagal melakukan otentikasi login.');
+      setErrorMsg(getFriendlyErrorMessage(err));
     } finally {
       setIsLoading(false);
     }

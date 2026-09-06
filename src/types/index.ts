@@ -24,6 +24,7 @@ export interface UserAccount {
   memberId?: string;       // Optional link to Member. Null for non-member IT Admins.
   status: 'aktif' | 'non-aktif';
   createdAt: string;
+  demo?: boolean;          // Penanda sesi offline demo
 }
 
 export interface Member {

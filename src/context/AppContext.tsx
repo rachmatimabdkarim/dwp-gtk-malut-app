@@ -23,8 +23,10 @@ import {
   DocumentJobDesk,
   JobDeskLog
 } from '../types';
-import { apiService } from '../services/apiService';
+import { apiService, INITIAL_USER_ACCOUNTS } from '../services/apiService';
+import { supabase } from '../lib/supabase';
 import { cloudSync, ensureUUID, generateUUID } from '../services/cloudSync';
+
 import { 
   DynamicPermissionMatrix, 
   getDynamicPermissions, 
@@ -58,98 +60,44 @@ export const getEffectiveRole = (user: UserAccount, membersList: Member[]): User
   return 'anggota';
 };
 
-export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
-  {
-    id: '09d3f668-c647-4156-97de-ab059e1f9800',
-    username: 'admin',
-    password: 'admin123',
-    email: 'admin.it@malut.go.id',
-    role: 'admin_master',
-    memberId: undefined, // User Non-Anggota (Superadmin IT Support)
-    status: 'aktif',
-    createdAt: '2026-01-01'
+export { INITIAL_USER_ACCOUNTS };
+
+// Helper pembuat UserAccount dari sesi autentikasi Supabase & fallback seed lokal
+export const buildUserAccountFromSession = (
+  authUser: {
+    id: string;
+    email?: string | null;
+    app_metadata?: { dwp_role?: UserRole; member_id?: string; [key: string]: any };
+    user_metadata?: { username?: string; [key: string]: any };
+    demo?: boolean;
+    [key: string]: any;
   },
-  {
-    id: '12b747b5-07f3-41e6-a59f-edfd54b84402',
-    username: 'ketua',
-    password: 'dwp2026!',
-    email: 'rahmiati.dwpgtk@malut.go.id',
-    role: 'ketua',
-    memberId: '11111111-1111-1111-1111-111111111111', // Linked ke Ketua DWP
+  localAccounts: UserAccount[]
+): UserAccount => {
+  const cleanEmail = (authUser.email || '').trim().toLowerCase();
+
+  // Fallback ke user_accounts lokal seed berdasarkan email atau username
+  const localAcc = localAccounts.find(
+    u => (u.email && u.email.toLowerCase() === cleanEmail) ||
+         (authUser.user_metadata?.username && u.username.toLowerCase() === authUser.user_metadata.username.toLowerCase())
+  );
+
+  // Aturan G1: role (app_metadata.dwp_role, fallback: user_accounts lokal seed berdasar email), memberId, username; role UserRole, default 'anggota'
+  const role: UserRole = (authUser.app_metadata?.dwp_role as UserRole) || localAcc?.role || 'anggota';
+  const memberId = authUser.app_metadata?.member_id || localAcc?.memberId || undefined;
+  const username = authUser.user_metadata?.username || localAcc?.username || (cleanEmail ? cleanEmail.split('@')[0] : 'pengguna');
+
+  return {
+    id: authUser.id || localAcc?.id || 'auth-user',
+    username,
+    email: cleanEmail || localAcc?.email || '',
+    role,
+    memberId,
     status: 'aktif',
-    createdAt: '2026-01-05'
-  },
-  {
-    id: '1ebffcb5-1da3-4878-9f3e-01edc0c87423',
-    username: 'waket',
-    password: 'dwp2026!',
-    email: 'endang.dwp@malut.go.id',
-    role: 'wakil_ketua',
-    memberId: '22222222-2222-2222-2222-222222222222', // Linked ke Wakil Ketua
-    status: 'aktif',
-    createdAt: '2026-01-10'
-  },
-  {
-    id: '7f7046c1-1389-4c38-a036-4bf640cb1537',
-    username: 'sekretaris',
-    password: 'dwp2026!',
-    email: 'fitriani.sekretaris@malut.go.id',
-    role: 'sekretaris',
-    memberId: '33333333-3333-3333-3333-333333333333', // Linked ke Sekretaris
-    status: 'aktif',
-    createdAt: '2026-01-12'
-  },
-  {
-    id: '9097a2f5-1584-4570-844a-fd8ed68ee814',
-    username: 'bendahara',
-    password: 'dwp2026!',
-    email: 'hasnah.bendahara@malut.go.id',
-    role: 'bendahara',
-    memberId: '44444444-4444-4444-4444-444444444444', // Linked ke Bendahara
-    status: 'aktif',
-    createdAt: '2026-01-14'
-  },
-  {
-    id: '879a9725-f247-4378-a6e8-e0648196105c',
-    username: 'kabid_pendidikan',
-    password: 'dwp2026!',
-    email: 'siti.aminah@malut.go.id',
-    role: 'admin_bidang',
-    memberId: '55555555-5555-5555-5555-555555555555', // Linked ke Ketua Bidang Pendidikan
-    status: 'aktif',
-    createdAt: '2026-01-15'
-  },
-  {
-    id: '23a9b8c7-d6e5-4f3a-2b1c-0d9e8f7a6b5c',
-    username: 'kabid_ekonomi',
-    password: 'dwp2026!',
-    email: 'fatimah.ekonomi@malut.go.id',
-    role: 'admin_bidang',
-    memberId: '66666666-6666-6666-6666-666666666666', // Linked ke Ketua Bidang Ekonomi
-    status: 'aktif',
-    createdAt: '2026-01-16'
-  },
-  {
-    id: '34b0c9d8-e7f6-5a4b-3c2d-1e0f9a8b7c6d',
-    username: 'kabid_sosbud',
-    password: 'dwp2026!',
-    email: 'hawa.sosbud@malut.go.id',
-    role: 'admin_bidang',
-    memberId: '77777777-7777-7777-7777-777777777777', // Linked ke Ketua Bidang Sosbud
-    status: 'aktif',
-    createdAt: '2026-01-17'
-  },
-  {
-    id: '45c1dae9-f8a7-6b5c-4d3e-2f1a0b9c8d7e',
-    username: 'anggota',
-    password: 'dwp2026!',
-    email: 'halimah.anggota@malut.go.id',
-    role: 'anggota',
-    memberId: '88888888-8888-8888-8888-888888888888', // Linked ke Anggota DWP
-    status: 'aktif',
-    createdAt: '2026-01-18'
-  }
-];
+    createdAt: localAcc?.createdAt || new Date().toISOString().split('T')[0],
+    demo: !!authUser.demo
+  };
+};
 
 export const USER_PERSONAS: Record<UserRole, UserPersona> = {
   admin_master: {
@@ -750,8 +698,6 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentRole, setCurrentRole] = useState<UserRole>('admin_master');
-
   // Load initial data from localStorage if available, or fallback to INITIAL constants
   const [members, setMembers] = useState<Member[]>(() => {
     const saved = localStorage.getItem('dwp_members');
@@ -823,13 +769,78 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return !!apiService.getAuthSession();
+    const session = apiService.getAuthSession();
+    return !!(session && (session.access_token || session.user));
   });
 
   const [currentAccount, setCurrentAccount] = useState<UserAccount | null>(() => {
     const session = apiService.getAuthSession();
-    return session ? session.user : null;
+    if (!session || !session.user) return null;
+    const saved = localStorage.getItem('dwp_user_accounts');
+    const localUsers: UserAccount[] = saved ? JSON.parse(saved) : INITIAL_USER_ACCOUNTS;
+    return buildUserAccountFromSession(session.user, localUsers);
   });
+
+  const [currentRole, setCurrentRole] = useState<UserRole>(() => {
+    const session = apiService.getAuthSession();
+    if (!session || !session.user) return 'anggota';
+    const saved = localStorage.getItem('dwp_user_accounts');
+    const localUsers: UserAccount[] = saved ? JSON.parse(saved) : INITIAL_USER_ACCOUNTS;
+    const acc = buildUserAccountFromSession(session.user, localUsers);
+    return (session.user.app_metadata?.dwp_role as UserRole) || acc.role || 'anggota';
+  });
+
+  // Pulihkan sesi Supabase saat aplikasi dimuat & sinkronkan event auth (G1-auth)
+  useEffect(() => {
+    const restoreSession = (session: any) => {
+      if (!session?.user) return;
+      apiService.setAuthSession(session);
+      const saved = localStorage.getItem('dwp_user_accounts');
+      const localUsers: UserAccount[] = saved ? JSON.parse(saved) : INITIAL_USER_ACCOUNTS;
+      const acc = buildUserAccountFromSession(session.user, localUsers);
+      setCurrentAccount(acc);
+      setIsAuthenticated(true);
+      const effRole = (session.user.app_metadata?.dwp_role as UserRole) || getEffectiveRole(acc, members);
+      setCurrentRole(effRole);
+    };
+
+    // 1. Pulihkan sesi saat aplikasi dimuat (supabase.auth.getSession())
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!error && session) {
+        restoreSession(session);
+      } else {
+        // Fallback jika mode offline / demo session aktif
+        const savedSession = apiService.getAuthSession();
+        if (savedSession?.user) {
+          restoreSession(savedSession);
+        }
+      }
+    }).catch((err) => {
+      console.warn('Supabase getSession network error:', err);
+      const savedSession = apiService.getAuthSession();
+      if (savedSession?.user) {
+        restoreSession(savedSession);
+      }
+    });
+
+    // 2. Dengarkan perubahan status autentikasi (onAuthStateChange)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        restoreSession(session);
+      } else if (event === 'SIGNED_OUT') {
+        apiService.clearAuthSession();
+        setIsAuthenticated(false);
+        setCurrentAccount(null);
+        setCurrentRole('anggota');
+      } else if (event === 'TOKEN_REFRESHED' && session) {
+        apiService.setAuthSession(session);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [members]);
 
   const [activeTab, setActiveTabState] = useState<'public' | 'admin'>('public');
   const [adminSubTab, setAdminSubTabState] = useState<AdminSubTab>('dashboard');
@@ -877,22 +888,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const login = async (usernameInput: string, passwordInput: string): Promise<boolean> => {
-    const user = await apiService.authenticateUser(usernameInput, passwordInput);
-    if (!user) return false;
-    apiService.setAuthSession(user);
-    setIsAuthenticated(true);
-    setCurrentAccount(user);
+    const authSession = await apiService.login(usernameInput, passwordInput);
+    if (!authSession || !authSession.user) return false;
 
-    const effRole = getEffectiveRole(user, members);
+    const acc = buildUserAccountFromSession(authSession.user, userAccounts);
+    setIsAuthenticated(true);
+    setCurrentAccount(acc);
+
+    const effRole = (authSession.user.app_metadata?.dwp_role as UserRole) || getEffectiveRole(acc, members);
     setCurrentRole(effRole);
 
     addSystemAuditLog({
       category: 'auth',
       severity: 'success',
-      actorName: user.username,
+      actorName: acc.username,
       actorRole: effRole,
       action: 'Sesi Login Pengguna System',
-      details: `User "${user.username}" (${user.email}) berhasil login masuk ke Portal Admin sebagai ${effRole}.`
+      details: `User "${acc.username}" (${acc.email}) berhasil login ke Portal Admin sebagai ${effRole}.${authSession.user.demo ? ' (Mode Offline Demo)' : ''}`
     });
 
     setActiveTab('admin');
@@ -900,7 +912,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return true;
   };
 
-  const logout = () => {
+  const logout = async () => {
     if (currentAccount) {
       addSystemAuditLog({
         category: 'auth',
@@ -911,9 +923,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         details: `Pengguna ${activePersona.name} (${currentRole}) telah keluar dari portal admin.`
       });
     }
+
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('Supabase signOut error:', err);
+    }
+
     apiService.clearAuthSession();
     setIsAuthenticated(false);
     setCurrentAccount(null);
+    setCurrentRole('anggota');
     setActiveTab('public');
     window.history.pushState(null, '', '/login');
   };

@@ -31,12 +31,17 @@ import { Lock, ArrowLeft } from 'lucide-react';
 const MainLayout: React.FC = () => {
   const { activeTab, adminSubTab, currentRole, setAdminSubTab, activePersona, isAuthenticated } = useApp();
 
-  // Check if current URL path is explicitly /login
+  // Periksa apakah path URL saat ini adalah /login
   const isLoginPage = window.location.pathname === '/login';
 
-  // 1. Render Login Page if /login URL is accessed OR if trying to access admin without authentication
-  if (isLoginPage || (activeTab === 'admin' && !isAuthenticated)) {
+  // 1. Gerbang Admin: Render LoginPage jika sesi belum terautentikasi
+  if ((isLoginPage && !isAuthenticated) || (activeTab === 'admin' && !isAuthenticated)) {
     return <LoginPage />;
+  }
+
+  // Jika sudah terautentikasi namun masih di path /login, arahkan ke dashboard
+  if (isLoginPage && isAuthenticated && window.location.pathname === '/login') {
+    window.history.pushState(null, '', '/admin/dashboard');
   }
 
   // 2. Render Public Website
