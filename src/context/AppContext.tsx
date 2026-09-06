@@ -25,7 +25,7 @@ import {
 } from '../types';
 import { apiService, INITIAL_USER_ACCOUNTS } from '../services/apiService';
 import { supabase } from '../lib/supabase';
-import { cloudSync, ensureUUID, generateUUID } from '../services/cloudSync';
+import { cloudSync, ensureUUID, generateUUID, SEED_NOTIFICATION_IDS } from '../services/cloudSync';
 
 import { 
   DynamicPermissionMatrix, 
@@ -762,6 +762,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const prevAttendanceRef = useRef<AttendanceRecord[]>(attendanceRecords);
   const prevNewsRef = useRef<NewsArticle[]>(news);
   const prevSiteConfigRef = useRef<SiteConfig>(siteConfig);
+  const prevActivityDocumentsRef = useRef<ActivityDocument[]>(activityDocuments);
+  const prevNotificationsRef = useRef<AppNotification[]>(notifications);
 
   useEffect(() => {
     localStorage.setItem('dwp_system_audit_logs', JSON.stringify(systemAuditLogs));
@@ -1006,6 +1008,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         prevAttendanceRef.current = cloudData.attendance;
         localStorage.setItem('dwp_attendance', JSON.stringify(cloudData.attendance));
       }
+      if (hasAuth && cloudData.activityDocuments) {
+        setActivityDocuments(prevDocs => {
+          const cloudDocs = cloudData.activityDocuments || [];
+          const cloudMap = new Map(cloudDocs.map(d => [d.id, d]));
+          const localOnly = prevDocs.filter(d => !cloudMap.has(d.id));
+          const merged = [...cloudDocs, ...localOnly];
+          prevActivityDocumentsRef.current = merged;
+          localStorage.setItem('dwp_activity_documents', JSON.stringify(merged));
+          return merged;
+        });
+      }
+      if (hasAuth && cloudData.notifications) {
+        setNotifications(prevNotifs => {
+          const cloudNotifs = cloudData.notifications || [];
+          const localMap = new Map(prevNotifs.map(n => [n.id, n]));
+          const mergedCloud = cloudNotifs.map(cn => {
+            const local = localMap.get(cn.id);
+            return {
+              ...cn,
+              isRead: local ? local.isRead : false
+            };
+          });
+          const cloudIds = new Set(cloudNotifs.map(n => n.id));
+          const localOnly = prevNotifs.filter(n => !cloudIds.has(n.id));
+          const merged = [...mergedCloud, ...localOnly];
+          prevNotificationsRef.current = merged;
+          localStorage.setItem('dwp_notifications', JSON.stringify(merged));
+          return merged;
+        });
+      }
+      if (hasAuth && cloudData.kopSuratConfig) {
+        setKopSuratConfig(prevKop => {
+          const merged = { ...prevKop, ...cloudData.kopSuratConfig };
+          localStorage.setItem('dwp_kop_surat_config', JSON.stringify(merged));
+          return merged;
+        });
+      }
     } catch (err) {
       console.warn('Reload from cloud error:', err);
     } finally {
@@ -1102,6 +1141,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setAttendanceRecords(INITIAL_ATTENDANCE);
           prevAttendanceRef.current = INITIAL_ATTENDANCE;
           localStorage.setItem('dwp_attendance', JSON.stringify(INITIAL_ATTENDANCE));
+        }
+
+        // 7. Activity Documents
+        if (hasAuth && cloudData.activityDocuments) {
+          setActivityDocuments(prevDocs => {
+            const cloudDocs = cloudData.activityDocuments || [];
+            const cloudMap = new Map(cloudDocs.map(d => [d.id, d]));
+            const localOnly = prevDocs.filter(d => !cloudMap.has(d.id));
+            const merged = [...cloudDocs, ...localOnly];
+            prevActivityDocumentsRef.current = merged;
+            localStorage.setItem('dwp_activity_documents', JSON.stringify(merged));
+            return merged;
+          });
+        }
+
+        // 8. Notifications
+        if (hasAuth && cloudData.notifications) {
+          setNotifications(prevNotifs => {
+            const cloudNotifs = cloudData.notifications || [];
+            const localMap = new Map(prevNotifs.map(n => [n.id, n]));
+            const mergedCloud = cloudNotifs.map(cn => {
+              const local = localMap.get(cn.id);
+              return {
+                ...cn,
+                isRead: local ? local.isRead : false
+              };
+            });
+            const cloudIds = new Set(cloudNotifs.map(n => n.id));
+            const localOnly = prevNotifs.filter(n => !cloudIds.has(n.id));
+            const merged = [...mergedCloud, ...localOnly];
+            prevNotificationsRef.current = merged;
+            localStorage.setItem('dwp_notifications', JSON.stringify(merged));
+            return merged;
+          });
+        }
+
+        // 9. Kop Surat Config (tanpa auto-sync kembali ke cloud)
+        if (hasAuth && cloudData.kopSuratConfig) {
+          setKopSuratConfig(prevKop => {
+            const merged = { ...prevKop, ...cloudData.kopSuratConfig };
+            localStorage.setItem('dwp_kop_surat_config', JSON.stringify(merged));
+            return merged;
+          });
         }
       } catch (err) {
         console.warn('Initial cloud data loading error, fallback to local data:', err);
@@ -1229,8 +1311,73 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [siteConfig, isInitialized, isAuthenticated]);
 
   useEffect(() => {
+    localStorage.setItem('dwp_activity_documents', JSON.stringify(activityDocuments));
+    if (isReceivingFromCloudRef.current) {
+      prevActivityDocumentsRef.current = activityDocuments;
+      return;
+    }
+    if (prevActivityDocumentsRef.current === activityDocuments) {
+      return;
+    }
+    prevActivityDocumentsRef.current = activityDocuments;
+    if (isInitialized && isAuthenticated) {
+      const timer = setTimeout(() => {
+        cloudSync.syncActivityDocuments(activityDocuments);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [activityDocuments, isInitialized, isAuthenticated]);
+
+  useEffect(() => {
     localStorage.setItem('dwp_notifications', JSON.stringify(notifications));
-  }, [notifications]);
+    if (isReceivingFromCloudRef.current) {
+      prevNotificationsRef.current = notifications;
+      return;
+    }
+    if (prevNotificationsRef.current === notifications) {
+      return;
+    }
+
+    // Deteksi apakah ada perubahan isi notifikasi selain status isRead lokal
+    const prevList = prevNotificationsRef.current;
+    let hasContentChange = prevList.length !== notifications.length;
+    if (!hasContentChange) {
+      for (let i = 0; i < notifications.length; i++) {
+        const a = prevList[i];
+        const b = notifications[i];
+        if (
+          !a || !b ||
+          a.id !== b.id ||
+          a.targetRole !== b.targetRole ||
+          a.title !== b.title ||
+          a.message !== b.message ||
+          a.type !== b.type ||
+          a.proposalId !== b.proposalId ||
+          a.nextStepAction !== b.nextStepAction ||
+          a.targetTab !== b.targetTab ||
+          a.actionButtonText !== b.actionButtonText
+        ) {
+          hasContentChange = true;
+          break;
+        }
+      }
+    }
+
+    prevNotificationsRef.current = notifications;
+
+    if (isInitialized && isAuthenticated && hasContentChange) {
+      // Filter notifikasi seed bawaan sebelum mengirim ke cloud
+      const nonSeedNotifs = notifications.filter(
+        n => !SEED_NOTIFICATION_IDS.has(n.id) && !n.id.startsWith('seed-')
+      );
+      if (nonSeedNotifs.length > 0) {
+        const timer = setTimeout(() => {
+          cloudSync.syncNotifications(nonSeedNotifs);
+        }, 800);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [notifications, isInitialized, isAuthenticated]);
 
   const [focusedProposalId, setFocusedProposalId] = useState<string | null>(null);
   const [focusedWorkspaceTab, setFocusedWorkspaceTab] = useState<'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj'>('usulan');
@@ -2133,6 +2280,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return updated;
     });
 
+    if (newCfg.kopSurat && isAuthenticated) {
+      cloudSync.syncKopSuratConfig(newCfg.kopSurat);
+    }
+
     addSystemAuditLog({
       category: 'cms',
       severity: 'info',
@@ -2144,8 +2295,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateKopSuratConfig = (newCfg: Partial<KopSuratConfig>) => {
+    let updatedConfig: KopSuratConfig;
     setKopSuratConfig(prev => {
       const updated = { ...prev, ...newCfg };
+      updatedConfig = updated;
       localStorage.setItem('dwp_kop_surat_config', JSON.stringify(updated));
       return updated;
     });
@@ -2158,6 +2311,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Pembaruan Pengaturan Kop Surat Resmi',
       details: `Pengaturan Header & Teks Kop Surat Resmi DWP GTK Maluku Utara telah diperbarui oleh ${activePersona.name}.`
     });
+
+    // Panggil syncKopSuratConfig HANYA dari handler aksi simpan/ubah oleh pengguna saat login
+    if (isAuthenticated && updatedConfig!) {
+      cloudSync.syncKopSuratConfig(updatedConfig);
+    }
   };
 
   const createOrUpdateActivityDocument = (docData: Partial<ActivityDocument> & { proposalId: string; documentType: DocumentType }) => {

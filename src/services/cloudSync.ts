@@ -7,9 +7,24 @@ import {
   NewsArticle, 
   AttendanceRecord,
   UserRole,
-  ProposalStage
+  ProposalStage,
+  ActivityDocument,
+  AppNotification,
+  KopSuratConfig,
+  DocumentType,
+  DocumentStatus
 } from '../types';
 import { toISODateSafe, toISOStringSafe } from '../utils/dateFormatter';
+
+/**
+ * ID Notifikasi bawaan (Seed Demo INITIAL_NOTIFICATIONS) yang tidak boleh disinkronkan ke cloud.
+ */
+export const SEED_NOTIFICATION_IDS = new Set<string>([
+  'e0000001-0000-0000-0000-000000000001',
+  'e0000002-0000-0000-0000-000000000002',
+  'e0000003-0000-0000-0000-000000000003',
+  'e0000004-0000-0000-0000-000000000004'
+]);
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -688,7 +703,247 @@ export const cloudSync = {
   },
 
   // ==========================================
-  // 7. INITIAL BULK LOADER
+  // 7. DOKUMEN KEGIATAN (ACTIVITY DOCUMENTS)
+  // ==========================================
+  async fetchActivityDocuments(isLoggedIn?: boolean): Promise<ActivityDocument[] | null> {
+    try {
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
+      if (!isAuth) {
+        // Mode Anonim: JANGAN baca activity_documents privat dari Supabase
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from('activity_documents')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        handleSupabaseError('fetchActivityDocuments', error);
+        return null;
+      }
+      if (!data) return null;
+      if (data.length === 0) return [];
+
+      return data.map((row: any): ActivityDocument => ({
+        id: row.id,
+        proposalId: row.proposal_id,
+        documentType: row.document_type as DocumentType,
+        customTitle: row.custom_title || undefined,
+        assignedToMemberId: row.assigned_to_member_id || undefined,
+        assignedToMemberName: row.assigned_to_member_name || undefined,
+        status: (row.status as DocumentStatus) || 'draft',
+        letterNumber: row.letter_number || undefined,
+        contentData: (typeof row.content_data === 'object' && row.content_data !== null) ? row.content_data : {},
+        logs: Array.isArray(row.logs) ? row.logs : [],
+        createdAt: row.created_at || new Date().toISOString(),
+        updatedAt: row.updated_at || new Date().toISOString()
+      }));
+    } catch (e) {
+      console.warn('Supabase fetchActivityDocuments exception:', e);
+      return null;
+    }
+  },
+
+  async syncActivityDocuments(docs: ActivityDocument[]) {
+    try {
+      if (!await hasActiveAuthSession()) return; // Lewati push jika tidak login
+      if (!docs || docs.length === 0) return;
+
+      // Ambil daftar ID proposal yang valid di cloud untuk menjaga integritas foreign key
+      const { data: cloudProposals, error: propErr } = await supabase
+        .from('activity_proposals')
+        .select('id');
+
+      if (propErr) {
+        handleSupabaseError('syncActivityDocuments (check proposals)', propErr);
+        return;
+      }
+
+      const cloudPropIds = new Set((cloudProposals || []).map((p: any) => p.id));
+
+      const rows: any[] = [];
+      for (const doc of docs) {
+        const proposalUuid = ensureUUID(doc.proposalId);
+        if (!cloudPropIds.has(proposalUuid)) {
+          console.info(`[syncActivityDocuments] Proposal terkait (${doc.proposalId} -> ${proposalUuid}) belum ada di cloud, dokumen ${doc.id} dilewati.`);
+          continue;
+        }
+
+        rows.push({
+          id: doc.id,
+          proposal_id: proposalUuid,
+          document_type: doc.documentType,
+          custom_title: doc.customTitle || null,
+          assigned_to_member_id: doc.assignedToMemberId || null,
+          assigned_to_member_name: doc.assignedToMemberName || null,
+          status: doc.status || 'draft',
+          letter_number: doc.letterNumber || null,
+          content_data: doc.contentData || {},
+          logs: doc.logs || [],
+          created_at: toISOStringSafe(doc.createdAt),
+          updated_at: toISOStringSafe(doc.updatedAt)
+        });
+      }
+
+      if (rows.length === 0) return;
+
+      const { error } = await supabase
+        .from('activity_documents')
+        .upsert(rows, { onConflict: 'id' });
+
+      if (error) {
+        handleSupabaseError('syncActivityDocuments', error);
+      }
+    } catch (e) {
+      console.warn('Sync activity documents error:', e);
+    }
+  },
+
+  async deleteActivityDocument(id: string) {
+    try {
+      if (!await hasActiveAuthSession()) return;
+      const { error } = await supabase.from('activity_documents').delete().eq('id', id);
+      if (error) handleSupabaseError('deleteActivityDocument', error);
+    } catch (e) {
+      console.warn('Delete activity document error:', e);
+    }
+  },
+
+  // ==========================================
+  // 8. NOTIFIKASI APLIKASI (NOTIFICATIONS)
+  // ==========================================
+  async fetchNotifications(isLoggedIn?: boolean): Promise<AppNotification[] | null> {
+    try {
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
+      if (!isAuth) {
+        // Mode Anonim: JANGAN baca tabel notifikasi privat dari Supabase
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        handleSupabaseError('fetchNotifications', error);
+        return null;
+      }
+      if (!data) return null;
+      if (data.length === 0) return [];
+
+      return data.map((row: any): AppNotification => ({
+        id: row.id,
+        targetRole: (row.target_role as UserRole | 'all') || 'all',
+        title: row.title,
+        message: row.message || '',
+        timestamp: row.created_at || new Date().toISOString(),
+        isRead: false, // isRead tidak di-cloud-kan (baca perangkat lokal); default false untuk baris cloud baru
+        type: (row.type as any) || 'new_proposal',
+        proposalId: row.proposal_id || undefined,
+        nextStepAction: row.next_step_action || undefined,
+        targetTab: row.target_tab || undefined,
+        actionButtonText: row.action_button_text || undefined
+      }));
+    } catch (e) {
+      console.warn('Supabase fetchNotifications exception:', e);
+      return null;
+    }
+  },
+
+  async syncNotifications(notifications: AppNotification[]) {
+    try {
+      if (!await hasActiveAuthSession()) return; // Lewati jika tidak login
+      if (!notifications || notifications.length === 0) return;
+
+      // Filter baris seed demo INITIAL_NOTIFICATIONS (jangan pernah dikirim ke cloud)
+      const validNotifs = notifications.filter(
+        n => !SEED_NOTIFICATION_IDS.has(n.id) && !n.id.startsWith('seed-')
+      );
+      if (validNotifs.length === 0) return;
+
+      const rows = validNotifs.map(n => ({
+        id: n.id,
+        target_role: n.targetRole || 'all',
+        title: n.title,
+        message: n.message || '',
+        type: n.type || 'info',
+        proposal_id: n.proposalId || null,
+        next_step_action: n.nextStepAction || null,
+        target_tab: n.targetTab || null,
+        action_button_text: n.actionButtonText || null,
+        created_at: toISOStringSafe(n.timestamp),
+        updated_at: new Date().toISOString()
+      }));
+
+      const { error } = await supabase
+        .from('notifications')
+        .upsert(rows, { onConflict: 'id' });
+
+      if (error) {
+        handleSupabaseError('syncNotifications', error);
+      }
+    } catch (e) {
+      console.warn('Sync notifications error:', e);
+    }
+  },
+
+  // ==========================================
+  // 9. KOP SURAT RESMI (KOP SURAT CONFIG)
+  // ==========================================
+  async fetchKopSuratConfig(isLoggedIn?: boolean): Promise<KopSuratConfig | null> {
+    try {
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
+      if (!isAuth) {
+        // Mode Anonim: JANGAN baca kop_surat_config dari Supabase
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from('kop_surat_config')
+        .select('*')
+        .eq('id', 1)
+        .maybeSingle();
+
+      if (error) {
+        handleSupabaseError('fetchKopSuratConfig', error);
+        return null;
+      }
+      if (!data || !data.data || typeof data.data !== 'object' || Object.keys(data.data).length === 0) {
+        return null;
+      }
+
+      return data.data as KopSuratConfig;
+    } catch (e) {
+      console.warn('Supabase fetchKopSuratConfig exception:', e);
+      return null;
+    }
+  },
+
+  async syncKopSuratConfig(config: KopSuratConfig) {
+    try {
+      if (!await hasActiveAuthSession()) return; // Lewati jika tidak login
+      if (!config) return;
+
+      const { error } = await supabase
+        .from('kop_surat_config')
+        .upsert({
+          id: 1,
+          data: config,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+
+      if (error) {
+        handleSupabaseError('syncKopSuratConfig', error);
+      }
+    } catch (e) {
+      console.warn('Sync kop surat config error:', e);
+    }
+  },
+
+  // ==========================================
+  // 10. INITIAL BULK LOADER
   // ==========================================
   async fetchAllInitialData(isLoggedIn?: boolean) {
     try {
@@ -699,14 +954,20 @@ export const cloudSync = {
         proposalsRes,
         siteConfigRes,
         newsRes,
-        attendanceRes
+        attendanceRes,
+        activityDocumentsRes,
+        notificationsRes,
+        kopSuratConfigRes
       ] = await Promise.allSettled([
         this.fetchMembers(isAuth),
         this.fetchUserAccounts(isAuth),
         this.fetchProposals(isAuth),
         this.fetchSiteConfig(),
         this.fetchNews(isAuth),
-        this.fetchAttendance(isAuth)
+        this.fetchAttendance(isAuth),
+        this.fetchActivityDocuments(isAuth),
+        this.fetchNotifications(isAuth),
+        this.fetchKopSuratConfig(isAuth)
       ]);
 
       return {
@@ -715,7 +976,10 @@ export const cloudSync = {
         proposals: proposalsRes.status === 'fulfilled' ? proposalsRes.value : null,
         siteConfig: siteConfigRes.status === 'fulfilled' ? siteConfigRes.value : null,
         news: newsRes.status === 'fulfilled' ? newsRes.value : null,
-        attendance: attendanceRes.status === 'fulfilled' ? attendanceRes.value : null
+        attendance: attendanceRes.status === 'fulfilled' ? attendanceRes.value : null,
+        activityDocuments: activityDocumentsRes.status === 'fulfilled' ? activityDocumentsRes.value : null,
+        notifications: notificationsRes.status === 'fulfilled' ? notificationsRes.value : null,
+        kopSuratConfig: kopSuratConfigRes.status === 'fulfilled' ? kopSuratConfigRes.value : null
       };
     } catch (e) {
       console.warn('Fetch all initial data exception:', e);
