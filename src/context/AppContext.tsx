@@ -517,7 +517,7 @@ const MOCK_SIGNATURE = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/20
 const INITIAL_ATTENDANCE: AttendanceRecord[] = [
   {
     id: 'd0000001-0000-0000-0000-000000000001',
-    activityId: 'a0000003-0000-0000-0000-000000000003',
+    activityId: 'a0000001-0000-0000-0000-000000000001',
     memberId: '11111111-1111-1111-1111-111111111111',
     participantName: 'Ny. Hj. Rahmiati Ahmad, M.Pd',
     nip: '19780512 200312 2 001',
@@ -530,26 +530,13 @@ const INITIAL_ATTENDANCE: AttendanceRecord[] = [
   },
   {
     id: 'd0000002-0000-0000-0000-000000000002',
-    activityId: 'a0000003-0000-0000-0000-000000000003',
+    activityId: 'a0000001-0000-0000-0000-000000000001',
     memberId: '55555555-5555-5555-5555-555555555555',
     participantName: 'Ny. Hj. Siti Aminah, S.Pd',
     nip: '19880418 201204 2 002',
     jabatan: 'Ketua Bidang Pendidikan',
     phone: '0852-1122-3344',
     checkInTime: '2026-07-10 08:45',
-    signatureUrl: MOCK_SIGNATURE,
-    status: 'verified',
-    verifiedBy: 'Panitia Sekretariat'
-  },
-  {
-    id: 'd0000003-0000-0000-0000-000000000003',
-    activityId: 'a0000003-0000-0000-0000-000000000003',
-    memberId: '77777777-7777-7777-7777-777777777777',
-    participantName: 'Ny. Mariam Syaiful, S.Sos',
-    nip: '19930711 201902 2 005',
-    jabatan: 'Ketua Bidang Sosial Budaya',
-    phone: '0822-4455-6677',
-    checkInTime: '2026-07-10 09:00',
     signatureUrl: MOCK_SIGNATURE,
     status: 'verified',
     verifiedBy: 'Panitia Sekretariat'

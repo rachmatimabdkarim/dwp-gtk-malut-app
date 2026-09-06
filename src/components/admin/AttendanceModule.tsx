@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { PenTool, CheckCircle2, RotateCcw, User, ShieldCheck, Printer, FileCheck } from 'lucide-react';
+import { formatDateDDMMYYYY } from '../../utils/dateFormatter';
 
 export const AttendanceModule: React.FC = () => {
   const { proposals, members, attendanceRecords, addAttendanceRecord, verifyAttendanceRecord, activePersona } = useApp();
@@ -167,7 +168,7 @@ export const AttendanceModule: React.FC = () => {
               >
                 {proposals.map(p => (
                   <option key={p.id} value={p.id}>
-                    {p.title} ({p.startDate})
+                    {p.title} ({formatDateDDMMYYYY(p.startDate)})
                   </option>
                 ))}
               </select>
@@ -285,7 +286,7 @@ export const AttendanceModule: React.FC = () => {
             {activeProposal && (
               <div className="pt-2 text-xs font-medium text-slate-700 space-y-0.5">
                 <p className="font-bold text-slate-900">{activeProposal.title}</p>
-                <p>Hari/Tanggal: {activeProposal.startDate} | Tempat: {activeProposal.location}</p>
+                <p>Hari/Tanggal: {formatDateDDMMYYYY(activeProposal.startDate)} | Tempat: {activeProposal.location}</p>
               </div>
             )}
           </div>

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Calendar } from 'lucide-react';
-import { formatDateDDMMYYYY } from '../../utils/dateFormatter';
+import { formatDateDDMMYYYY, toISODateSafe } from '../../utils/dateFormatter';
 
 interface CustomDateInputProps {
   label?: string;
@@ -63,7 +63,7 @@ export const CustomDateInput: React.FC<CustomDateInputProps> = ({
           ref={hiddenDateInputRef}
           type="date"
           required={required}
-          value={value || ''}
+          value={value ? toISODateSafe(value, '') : ''}
           onChange={(e) => onChange(e.target.value)}
           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full pointer-events-auto"
         />

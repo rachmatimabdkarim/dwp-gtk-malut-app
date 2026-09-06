@@ -9,6 +9,7 @@ import {
   UserRole,
   ProposalStage
 } from '../types';
+import { toISODateSafe, toISOStringSafe } from '../utils/dateFormatter';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -130,7 +131,7 @@ export const cloudSync = {
         nama_anak: m.namaAnak || null,
         status: m.status || 'Aktif',
         avatar: m.avatar || null,
-        date_joined: m.dateJoined ? m.dateJoined.split('T')[0] : new Date().toISOString().split('T')[0]
+        date_joined: m.dateJoined ? toISODateSafe(m.dateJoined) : new Date().toISOString().split('T')[0]
       }));
 
       const { error } = await supabase.from('members').upsert(rows, { onConflict: 'id' });
@@ -192,7 +193,7 @@ export const cloudSync = {
         role: u.role,
         member_id: u.memberId ? ensureUUID(u.memberId) : null,
         status: u.status || 'aktif',
-        created_at: u.createdAt ? new Date(u.createdAt).toISOString() : new Date().toISOString()
+        created_at: toISOStringSafe(u.createdAt)
       }));
 
       const { error } = await supabase.from('user_accounts').upsert(rows, { onConflict: 'id' });
@@ -292,14 +293,14 @@ export const cloudSync = {
           target_audience: p.targetAudience || '',
           estimated_budget: Number(p.estimatedBudget) || 0,
           location: p.location || '',
-          start_date: p.startDate ? p.startDate.split('T')[0] : new Date().toISOString().split('T')[0],
-          end_date: p.endDate ? p.endDate.split('T')[0] : new Date().toISOString().split('T')[0],
+          start_date: toISODateSafe(p.startDate),
+          end_date: toISODateSafe(p.endDate),
           current_stage: p.currentStage || 'stage_4_wakil_ketua',
           stage_progress: p.stageProgress || 1,
           created_by: p.createdBy,
           creator_role: p.creatorRole || null,
           revision_comment: p.revisionComment || null,
-          created_at: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString()
+          created_at: toISOStringSafe(p.createdAt)
         }, { onConflict: 'id' });
 
         if (pErr) {
@@ -317,7 +318,7 @@ export const cloudSync = {
             actor_name: l.actorName,
             decision: l.decision,
             notes: l.notes || '',
-            created_at: l.timestamp ? new Date(l.timestamp).toISOString() : new Date().toISOString()
+            created_at: toISOStringSafe(l.timestamp)
           }));
 
           const { error: lErr } = await supabase.from('approval_logs').upsert(logRows, { onConflict: 'id' });

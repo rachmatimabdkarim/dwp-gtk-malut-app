@@ -2096,7 +2096,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                           <p>{activeDoc.contentData.bodyText}</p>
                                           <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-[10px] space-y-1 font-sans">
                                             <div><strong>Kegiatan:</strong> {detailProposal.title}</div>
-                                            <div><strong>Waktu:</strong> {detailProposal.startDate} s.d {detailProposal.endDate}</div>
+                                            <div><strong>Waktu:</strong> {formatDateRangeDDMMYYYY(detailProposal.startDate, detailProposal.endDate)}</div>
                                             <div><strong>Lokasi:</strong> {detailProposal.location}</div>
                                           </div>
                                         </div>

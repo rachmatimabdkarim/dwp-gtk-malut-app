@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ExecutionReport } from '../../types';
 import { FileCheck, Printer, Globe, Edit3, CheckCircle2, Sparkles, Image as ImageIcon, Send, ArrowRight } from 'lucide-react';
+import { formatDateDDMMYYYY } from '../../utils/dateFormatter';
 
 export const ReportGeneratorModal: React.FC = () => {
   const { proposals, reports, createOrUpdateReport, approveReportAndPublishNews, attendanceRecords, activePersona } = useApp();
@@ -261,7 +262,7 @@ export const ReportGeneratorModal: React.FC = () => {
             <div className="grid sm:grid-cols-2 gap-2 bg-slate-50 p-4 rounded-xl border border-slate-200 font-medium">
               <div><span className="font-bold text-slate-900">Nama Kegiatan:</span> {activeProposal?.title}</div>
               <div><span className="font-bold text-slate-900">Bidang Penyelenggara:</span> {activeProposal?.bidang}</div>
-              <div><span className="font-bold text-slate-900">Waktu & Lokasi:</span> {activeProposal?.startDate} | {activeProposal?.location}</div>
+              <div><span className="font-bold text-slate-900">Waktu & Lokasi:</span> {formatDateDDMMYYYY(activeProposal?.startDate)} | {activeProposal?.location}</div>
               <div><span className="font-bold text-slate-900">Jumlah Peserta Hadir:</span> {totalParticipants} Orang</div>
               <div><span className="font-bold text-slate-900">Realisasi Anggaran:</span> Rp {actualBudget.toLocaleString('id-ID')}</div>
             </div>
