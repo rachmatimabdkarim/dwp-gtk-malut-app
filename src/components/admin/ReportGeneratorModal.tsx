@@ -240,7 +240,7 @@ export const ReportGeneratorModal: React.FC = () => {
               KANTOR BALAI GURU PENGGERAK / GTK PROVINSI MALUKU UTARA
             </div>
             <div className="text-[11px] text-slate-600 font-sans">
-              Jl. Sultan Babullah No. 45, Ternate — Email: dwp.gtk@malut.kemdikbud.go.id
+              Jl. Raya Rum, RT.01 RW.01 Kecamatan Tidore Utara, Kota Tidore Kepulauan, Provinsi Maluku Utara — Email: dwp.gtk@malut.kemdikbud.go.id
             </div>
           </div>
 
@@ -353,7 +353,7 @@ export const ReportGeneratorModal: React.FC = () => {
             </div>
 
             <div>
-              <p className="text-slate-500">Ternate, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <p className="text-slate-500">Tidore Kepulauan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               <p className="font-bold text-slate-900 mt-1">Sekretaris / Pengurus Penanggung Jawab</p>
               <div className="h-16" />
               <p className="font-bold text-slate-900 border-b border-slate-400 inline-block px-6">

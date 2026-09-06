@@ -225,7 +225,7 @@ const INITIAL_MEMBERS: Member[] = [
     nip: '19820315 200801 2 004',
     name: 'Ny. Dra. Endang Kusuma',
     jabatan: 'Wakil Ketua',
-    unitKerja: 'Subbag Umum & Tata Usaha BGP Malut',
+    unitKerja: 'Subbag Umum & Tata Usaha',
     pekerjaan: 'Pegawai Negeri Sipil (PNS)',
     golonganDarah: 'A',
     namaSuami: 'Ir. Bambang Kusuma',
@@ -242,7 +242,7 @@ const INITIAL_MEMBERS: Member[] = [
     nip: '19851120 201012 2 008',
     name: 'Ny. Fitriani Nurdin, S.E',
     jabatan: 'Sekretaris',
-    unitKerja: 'Kantor GTK Sofifi',
+    unitKerja: 'Kantor GTK Provinsi Maluku Utara',
     pekerjaan: 'Pegawai Negeri Sipil (PNS)',
     golonganDarah: 'B',
     namaSuami: "Nurdin Syafi'i, S.T",
@@ -276,7 +276,7 @@ const INITIAL_MEMBERS: Member[] = [
     nip: '19860412 201201 2 009',
     name: 'Ny. Hasnah Usman, S.E',
     jabatan: 'Bendahara',
-    unitKerja: 'BGP Provinsi Maluku Utara',
+    unitKerja: 'Kantor GTK Provinsi Maluku Utara',
     pekerjaan: 'Staf Pengelolaan Keuangan',
     golonganDarah: 'O',
     namaSuami: 'Usman Ali, M.M',
@@ -310,7 +310,7 @@ const INITIAL_MEMBERS: Member[] = [
     nip: '19900902 201503 2 007',
     name: 'Ny. Fatimah Az-Zahra, SE',
     jabatan: 'Ketua Bidang Ekonomi',
-    unitKerja: 'Kantor GTK Ternate',
+    unitKerja: 'Kantor GTK Provinsi Maluku Utara',
     pekerjaan: 'Wiraswasta / Pelaku UMKM',
     golonganDarah: 'B',
     namaSuami: 'Zulkifli Ibrahim',
@@ -368,7 +368,7 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
     objective: 'Meningkatkan pemahaman anggota tentang pemanfaatan internet sehat dan pola pengasuhan digital.',
     targetAudience: '50 Orang Anggota & Pengurus DWP GTK Malut',
     estimatedBudget: 12500000,
-    location: 'Aula Kantor BGP / GTK Provinsi Maluku Utara, Ternate',
+    location: 'Aula Kantor GTK Provinsi Maluku Utara',
     startDate: '2026-08-15',
     endDate: '2026-08-15',
     currentStage: 'stage_4_wakil_ketua',
@@ -397,7 +397,7 @@ const INITIAL_PROPOSALS: ActivityProposal[] = [
     objective: 'Meningkatkan keterampilan memasarkan produk olahan pala dan kenari secara online.',
     targetAudience: 'Seluruh Anggota DWP & UMKM Binaan GTK',
     estimatedBudget: 18000000,
-    location: 'Halaman Utama Kantor GTK Prov. Maluku Utara, Sofifi',
+    location: 'Halaman Utama Kantor GTK Provinsi Maluku Utara',
     startDate: '2026-09-02',
     endDate: '2026-09-03',
     currentStage: 'stage_5_ketua',
@@ -573,7 +573,7 @@ const INITIAL_NEWS: NewsArticle[] = [
     author: 'Humas DWP GTK Malut',
     date: '14 Juli 2026',
     summary: 'Wujud kepedulian pendidikan anak pesisir, pengurus DWP Kantor GTK Prov. Maluku Utara sukses menggelar Bakti Sosial tahunan.',
-    content: `Jelbar, Halmahera Barat — Pengurus Dharma Wanita Persatuan (DWP) Kantor Balai Guru Penggerak / GTK Provinsi Maluku Utara sukses melaksanakan kegiatan Bakti Sosial Peduli Pendidikan Anak Pesisir.\n\nKetua DWP Kantor GTK Maluku Utara, Ny. Hj. Rahmiati Ahmad, M.Pd menyatakan bahwa paket bantuan berupa tas sekolah, buku tulis, alat tulis, dan seragam diserahkan secara simbolis kepada perwakilan siswa.\n\n"Semoga bantuan ini dapat memacu semangat belajar anak-anak generasi penerus Maluku Utara di wilayah pesisir," ujar Ny. Rahmiati.`,
+    content: `Jelbar, Halmahera Barat — Pengurus Dharma Wanita Persatuan (DWP) Kantor GTK Provinsi Maluku Utara sukses melaksanakan kegiatan Bakti Sosial Peduli Pendidikan Anak Pesisir.\n\nKetua DWP Kantor GTK Maluku Utara, Ny. Hj. Rahmiati Ahmad, M.Pd menyatakan bahwa paket bantuan berupa tas sekolah, buku tulis, alat tulis, dan seragam diserahkan secara simbolis kepada perwakilan siswa.\n\n"Semoga bantuan ini dapat memacu semangat belajar anak-anak generasi penerus Maluku Utara di wilayah pesisir," ujar Ny. Rahmiati.`,
     mainImage: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=800&auto=format&fit=crop&q=80',
     isPublished: true,
     sourceReportId: 'f0000001-0000-0000-0000-000000000001'
@@ -620,7 +620,7 @@ const INITIAL_SITE_CONFIG: SiteConfig = {
     'Meningkatkan kualitas sumber daya manusia anggota DWP melalui pendidikan dan pelatihan berkelanjutan.',
     'Mendorong kemandirian ekonomi anggota berbasis potensi lokal Maluku Utara.',
     'Menyelenggarakan kegiatan sosial budaya dan kepedulian pendidikan masyarakat.',
-    'Memperkuat kerja sama dengan Kantor GTK Kemendikbudristek dan mitra strategis daerah.'
+    'Memperkuat kerja sama dengan Kantor GTK Kemendikdasmen dan mitra strategis daerah.'
   ],
   
   strukturTagText: 'Kepengurusan Resmi',
@@ -635,14 +635,14 @@ const INITIAL_SITE_CONFIG: SiteConfig = {
   agendaTitle: 'Jadwal Kegiatan & Portal Absensi Digital',
   agendaSubtext: 'Peserta yang menghadiri kegiatan dapat melakukan pengisian kehadiran dan tanda tangan digital secara langsung.',
   
-  address: 'Jl. Sultan Babullah No. 45, Ternate, Provinsi Maluku Utara',
+  address: 'Jl. Raya Rum, RT.01 RW.01 Kecamatan Tidore Utara, Kota Tidore Kepulauan, Provinsi Maluku Utara',
   phone: '(0921) 3123456',
   email: 'dwp.gtk@malut.kemdikbud.go.id',
   facebook: 'https://facebook.com/dwpgtkmalut',
   instagram: 'https://instagram.com/dwp_gtk_malut',
   youtube: 'https://youtube.com/@dwpgtkmalut',
   primaryThemeColor: '#6b0f1a',
-  footerDescription: 'Organisasi istri Pegawai Negeri Sipil di lingkungan Balai Guru Penggerak / Kantor Guru dan Tenaga Kependidikan (GTK) Provinsi Maluku Utara yang bergerak di bidang Pendidikan, Ekonomi, dan Sosial Budaya.',
+  footerDescription: 'Organisasi istri Pegawai Negeri Sipil di lingkungan Kantor Guru dan Tenaga Kependidikan (GTK) Provinsi Maluku Utara yang bergerak di bidang Pendidikan, Ekonomi, dan Sosial Budaya.',
   copyrightText: '© 2026 Dharma Wanita Persatuan - Kantor GTK Provinsi Maluku Utara. Hak Cipta Dilindungi.'
 };
 

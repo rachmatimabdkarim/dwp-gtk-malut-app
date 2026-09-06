@@ -349,7 +349,7 @@ export const AttendanceModule: React.FC = () => {
                 </div>
 
                 <div>
-                  <p className="text-slate-500">Ternate, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                  <p className="text-slate-500">Tidore Kepulauan, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                   <p className="font-bold text-slate-900 mt-1">Petugas Verifikasi Panitia</p>
                   <div className="h-16" />
                   <p className="font-bold text-slate-900 border-b border-slate-400 inline-block px-4">

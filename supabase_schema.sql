@@ -150,9 +150,9 @@ CREATE TABLE IF NOT EXISTS execution_reports (
 INSERT INTO members (id, name, nip, email, phone, jabatan, bidang, unit_kerja, status)
 VALUES 
   ('11111111-1111-1111-1111-111111111111', 'Ny. Hj. Rahmiati Ahmad, M.Pd', '197805122003122001', 'rahmiati.dwpgtk@malut.go.id', '0812-4567-8901', 'Ketua', '-', 'Kantor GTK Prov. Maluku Utara', 'Aktif'),
-  ('22222222-2222-2222-2222-222222222222', 'Ny. Dra. Endang Kusuma', '198203152008012004', 'endang.dwp@malut.go.id', '0813-9876-5432', 'Wakil Ketua', '-', 'Subbag Umum & Tata Usaha BGP Malut', 'Aktif'),
-  ('33333333-3333-3333-3333-333333333333', 'Ny. Fitriani Nurdin, S.E', '198511202010122008', 'fitriani.sekretaris@malut.go.id', '0821-3344-5566', 'Sekretaris', '-', 'Kantor GTK Sofifi', 'Aktif'),
-  ('44444444-4444-4444-4444-444444444444', 'Ny. Hasnah Usman, S.E', '198604122012012009', 'hasnah.bendahara@malut.go.id', '0812-6677-8899', 'Bendahara', '-', 'BGP Provinsi Maluku Utara', 'Aktif'),
+  ('22222222-2222-2222-2222-222222222222', 'Ny. Dra. Endang Kusuma', '198203152008012004', 'endang.dwp@malut.go.id', '0813-9876-5432', 'Wakil Ketua', '-', 'Subbag Umum & Tata Usaha', 'Aktif'),
+  ('33333333-3333-3333-3333-333333333333', 'Ny. Fitriani Nurdin, S.E', '198511202010122008', 'fitriani.sekretaris@malut.go.id', '0821-3344-5566', 'Sekretaris', '-', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('44444444-4444-4444-4444-444444444444', 'Ny. Hasnah Usman, S.E', '198604122012012009', 'hasnah.bendahara@malut.go.id', '0812-6677-8899', 'Bendahara', '-', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
   ('55555555-5555-5555-5555-555555555555', 'Ny. Hj. Siti Aminah, S.Pd', '198804182012042002', 'siti.aminah@malut.go.id', '0852-1122-3344', 'Ketua Bidang Pendidikan', 'Pendidikan', 'Dinas Pendidikan Prov. Maluku Utara', 'Aktif')
 ON CONFLICT (email) DO NOTHING;
 
@@ -169,5 +169,5 @@ ON CONFLICT (username) DO NOTHING;
 
 -- Seed Initial Site Config
 INSERT INTO site_config (id, site_title, sub_title, address, phone, email)
-VALUES (1, 'Dharma Wanita Persatuan', 'Kantor GTK Provinsi Maluku Utara', 'Jl. Sultan Babullah No. 45, Ternate, Provinsi Maluku Utara', '(0921) 3123456', 'dwp.gtk@malut.kemdikbud.go.id')
+VALUES (1, 'Dharma Wanita Persatuan', 'Kantor GTK Provinsi Maluku Utara', 'Jl. Raya Rum, RT.01 RW.01 Kecamatan Tidore Utara, Kota Tidore Kepulauan, Provinsi Maluku Utara', '(0921) 3123456', 'dwp.gtk@malut.kemdikbud.go.id')
 ON CONFLICT (id) DO NOTHING;

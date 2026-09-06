@@ -32,7 +32,7 @@ export const PublicFooter: React.FC = () => {
             </div>
 
             <p className="text-slate-400 text-xs leading-relaxed max-w-md">
-              {siteConfig.footerDescription || 'Organisasi istri Pegawai Negeri Sipil di lingkungan Balai Guru Penggerak / Kantor Guru dan Tenaga Kependidikan (GTK) Provinsi Maluku Utara.'}
+              {siteConfig.footerDescription || 'Organisasi istri Pegawai Negeri Sipil di lingkungan Kantor Guru dan Tenaga Kependidikan (GTK) Provinsi Maluku Utara.'}
             </p>
 
             <div className="flex items-center gap-2 pt-1">

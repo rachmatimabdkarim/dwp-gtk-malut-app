@@ -500,7 +500,7 @@ export const MemberManagement: React.FC = () => {
                   type="text"
                   value={unitKerja}
                   onChange={(e) => setUnitKerja(e.target.value)}
-                  placeholder="Contoh: Kantor BGP / SMA Negeri 1 Ternate (Opsional)"
+                  placeholder="Contoh: Kantor GTK Provinsi Maluku Utara / SMA Negeri 1 Ternate (Opsional)"
                   className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                 />
               </div>
