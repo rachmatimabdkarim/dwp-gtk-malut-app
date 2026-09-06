@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { ImageUploadCompressor } from '../common/ImageUploadCompressor';
+import { ChangePasswordForm } from './ChangePasswordForm';
 import { 
   User, 
-  Lock, 
   Save, 
   Check, 
-  AlertCircle, 
   ShieldCheck, 
-  Key, 
   UserCheck, 
   Phone, 
   Mail, 
@@ -23,8 +21,7 @@ export const UserProfilePage: React.FC = () => {
     activePersona, 
     members, 
     updateMember, 
-    updateUserAccount,
-    userAccounts
+    updateUserAccount
   } = useApp();
 
   // Find linked member record if any
@@ -47,15 +44,8 @@ export const UserProfilePage: React.FC = () => {
   const [namaAnak, setNamaAnak] = useState(linkedMember?.namaAnak || '');
   const [avatar, setAvatar] = useState(linkedMember?.avatar || activePersona.avatar);
 
-  // Form State - Security / Password
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
   // Status Alerts
   const [profileSuccess, setProfileSuccess] = useState(false);
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
     if (linkedMember) {
@@ -108,47 +98,6 @@ export const UserProfilePage: React.FC = () => {
     setTimeout(() => setProfileSuccess(false), 4000);
   };
 
-  // Handle Change Password
-  const handleChangePassword = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordError('');
-    setPasswordSuccess(false);
-
-    if (!currentAccount) {
-      setPasswordError('Tidak ada akun user aktif yang terdeteksi.');
-      return;
-    }
-
-    // Verify current password match
-    const accountInDb = userAccounts.find(u => u.id === currentAccount.id);
-    const actualCurrentPass = accountInDb?.password || currentAccount.password;
-
-    if (currentPassword !== actualCurrentPass) {
-      setPasswordError('Password saat ini (password lama) tidak sesuai!');
-      return;
-    }
-
-    if (newPassword.length < 4) {
-      setPasswordError('Password baru minimal harus 4 karakter.');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setPasswordError('Konfirmasi password baru tidak cocok.');
-      return;
-    }
-
-    // Update password in AppContext / Database
-    updateUserAccount(currentAccount.id, {
-      password: newPassword
-    });
-
-    setPasswordSuccess(true);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setPasswordSuccess(false), 4000);
-  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -408,89 +357,7 @@ export const UserProfilePage: React.FC = () => {
           </div>
 
           {/* Section 2: Change Password Form */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-5">
-            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Key className="w-5 h-5 text-dwp-burgundy" />
-                <h3 className="font-serif font-bold text-slate-900 text-lg">
-                  Keamanan Akun & Ganti Password
-                </h3>
-              </div>
-            </div>
-
-            {passwordError && (
-              <div className="bg-rose-100 text-rose-900 border border-rose-300 p-3 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in">
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                <span>{passwordError}</span>
-              </div>
-            )}
-
-            {passwordSuccess && (
-              <div className="bg-emerald-100 text-emerald-900 border border-emerald-300 p-3 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in">
-                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Password akun Anda berhasil diperbarui! Silakan gunakan password baru ini untuk login berikutnya.</span>
-              </div>
-            )}
-
-            <form onSubmit={handleChangePassword} className="space-y-4 text-xs">
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">Password Saat Ini (Password Lama) *</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                  <input
-                    type="password"
-                    required
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Masukkan password Anda saat ini..."
-                    className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Password Baru *</label>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                    <input
-                      type="password"
-                      required
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Password baru (min. 4 karakter)"
-                      className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">Konfirmasi Password Baru *</label>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                    <input
-                      type="password"
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Ketik ulang password baru..."
-                      className="w-full pl-9 pr-3 py-2.5 border border-slate-300 rounded-xl font-medium focus:ring-2 focus:ring-dwp-burgundy focus:outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-end">
-                <button
-                  type="submit"
-                  className="bg-slate-900 hover:bg-slate-800 text-dwp-gold font-bold px-5 py-2.5 rounded-xl shadow flex items-center gap-2 transition-all hover:scale-[1.02]"
-                >
-                  <Key className="w-4 h-4 text-dwp-gold" />
-                  <span>Update Password Akun</span>
-                </button>
-              </div>
-            </form>
-          </div>
+          <ChangePasswordForm />
 
         </div>
 
