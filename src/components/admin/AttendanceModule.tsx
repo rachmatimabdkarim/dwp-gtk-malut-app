@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { PenTool, CheckCircle2, RotateCcw, User, ShieldCheck, Printer, FileCheck } from 'lucide-react';
 import { formatDateDDMMYYYY } from '../../utils/dateFormatter';
+import { ensureUUID } from '../../services/cloudSync';
 
 export const AttendanceModule: React.FC = () => {
   const { proposals, members, attendanceRecords, addAttendanceRecord, verifyAttendanceRecord, activePersona } = useApp();
@@ -115,7 +116,9 @@ export const AttendanceModule: React.FC = () => {
     clearCanvas();
   };
 
-  const currentRecords = attendanceRecords.filter(r => r.activityId === selectedActivityId);
+  const currentRecords = attendanceRecords.filter(r => 
+    r.activityId === selectedActivityId || ensureUUID(r.activityId) === ensureUUID(selectedActivityId)
+  );
   const activeProposal = proposals.find(p => p.id === selectedActivityId);
 
   return (
@@ -328,9 +331,20 @@ export const AttendanceModule: React.FC = () => {
                         )}
                       </td>
                       <td className="p-2.5 border border-slate-200 text-center no-print">
-                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Terverifikasi
-                        </span>
+                        {rec.status === 'verified' ? (
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Terverifikasi
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => verifyAttendanceRecord(rec.id, activePersona.name)}
+                            className="bg-amber-100 hover:bg-emerald-600 text-amber-900 hover:text-white border border-amber-300 hover:border-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full transition-all inline-flex items-center gap-1"
+                            title="Verifikasi kehadiran peserta"
+                          >
+                            <ShieldCheck className="w-3 h-3" /> Verifikasi
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

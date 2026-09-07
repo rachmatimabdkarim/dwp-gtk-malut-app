@@ -10,6 +10,7 @@ import { OrgChart } from './components/public/OrgChart';
 import { NewsSection } from './components/public/NewsSection';
 import { AgendaSection } from './components/public/AgendaSection';
 import { PublicFooter } from './components/public/PublicFooter';
+import { PublicAttendanceForm } from './components/public/PublicAttendanceForm';
 
 // Admin Components
 import { AdminHeader } from './components/admin/AdminHeader';
@@ -31,8 +32,25 @@ import { Lock, ArrowLeft } from 'lucide-react';
 const MainLayout: React.FC = () => {
   const { activeTab, adminSubTab, currentRole, setAdminSubTab, activePersona, isAuthenticated } = useApp();
 
+  const [currentPath, setCurrentPath] = React.useState(() => window.location.pathname);
+
+  React.useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
+
+  // 0. Rute Publik: Presensi Digital (/absensi/:proposalId)
+  if (currentPath.startsWith('/absensi')) {
+    const absensiMatch = currentPath.match(/^\/absensi\/?([^/?#]+)?/);
+    const proposalId = absensiMatch && absensiMatch[1] ? decodeURIComponent(absensiMatch[1]) : '';
+    return <PublicAttendanceForm proposalId={proposalId} />;
+  }
+
   // Periksa apakah path URL saat ini adalah /login
-  const isLoginPage = window.location.pathname === '/login';
+  const isLoginPage = currentPath === '/login';
 
   // 1. Gerbang Admin: Render LoginPage jika sesi belum terautentikasi
   if ((isLoginPage && !isAuthenticated) || (activeTab === 'admin' && !isAuthenticated)) {

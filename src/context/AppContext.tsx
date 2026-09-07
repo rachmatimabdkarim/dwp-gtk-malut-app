@@ -743,7 +743,7 @@ interface AppContextType {
   deleteProposal: (proposalId: string) => void;
   
   attendanceRecords: AttendanceRecord[];
-  addAttendanceRecord: (record: Omit<AttendanceRecord, 'id' | 'status'>) => void;
+  addAttendanceRecord: (record: Omit<AttendanceRecord, 'id' | 'status'> & { id?: string; status?: 'verified' | 'unverified' }) => void;
   verifyAttendanceRecord: (recordId: string, verifierName: string) => void;
   
   reports: ExecutionReport[];
@@ -2371,14 +2371,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  const addAttendanceRecord = (rec: Omit<AttendanceRecord, 'id' | 'status'>) => {
+  const addAttendanceRecord = (rec: Omit<AttendanceRecord, 'id' | 'status'> & { id?: string; status?: 'verified' | 'unverified' }) => {
     const newRecord: AttendanceRecord = {
       ...rec,
-      id: generateUUID(),
+      id: rec.id || generateUUID(),
       activityId: ensureUUID(rec.activityId),
       memberId: rec.memberId ? ensureUUID(rec.memberId) : undefined,
-      status: 'verified', // Auto verified if submitted
-      checkInTime: new Date().toLocaleString('id-ID')
+      status: rec.status || 'verified',
+      checkInTime: rec.checkInTime || new Date().toLocaleString('id-ID')
     };
     setAttendanceRecords(prev => [newRecord, ...prev]);
   };
