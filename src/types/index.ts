@@ -25,6 +25,7 @@ export interface UserAccount {
   status: 'aktif' | 'non-aktif';
   createdAt: string;
   demo?: boolean;          // Penanda sesi offline demo
+  auth_id?: string;        // Optional link ke auth.users id Supabase
 }
 
 export interface Member {
