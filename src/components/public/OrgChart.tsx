@@ -101,7 +101,7 @@ export const OrgChart: React.FC = () => {
                 <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 mx-auto mb-2 bg-slate-50">
                   <img src={sekretaris?.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80'} alt="Sekretaris" className="w-full h-full object-cover" />
                 </div>
-                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{sekretaris?.name || 'Ny. Fitriani Nurdin, S.E'}</h5>
+                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{sekretaris?.name || 'Ny. Fadila Assagaf'}</h5>
                 <p className="text-[10px] text-dwp-burgundy font-bold mt-1 uppercase">Sekretaris</p>
               </div>
 
@@ -110,7 +110,7 @@ export const OrgChart: React.FC = () => {
                 <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 mx-auto mb-2 bg-slate-50">
                   <img src={wakilSekretaris?.avatar || 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&auto=format&fit=crop&q=80'} alt="Wakil Sekretaris" className="w-full h-full object-cover" />
                 </div>
-                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{wakilSekretaris?.name || 'Ny. Sitti Maryam Subhan, S.Pd'}</h5>
+                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{wakilSekretaris?.name || 'Ny. Hastizia Ismira'}</h5>
                 <p className="text-[10px] text-dwp-burgundy font-bold mt-1 uppercase">Wakil Sekretaris</p>
               </div>
 
@@ -119,7 +119,7 @@ export const OrgChart: React.FC = () => {
                 <div className="w-14 h-14 rounded-full overflow-hidden border border-slate-200 mx-auto mb-2 bg-slate-50">
                   <img src={bendahara?.avatar || 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80'} alt="Bendahara" className="w-full h-full object-cover" />
                 </div>
-                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{bendahara?.name || 'Ny. Hasnah Usman, S.E'}</h5>
+                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{bendahara?.name || 'Ny. Jumaini'}</h5>
                 <p className="text-[10px] text-dwp-burgundy font-bold mt-1 uppercase">Bendahara</p>
               </div>
             </div>
@@ -146,7 +146,7 @@ export const OrgChart: React.FC = () => {
                   <BookOpen className="w-3 h-3" />
                   <span>Bidang Pendidikan</span>
                 </span>
-                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{kabidPendidikan?.name || 'Ny. Hj. Siti Aminah, S.Pd'}</h5>
+                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{kabidPendidikan?.name || 'Ny. Jusna'}</h5>
                 <p className="text-[10px] text-slate-500 font-medium mt-0.5">Ketua Bidang Pendidikan</p>
               </div>
 
@@ -159,7 +159,7 @@ export const OrgChart: React.FC = () => {
                   <Banknote className="w-3 h-3 text-emerald-600" />
                   <span>Bidang Ekonomi</span>
                 </span>
-                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{kabidEkonomi?.name || 'Ny. Fatimah Az-Zahra, SE'}</h5>
+                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{kabidEkonomi?.name || 'Ny. Yayuk Setiyawati'}</h5>
                 <p className="text-[10px] text-slate-500 font-medium mt-0.5">Ketua Bidang Ekonomi</p>
               </div>
 
@@ -172,7 +172,7 @@ export const OrgChart: React.FC = () => {
                   <HeartHandshake className="w-3 h-3 text-sky-600" />
                   <span>Bidang Sosial Budaya</span>
                 </span>
-                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{kabidSosbud?.name || 'Ny. Mariam Syaiful, S.Sos'}</h5>
+                <h5 className="font-serif font-bold text-slate-900 text-xs leading-snug">{kabidSosbud?.name || 'Ny. Risna Kanurna Sopalatu'}</h5>
                 <p className="text-[10px] text-slate-500 font-medium mt-0.5">Ketua Bidang Sosial Budaya</p>
               </div>
             </div>

@@ -149,11 +149,22 @@ CREATE TABLE IF NOT EXISTS execution_reports (
 -- Seed Members Initial Data
 INSERT INTO members (id, name, nip, email, phone, jabatan, bidang, unit_kerja, status)
 VALUES 
-  ('11111111-1111-1111-1111-111111111111', 'Ny. Hj. Rahmiati Ahmad, M.Pd', '197805122003122001', 'rahmiati.dwpgtk@malut.go.id', '0812-4567-8901', 'Ketua', '-', 'Kantor GTK Prov. Maluku Utara', 'Aktif'),
-  ('22222222-2222-2222-2222-222222222222', 'Ny. Dra. Endang Kusuma', '198203152008012004', 'endang.dwp@malut.go.id', '0813-9876-5432', 'Wakil Ketua', '-', 'Subbag Umum & Tata Usaha', 'Aktif'),
-  ('33333333-3333-3333-3333-333333333333', 'Ny. Fitriani Nurdin, S.E', '198511202010122008', 'fitriani.sekretaris@malut.go.id', '0821-3344-5566', 'Sekretaris', '-', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
-  ('44444444-4444-4444-4444-444444444444', 'Ny. Hasnah Usman, S.E', '198604122012012009', 'hasnah.bendahara@malut.go.id', '0812-6677-8899', 'Bendahara', '-', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
-  ('55555555-5555-5555-5555-555555555555', 'Ny. Hj. Siti Aminah, S.Pd', '198804182012042002', 'siti.aminah@malut.go.id', '0852-1122-3344', 'Ketua Bidang Pendidikan', 'Pendidikan', 'Dinas Pendidikan Prov. Maluku Utara', 'Aktif')
+  ('11111111-1111-1111-1111-111111111111', 'Ny. Washliyatul Qodari', '', 'washliyatul.dwp@malut.go.id', '0812-4567-8901', 'Ketua', '-', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('22222222-2222-2222-2222-222222222222', 'Ny. Wahyuni Bailussy', '', 'wahyuni.dwp@malut.go.id', '0813-9876-5432', 'Wakil Ketua', '-', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('33333333-3333-3333-3333-333333333333', 'Ny. Fadila Assagaf', '', 'fadila.dwp@malut.go.id', '0821-3344-5566', 'Sekretaris', '-', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('44444444-4444-4444-4444-444444444444', 'Ny. Jumaini', '', 'jumaini.dwp@malut.go.id', '0812-6677-8899', 'Bendahara', '-', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('55555555-5555-5555-5555-555555555555', 'Ny. Jusna', '', 'jusna.dwp@malut.go.id', '0852-1122-3344', 'Ketua Bidang Pendidikan', 'Pendidikan', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b0000001-0000-0000-0000-000000000001', 'Ny. Hastizia Ismira', '', 'hastizia.dwp@malut.go.id', '0821-9988-7766', 'Wakil Sekretaris', '-', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b0000002-0000-0000-0000-000000000002', 'Ny. Yayuk Setiyawati', '', 'yayuk.dwp@malut.go.id', '0812-7788-9900', 'Ketua Bidang Ekonomi', 'Ekonomi', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b0000003-0000-0000-0000-000000000003', 'Ny. Risna Kanurna Sopalatu', '', 'risna.dwp@malut.go.id', '0822-4455-6677', 'Ketua Bidang Sosial Budaya', 'Sosial Budaya', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b0000004-0000-0000-0000-000000000004', 'Ny. Nurlaela A. Barmawi', '', 'nurlaela.dwp@malut.go.id', '0852-9988-1122', 'Anggota', 'Pendidikan', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b0000005-0000-0000-0000-000000000005', 'Ny. Nur', '', 'nur.dwp@malut.go.id', '0852-9988-1123', 'Anggota', 'Pendidikan', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b0000006-0000-0000-0000-000000000006', 'Ny. Nining Suaib', '', 'nining.dwp@malut.go.id', '0852-9988-1124', 'Anggota', 'Pendidikan', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b0000007-0000-0000-0000-000000000007', 'Ny. Sahdia Abukasim', '', 'sahdia.dwp@malut.go.id', '0812-7788-9901', 'Anggota', 'Ekonomi', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b0000008-0000-0000-0000-000000000008', 'Ny. Jumiarti Audina', '', 'jumiarti.dwp@malut.go.id', '0812-7788-9902', 'Anggota', 'Ekonomi', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b0000009-0000-0000-0000-000000000009', 'Ny. Aida Ibrahim', '', 'aida.dwp@malut.go.id', '0822-4455-6678', 'Anggota', 'Sosial Budaya', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b000000a-0000-0000-0000-00000000000a', 'Ny. Siti Masita Muhammad', '', 'sitimasita.dwp@malut.go.id', '0822-4455-6679', 'Anggota', 'Sosial Budaya', 'Kantor GTK Provinsi Maluku Utara', 'Aktif'),
+  ('b000000b-0000-0000-0000-00000000000b', 'Ny. Nur Alisnawati Anas', '', 'nuralisnawati.dwp@malut.go.id', '0822-4455-6680', 'Anggota', 'Sosial Budaya', 'Kantor GTK Provinsi Maluku Utara', 'Aktif')
 ON CONFLICT (email) DO NOTHING;
 
 -- Seed User Accounts Initial Data

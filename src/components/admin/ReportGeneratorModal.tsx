@@ -348,7 +348,7 @@ export const ReportGeneratorModal: React.FC = () => {
               <p className="font-bold text-slate-900 mt-1">Ketua DWP Kantor GTK Prov. Maluku Utara</p>
               <div className="h-16" />
               <p className="font-bold text-slate-900 border-b border-slate-400 inline-block px-6">
-                Ny. Hj. Rahmiati Ahmad, M.Pd
+                Ny. Washliyatul Qodari
               </p>
             </div>
 
@@ -357,7 +357,7 @@ export const ReportGeneratorModal: React.FC = () => {
               <p className="font-bold text-slate-900 mt-1">Sekretaris / Pengurus Penanggung Jawab</p>
               <div className="h-16" />
               <p className="font-bold text-slate-900 border-b border-slate-400 inline-block px-6">
-                Ny. Dr. Nurul Hidayah, M.Si
+                Ny. Fadila Assagaf
               </p>
             </div>
           </div>

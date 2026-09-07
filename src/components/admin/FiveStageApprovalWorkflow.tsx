@@ -1573,8 +1573,8 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                           penerima: `Pengurus dan Seluruh Anggota Dharma Wanita Persatuan GTK Maluku Utara`,
                           rundown: `1. Pembukaan\n2. Sambutan Ketua DWP GTK Malut\n3. Pelaksanaan Acara Utama\n4. Doa & Penutup`,
                           bodyText: `Dengan ini diberitahukan bahwa sehubungan dengan pelaksanaan kegiatan ${detailProposal.title}, diharapkan perkenan Bapak/Ibu/Saudara/i untuk menghadiri dan berpartisipasi aktif dalam rangkaian kegiatan tersebut.`,
-                          signedByKetuaName: 'Ny. Hajjah Nurjanah S.Pd',
-                          signedByKetuaNip: '19780512 200501 2 003'
+                          signedByKetuaName: 'Ny. Washliyatul Qodari',
+                          signedByKetuaNip: ''
                         }
                       };
 
@@ -2151,10 +2151,10 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
                                           )}
                                         </div>
                                         <p className="font-bold underline text-[11px]">
-                                          {activeDoc.contentData.signedByKetuaName || 'Ny. Hajjah Nurjanah S.Pd'}
+                                          {activeDoc.contentData.signedByKetuaName || 'Ny. Washliyatul Qodari'}
                                         </p>
                                         <p className="text-[9px] text-slate-600 font-mono">
-                                          NIP. {activeDoc.contentData.signedByKetuaNip || '19780512 200501 2 003'}
+                                          {activeDoc.contentData.signedByKetuaNip ? `NIP. ${activeDoc.contentData.signedByKetuaNip}` : ''}
                                         </p>
                                       </div>
                                     </div>

@@ -754,7 +754,7 @@ export const UserManagement: React.FC = () => {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Contoh: fatimah.waket atau admin.it"
+                  placeholder="Contoh: wahyuni.waket atau admin.it"
                   className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-bold text-slate-900"
                 />
               </div>

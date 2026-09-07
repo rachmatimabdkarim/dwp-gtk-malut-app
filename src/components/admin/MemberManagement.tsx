@@ -398,7 +398,7 @@ export const MemberManagement: React.FC = () => {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Contoh: Ny. Hj. Siti Aminah, S.Pd"
+                  placeholder="Contoh: Ny. Washliyatul Qodari"
                   className="w-full p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
                 />
               </div>

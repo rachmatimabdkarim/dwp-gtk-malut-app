@@ -197,7 +197,7 @@ export const AttendanceModule: React.FC = () => {
                 required
                 value={participantName}
                 onChange={(e) => setParticipantName(e.target.value)}
-                placeholder="Contoh: Ny. Hj. Siti Aminah, S.Pd"
+                placeholder="Contoh: Ny. Washliyatul Qodari"
                 className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-dwp-burgundy focus:outline-none font-medium"
               />
             </div>
@@ -344,7 +344,7 @@ export const AttendanceModule: React.FC = () => {
                   <p className="font-bold text-slate-900 mt-1">Ketua Panitia Pelaksana</p>
                   <div className="h-16" />
                   <p className="font-bold text-slate-900 border-b border-slate-400 inline-block px-4">
-                    Ny. Hj. Siti Aminah, S.Pd
+                    Ny. Jusna
                   </p>
                 </div>
 

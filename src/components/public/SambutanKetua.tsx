@@ -13,7 +13,7 @@ export const SambutanKetua: React.FC = () => {
   );
 
 
-  const ketuaName = ketuaMember ? ketuaMember.name : 'Ny. Hj. Rahmiati Ahmad, M.Pd';
+  const ketuaName = ketuaMember ? ketuaMember.name : 'Ny. Washliyatul Qodari';
   const ketuaTitle = ketuaMember ? ketuaMember.jabatan : 'Ketua DWP Kantor GTK Provinsi Maluku Utara';
   const ketuaPhoto = ketuaMember?.avatar || 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop&q=80';
 
