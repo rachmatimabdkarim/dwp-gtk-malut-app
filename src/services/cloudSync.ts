@@ -12,7 +12,12 @@ import {
   AppNotification,
   KopSuratConfig,
   DocumentType,
-  DocumentStatus
+  DocumentStatus,
+  CommitteeMember,
+  CommitteeStatus,
+  CommitteeLog,
+  DocumentJobDesk,
+  JobDeskLog
 } from '../types';
 import { toISODateSafe, toISOStringSafe } from '../utils/dateFormatter';
 
@@ -84,6 +89,20 @@ export const ensureUUID = (id?: string): string => {
   const newUuid = generateUUID();
   dynamicUuidCache.set(id, newUuid);
   return newUuid;
+};
+
+export const parseJsonArray = <T>(val: any): T[] => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
 };
 
 /**
@@ -352,7 +371,13 @@ export const cloudSync = {
           stageProgress: 5,
           createdBy: row.organizer || 'Admin DWP',
           createdAt: row.start_date || '',
-          logs: []
+          logs: [],
+          committeeMembers: [],
+          committeeStatus: undefined,
+          committeeNotes: undefined,
+          committeeLogs: [],
+          documentJobDesks: [],
+          jobDeskLogs: []
         }));
       }
 
@@ -398,6 +423,12 @@ export const cloudSync = {
           createdBy: row.created_by,
           creatorRole: row.creator_role ? (row.creator_role as UserRole) : undefined,
           revisionComment: row.revision_comment || undefined,
+          committeeMembers: parseJsonArray<CommitteeMember>(row.committee_members),
+          committeeStatus: (row.committee_status as CommitteeStatus) || undefined,
+          committeeNotes: row.committee_notes || undefined,
+          committeeLogs: parseJsonArray<CommitteeLog>(row.committee_logs),
+          documentJobDesks: parseJsonArray<DocumentJobDesk>(row.document_job_desks),
+          jobDeskLogs: parseJsonArray<JobDeskLog>(row.job_desk_logs),
           createdAt: row.created_at ? row.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
           logs: logs.length > 0 ? logs : [
             {
@@ -442,6 +473,12 @@ export const cloudSync = {
           created_by: p.createdBy,
           creator_role: p.creatorRole || null,
           revision_comment: p.revisionComment || null,
+          committee_members: parseJsonArray(p.committeeMembers),
+          committee_status: p.committeeStatus || null,
+          committee_notes: p.committeeNotes || null,
+          committee_logs: parseJsonArray(p.committeeLogs),
+          document_job_desks: parseJsonArray(p.documentJobDesks),
+          job_desk_logs: parseJsonArray(p.jobDeskLogs),
           created_at: toISOStringSafe(p.createdAt)
         }, { onConflict: 'id' });
 

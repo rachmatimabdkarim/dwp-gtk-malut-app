@@ -1978,7 +1978,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const targetProp = proposals.find(p => p.id === proposalId);
     const pTitle = targetProp ? targetProp.title : proposalId;
 
-    setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, committeeMembers } : p));
+    let updatedProposal: ActivityProposal | null = targetProp ? { ...targetProp, committeeMembers } : null;
+
+    setProposals(prev => prev.map(p => {
+      if (p.id === proposalId) {
+        const u = { ...p, committeeMembers };
+        updatedProposal = u;
+        return u;
+      }
+      return p;
+    }));
 
     addSystemAuditLog({
       category: 'proposal',
@@ -1988,6 +1997,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: `Pembaruan Susunan Panitia Pelaksana`,
       details: `Susunan Panitia Kegiatan "${pTitle}" telah diperbarui oleh ${activePersona.name} (${committeeMembers.length} Anggota Panitia).`
     });
+
+    if (isAuthenticated && !isReceivingFromCloudRef.current && updatedProposal) {
+      cloudSync.syncProposals([{ ...updatedProposal }]);
+    }
   };
 
   const setDocumentJobDesks = (
@@ -2056,13 +2069,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
     }
 
+    const targetProp = proposals.find(p => p.id === proposalId);
+    let updatedProposal: ActivityProposal | null = targetProp ? {
+      ...targetProp,
+      documentJobDesks: jobDesks,
+      jobDeskLogs: [...(targetProp.jobDeskLogs || []), ...newLogs]
+    } : null;
+
     setProposals(prev => prev.map(p => {
       if (p.id !== proposalId) return p;
-      return {
+      const u = {
         ...p,
         documentJobDesks: jobDesks,
         jobDeskLogs: [...(p.jobDeskLogs || []), ...newLogs]
       };
+      updatedProposal = u;
+      return u;
     }));
 
     addSystemAuditLog({
@@ -2073,6 +2095,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Penetapan/Perubahan Jobdesk Dokumen Kegiatan',
       details: `Jobdesk dokumen ditetapkan/diperbarui oleh ${changedBy} untuk ${jobDesks.length} dokumen. Perubahan tercatat: ${newLogs.length} entri.`
     });
+
+    if (isAuthenticated && !isReceivingFromCloudRef.current && updatedProposal) {
+      cloudSync.syncProposals([{ ...updatedProposal }]);
+    }
   };
 
   const updateCommitteeStatus = (proposalId: string, status: CommitteeStatus, notes?: string, actorName?: string) => {
@@ -2081,46 +2107,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let creatorRole: UserRole = 'admin_bidang';
     const timestampStr = new Date().toLocaleString('id-ID');
 
+    let stageName = 'Pengajuan Panitia Pelaksana';
+    let decision: 'submitted' | 'verified' | 'approved' | 'revision' = 'submitted';
+
+    if (status === 'pending_waket_verification') {
+      stageName = 'Pengajuan Panitia Pelaksana';
+      decision = 'submitted';
+    } else if (status === 'pending_ketua_approval') {
+      stageName = 'Verifikasi Wakil Ketua';
+      decision = 'verified';
+    } else if (status === 'approved_by_ketua') {
+      stageName = 'Persetujuan Ketua DWP';
+      decision = 'approved';
+    } else if (status === 'revision_requested') {
+      stageName = 'Permintaan Revisi Panitia';
+      decision = 'revision';
+    }
+
+    const newLog: CommitteeLog = {
+      id: `commlog-${Date.now()}`,
+      stageName,
+      actorName: actorName || activePersona.name || 'Pengurus DWP',
+      decision,
+      notes: notes || (status === 'pending_waket_verification' ? 'Susunan panitia diajukan untuk verifikasi.' : 'Tindak lanjut susunan panitia.'),
+      timestamp: timestampStr
+    };
+
+    const targetProp = proposals.find(p => p.id === proposalId);
+    let updatedProposal: ActivityProposal | null = targetProp ? {
+      ...targetProp,
+      committeeStatus: status,
+      committeeNotes: notes,
+      committeeLogs: [...(targetProp.committeeLogs || []), newLog]
+    } : null;
+
     setProposals(prev => prev.map(p => {
       if (p.id !== proposalId) return p;
       targetProposalTitle = p.title;
       creatorRole = p.creatorRole || 'admin_bidang';
 
-      let stageName = 'Pengajuan Panitia Pelaksana';
-      let decision: 'submitted' | 'verified' | 'approved' | 'revision' = 'submitted';
-
-      if (status === 'pending_waket_verification') {
-        stageName = 'Pengajuan Panitia Pelaksana';
-        decision = 'submitted';
-      } else if (status === 'pending_ketua_approval') {
-        stageName = 'Verifikasi Wakil Ketua';
-        decision = 'verified';
-      } else if (status === 'approved_by_ketua') {
-        stageName = 'Persetujuan Ketua DWP';
-        decision = 'approved';
-      } else if (status === 'revision_requested') {
-        stageName = 'Permintaan Revisi Panitia';
-        decision = 'revision';
-      }
-
-      const newLog: CommitteeLog = {
-        id: `commlog-${Date.now()}`,
-        stageName,
-        actorName: actorName || activePersona.name || 'Pengurus DWP',
-        decision,
-        notes: notes || (status === 'pending_waket_verification' ? 'Susunan panitia diajukan untuk verifikasi.' : 'Tindak lanjut susunan panitia.'),
-        timestamp: timestampStr
-      };
-
       const existingLogs = p.committeeLogs || [];
-
-      return {
+      const u = {
         ...p,
         committeeStatus: status,
         committeeNotes: notes,
         committeeLogs: [...existingLogs, newLog]
       };
+      updatedProposal = u;
+      return u;
     }));
+
+    if (!targetProposalTitle && targetProp) {
+      targetProposalTitle = targetProp.title;
+    }
 
     addSystemAuditLog({
       category: 'proposal',
@@ -2130,6 +2169,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: `Tindak Lanjut Status Panitia Pelaksana`,
       details: `Usulan "${targetProposalTitle}": Status Panitia -> ${status.toUpperCase()} | Catatan: "${notes || '-'}"`
     });
+
+    if (isAuthenticated && !isReceivingFromCloudRef.current && updatedProposal) {
+      cloudSync.syncProposals([{ ...updatedProposal }]);
+    }
 
     setTimeout(() => {
       const timestampStr = new Date().toLocaleString('id-ID');
