@@ -18,7 +18,8 @@ import {
   CommitteeLog,
   DocumentJobDesk,
   JobDeskLog,
-  ExecutionReport
+  ExecutionReport,
+  SystemAuditLogEntry
 } from '../types';
 import { toISODateSafe, toISOStringSafe } from '../utils/dateFormatter';
 
@@ -1113,7 +1114,80 @@ export const cloudSync = {
   },
 
   // ==========================================
-  // 11. INITIAL BULK LOADER
+  // 11. LOG AUDIT SISTEM (SYSTEM AUDIT LOGS)
+  // ==========================================
+  async fetchSystemAuditLogs(isLoggedIn?: boolean): Promise<SystemAuditLogEntry[] | null> {
+    try {
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
+      if (!isAuth) {
+        // Mode Anonim: JANGAN baca tabel log audit privat dari Supabase
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from('system_audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        handleSupabaseError('fetchSystemAuditLogs', error);
+        return null;
+      }
+      if (!data) return null;
+      if (data.length === 0) return [];
+
+      return data.map((row: any): SystemAuditLogEntry => ({
+        id: row.id,
+        timestamp: row.timestamp || '',
+        category: (row.category as any) || 'system',
+        severity: (row.severity as any) || 'info',
+        actorName: row.actor_name || '',
+        actorRole: row.actor_role || '',
+        action: row.action || '',
+        details: row.details || '',
+        ipAddress: row.ip_address || undefined
+      }));
+    } catch (e) {
+      console.warn('Supabase fetchSystemAuditLogs exception:', e);
+      return null;
+    }
+  },
+
+  async syncSystemAuditLogs(auditLogs: SystemAuditLogEntry[]) {
+    try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
+      if (!auditLogs || auditLogs.length === 0) return;
+
+      const rows = auditLogs.map(log => ({
+        id: log.id,
+        timestamp: log.timestamp,
+        category: log.category,
+        severity: log.severity,
+        actor_name: log.actorName,
+        actor_role: log.actorRole,
+        action: log.action,
+        details: log.details || '',
+        ip_address: log.ipAddress || null
+      }));
+
+      for (let i = 0; i < rows.length; i += 100) {
+        const chunk = rows.slice(i, i + 100);
+        const { error } = await supabase
+          .from('system_audit_logs')
+          .upsert(chunk, { onConflict: 'id' });
+
+        if (error) {
+          handleSupabaseError('syncSystemAuditLogs', error);
+          break;
+        }
+      }
+    } catch (e) {
+      console.warn('Sync system audit logs error:', e);
+    }
+  },
+
+  // ==========================================
+  // 12. INITIAL BULK LOADER
   // ==========================================
   async fetchAllInitialData(isLoggedIn?: boolean) {
     try {
@@ -1128,7 +1202,8 @@ export const cloudSync = {
         activityDocumentsRes,
         notificationsRes,
         kopSuratConfigRes,
-        reportsRes
+        reportsRes,
+        systemAuditLogsRes
       ] = await Promise.allSettled([
         this.fetchMembers(isAuth),
         this.fetchUserAccounts(isAuth),
@@ -1139,7 +1214,8 @@ export const cloudSync = {
         this.fetchActivityDocuments(isAuth),
         this.fetchNotifications(isAuth),
         this.fetchKopSuratConfig(isAuth),
-        this.fetchReports(isAuth)
+        this.fetchReports(isAuth),
+        this.fetchSystemAuditLogs(isAuth)
       ]);
 
       return {
@@ -1152,7 +1228,8 @@ export const cloudSync = {
         activityDocuments: activityDocumentsRes.status === 'fulfilled' ? activityDocumentsRes.value : null,
         notifications: notificationsRes.status === 'fulfilled' ? notificationsRes.value : null,
         kopSuratConfig: kopSuratConfigRes.status === 'fulfilled' ? kopSuratConfigRes.value : null,
-        reports: reportsRes.status === 'fulfilled' ? reportsRes.value : null
+        reports: reportsRes.status === 'fulfilled' ? reportsRes.value : null,
+        systemAuditLogs: systemAuditLogsRes.status === 'fulfilled' ? systemAuditLogsRes.value : null
       };
     } catch (e) {
       console.warn('Fetch all initial data exception:', e);

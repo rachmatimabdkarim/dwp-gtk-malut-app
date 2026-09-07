@@ -26,6 +26,7 @@ import {
 import { apiService, INITIAL_USER_ACCOUNTS } from '../services/apiService';
 import { supabase } from '../lib/supabase';
 import { cloudSync, ensureUUID, generateUUID, SEED_NOTIFICATION_IDS } from '../services/cloudSync';
+import { parseCustomDate } from '../utils/dateFormatter';
 
 import { 
   DynamicPermissionMatrix, 
@@ -867,10 +868,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const prevSiteConfigRef = useRef<SiteConfig>(siteConfig);
   const prevActivityDocumentsRef = useRef<ActivityDocument[]>(activityDocuments);
   const prevNotificationsRef = useRef<AppNotification[]>(notifications);
-
-  useEffect(() => {
-    localStorage.setItem('dwp_system_audit_logs', JSON.stringify(systemAuditLogs));
-  }, [systemAuditLogs]);
+  const prevSystemAuditLogsRef = useRef<SystemAuditLogEntry[]>(systemAuditLogs);
 
   const addSystemAuditLog = (entry: Omit<SystemAuditLogEntry, 'id' | 'timestamp'>) => {
     const newLog: SystemAuditLogEntry = {
@@ -1221,6 +1219,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         prevReportsRef.current = cloudData.reports;
         localStorage.setItem('dwp_reports', JSON.stringify(cloudData.reports));
       }
+      if (hasAuth && cloudData.systemAuditLogs) {
+        setSystemAuditLogs(prevLogs => {
+          const cloudLogs = cloudData.systemAuditLogs || [];
+          const cloudMap = new Map(cloudLogs.map(l => [l.id, l]));
+          const localOnly = prevLogs.filter(l => !cloudMap.has(l.id));
+          const merged = [...cloudLogs, ...localOnly];
+          merged.sort((a, b) => {
+            const timeA = parseCustomDate(a.timestamp)?.getTime() || (a.id.match(/^log-sys-(\d+)/) ? parseInt(a.id.match(/^log-sys-(\d+)/)![1], 10) : 0);
+            const timeB = parseCustomDate(b.timestamp)?.getTime() || (b.id.match(/^log-sys-(\d+)/) ? parseInt(b.id.match(/^log-sys-(\d+)/)![1], 10) : 0);
+            return timeB - timeA || b.id.localeCompare(a.id);
+          });
+          prevSystemAuditLogsRef.current = merged;
+          localStorage.setItem('dwp_system_audit_logs', JSON.stringify(merged));
+          return merged;
+        });
+      }
     } catch (err) {
       console.warn('Reload from cloud error:', err);
     } finally {
@@ -1384,6 +1398,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setReports(INITIAL_REPORTS);
           prevReportsRef.current = INITIAL_REPORTS;
           localStorage.setItem('dwp_reports', JSON.stringify(INITIAL_REPORTS));
+        }
+
+        // 11. System Audit Logs
+        if (hasAuth && cloudData.systemAuditLogs) {
+          setSystemAuditLogs(prevLogs => {
+            const cloudLogs = cloudData.systemAuditLogs || [];
+            const cloudMap = new Map(cloudLogs.map(l => [l.id, l]));
+            const localOnly = prevLogs.filter(l => !cloudMap.has(l.id));
+            const merged = [...cloudLogs, ...localOnly];
+            merged.sort((a, b) => {
+              const timeA = parseCustomDate(a.timestamp)?.getTime() || (a.id.match(/^log-sys-(\d+)/) ? parseInt(a.id.match(/^log-sys-(\d+)/)![1], 10) : 0);
+              const timeB = parseCustomDate(b.timestamp)?.getTime() || (b.id.match(/^log-sys-(\d+)/) ? parseInt(b.id.match(/^log-sys-(\d+)/)![1], 10) : 0);
+              return timeB - timeA || b.id.localeCompare(a.id);
+            });
+            prevSystemAuditLogsRef.current = merged;
+            localStorage.setItem('dwp_system_audit_logs', JSON.stringify(merged));
+            return merged;
+          });
         }
       } catch (err) {
         console.warn('Initial cloud data loading error, fallback to local data:', err);
@@ -1589,6 +1621,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
   }, [notifications, isInitialized, isAuthenticated]);
+
+  useEffect(() => {
+    localStorage.setItem('dwp_system_audit_logs', JSON.stringify(systemAuditLogs));
+    if (isReceivingFromCloudRef.current) {
+      prevSystemAuditLogsRef.current = systemAuditLogs;
+      return;
+    }
+    if (prevSystemAuditLogsRef.current === systemAuditLogs) {
+      return;
+    }
+    prevSystemAuditLogsRef.current = systemAuditLogs;
+    if (apiService.getAuthSession()) {
+      const timer = setTimeout(() => {
+        cloudSync.syncSystemAuditLogs(systemAuditLogs);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [systemAuditLogs, isInitialized, isAuthenticated]);
+
+  useEffect(() => {
+    // Setelah login, tunggu hingga penerimaan data cloud selesai (maks ~6 dtk),
+    // lalu dorong log audit lokal yang mungkin tercatat selama proses muat.
+    if (!apiService.getAuthSession()) return;
+    let tries = 0;
+    const timer = window.setInterval(() => {
+      tries += 1;
+      if (!isReceivingFromCloudRef.current || tries > 30) {
+        window.clearInterval(timer);
+        if (!isReceivingFromCloudRef.current && systemAuditLogs.length > 0) {
+          cloudSync.syncSystemAuditLogs(systemAuditLogs);
+        }
+      }
+    }, 200);
+    return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [systemAuditLogs]);
 
   const [focusedProposalId, setFocusedProposalId] = useState<string | null>(null);
   const [focusedWorkspaceTab, setFocusedWorkspaceTab] = useState<'usulan' | 'panitia' | 'sk' | 'absensi' | 'lpj'>('usulan');
