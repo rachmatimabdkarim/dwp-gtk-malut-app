@@ -62,7 +62,7 @@ export const getEffectiveRole = (user: UserAccount, membersList: Member[]): User
 
 export { INITIAL_USER_ACCOUNTS };
 
-// Helper pembuat UserAccount dari sesi autentikasi Supabase & fallback seed lokal
+// Helper pembuat UserAccount dari sesi autentikasi Supabase & sinkronisasi akun (email, auth_id, fallback username)
 export const buildUserAccountFromSession = (
   authUser: {
     id: string;
@@ -75,14 +75,24 @@ export const buildUserAccountFromSession = (
   localAccounts: UserAccount[]
 ): UserAccount => {
   const cleanEmail = (authUser.email || '').trim().toLowerCase();
+  const authUserId = authUser.id || '';
+  const authUsername = (authUser.user_metadata?.username || '').trim().toLowerCase();
 
-  // Fallback ke user_accounts lokal seed berdasarkan email atau username
-  const localAcc = localAccounts.find(
-    u => (u.email && u.email.toLowerCase() === cleanEmail) ||
-         (authUser.user_metadata?.username && u.username.toLowerCase() === authUser.user_metadata.username.toLowerCase())
-  );
+  // Cocokkan dengan sesi: email sesi == akun.email, ATAU auth_id akun == id user sesi (fallback id == id user sesi), fallback username
+  const localAcc = localAccounts.find(u => {
+    if (cleanEmail && u.email && u.email.trim().toLowerCase() === cleanEmail) {
+      return true;
+    }
+    if (authUserId && ((u.auth_id && u.auth_id === authUserId) || u.id === authUserId)) {
+      return true;
+    }
+    if (authUsername && u.username && u.username.trim().toLowerCase() === authUsername) {
+      return true;
+    }
+    return false;
+  });
 
-  // Aturan G1: role (app_metadata.dwp_role, fallback: user_accounts lokal seed berdasar email), memberId, username; role UserRole, default 'anggota'
+  // Aturan G1: role (app_metadata.dwp_role, fallback: user_accounts lokal/cloud berdasar email/auth_id), memberId, username; role UserRole, default 'anggota'
   const role: UserRole = (authUser.app_metadata?.dwp_role as UserRole) || localAcc?.role || 'anggota';
   const memberId = authUser.app_metadata?.member_id || localAcc?.memberId || undefined;
   const username = authUser.user_metadata?.username || localAcc?.username || (cleanEmail ? cleanEmail.split('@')[0] : 'pengguna');
@@ -95,7 +105,8 @@ export const buildUserAccountFromSession = (
     memberId,
     status: 'aktif',
     createdAt: localAcc?.createdAt || new Date().toISOString().split('T')[0],
-    demo: !!authUser.demo
+    demo: !!authUser.demo,
+    auth_id: localAcc?.auth_id || authUserId || undefined
   };
 };
 
@@ -844,7 +855,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Guard refs: Cegah push otomatis saat menerima data dari cloud atau perubahan auth
   const isReceivingFromCloudRef = useRef<boolean>(false);
   const prevUserAccountsRef = useRef<UserAccount[]>(userAccounts);
+  const userAccountsRef = useRef<UserAccount[]>(userAccounts);
+  userAccountsRef.current = userAccounts;
   const prevMembersRef = useRef<Member[]>(members);
+  const membersRef = useRef<Member[]>(members);
+  membersRef.current = members;
   const prevProposalsRef = useRef<ActivityProposal[]>(proposals);
   const prevAttendanceRef = useRef<AttendanceRecord[]>(attendanceRecords);
   const prevNewsRef = useRef<NewsArticle[]>(news);
@@ -894,11 +909,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (!session?.user) return;
       apiService.setAuthSession(session);
       const saved = localStorage.getItem('dwp_user_accounts');
-      const localUsers: UserAccount[] = saved ? JSON.parse(saved) : INITIAL_USER_ACCOUNTS;
-      const acc = buildUserAccountFromSession(session.user, localUsers);
+      const savedUsers: UserAccount[] = saved ? JSON.parse(saved) : [];
+      // Gunakan daftar userAccounts terbaru bila sudah tersedia (bukan hanya saat mount)
+      const currentUsers = (userAccountsRef.current && userAccountsRef.current.length > 0)
+        ? userAccountsRef.current
+        : (savedUsers.length > 0 ? savedUsers : INITIAL_USER_ACCOUNTS);
+      const acc = buildUserAccountFromSession(session.user, currentUsers);
       setCurrentAccount(acc);
       setIsAuthenticated(true);
-      const effRole = (session.user.app_metadata?.dwp_role as UserRole) || getEffectiveRole(acc, members);
+      const currentMembers = (membersRef.current && membersRef.current.length > 0)
+        ? membersRef.current
+        : members;
+      const effRole = (session.user.app_metadata?.dwp_role as UserRole) || getEffectiveRole(acc, currentMembers);
       setCurrentRole(effRole);
     };
 
@@ -939,6 +961,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       subscription.unsubscribe();
     };
   }, [members]);
+
+  // Sinkronkan ulang currentAccount dan currentRole saat daftar userAccounts atau members diperbarui (mis. setelah fetch cloud)
+  useEffect(() => {
+    let isCancelled = false;
+
+    const syncAccountWithSession = async () => {
+      let session = apiService.getAuthSession();
+      let authUser: any = session?.user;
+
+      // Jika belum tersimpan di apiService, cek sesi aktif supabase
+      if (!authUser) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (data?.session?.user) {
+            authUser = data.session.user;
+            apiService.setAuthSession(data.session);
+          }
+        } catch {
+          // Abaikan jika offline / network error
+        }
+      }
+
+      // JANGAN menimpa currentAccount saat pengguna logout / tanpa sesi
+      if (isCancelled || !authUser) return;
+
+      const updatedAccount = buildUserAccountFromSession(authUser, userAccounts);
+      setCurrentAccount(prev => {
+        if (!prev) return updatedAccount;
+        if (
+          prev.id === updatedAccount.id &&
+          prev.username === updatedAccount.username &&
+          prev.email === updatedAccount.email &&
+          prev.role === updatedAccount.role &&
+          prev.memberId === updatedAccount.memberId &&
+          prev.auth_id === updatedAccount.auth_id
+        ) {
+          return prev;
+        }
+        return updatedAccount;
+      });
+
+      const effRole = (authUser.app_metadata?.dwp_role as UserRole) || getEffectiveRole(updatedAccount, members);
+      setCurrentRole(prev => (prev === effRole ? prev : effRole));
+    };
+
+    syncAccountWithSession();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [userAccounts, members]);
 
   const [activeTab, setActiveTabState] = useState<'public' | 'admin'>('public');
   const [adminSubTab, setAdminSubTabState] = useState<AdminSubTab>('dashboard');
@@ -1070,7 +1143,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (cloudData.userAccounts && cloudData.userAccounts.length > 0) {
         setUserAccounts(cloudData.userAccounts);
         prevUserAccountsRef.current = cloudData.userAccounts;
+        userAccountsRef.current = cloudData.userAccounts;
         localStorage.setItem('dwp_user_accounts', JSON.stringify(cloudData.userAccounts));
+
+        const activeSess = apiService.getAuthSession();
+        if (activeSess?.user) {
+          const membersList = (cloudData.members && cloudData.members.length > 0) ? cloudData.members : membersRef.current;
+          const freshAcc = buildUserAccountFromSession(activeSess.user, cloudData.userAccounts);
+          setCurrentAccount(freshAcc);
+          const effRole = (activeSess.user.app_metadata?.dwp_role as UserRole) || getEffectiveRole(freshAcc, membersList);
+          setCurrentRole(effRole);
+        }
       }
       if (cloudData.proposals && cloudData.proposals.length > 0) {
         setProposals(cloudData.proposals);
@@ -1172,12 +1255,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (cloudData.userAccounts && cloudData.userAccounts.length > 0) {
           setUserAccounts(cloudData.userAccounts);
           prevUserAccountsRef.current = cloudData.userAccounts;
+          userAccountsRef.current = cloudData.userAccounts;
           localStorage.setItem('dwp_user_accounts', JSON.stringify(cloudData.userAccounts));
+
+          const activeSess = apiService.getAuthSession() || (session ? { user: session.user } : null);
+          if (activeSess?.user) {
+            const membersList = (cloudData.members && cloudData.members.length > 0) ? cloudData.members : membersRef.current;
+            const freshAcc = buildUserAccountFromSession(activeSess.user, cloudData.userAccounts);
+            setCurrentAccount(freshAcc);
+            const effRole = (activeSess.user.app_metadata?.dwp_role as UserRole) || getEffectiveRole(freshAcc, membersList);
+            setCurrentRole(effRole);
+          }
         } else if (hasAuth && cloudData.userAccounts !== null && cloudData.userAccounts.length === 0) {
           // Hanya auto-seed jika tabel cloud benar-benar KOSONG (0 baris)
           await cloudSync.syncUserAccounts(INITIAL_USER_ACCOUNTS);
           setUserAccounts(INITIAL_USER_ACCOUNTS);
           prevUserAccountsRef.current = INITIAL_USER_ACCOUNTS;
+          userAccountsRef.current = INITIAL_USER_ACCOUNTS;
           localStorage.setItem('dwp_user_accounts', JSON.stringify(INITIAL_USER_ACCOUNTS));
         }
 
@@ -1485,7 +1579,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const targetProposal = proposals.find(p => p.id === proposalId);
     if (!targetProposal) return;
 
-    const canView = canViewProposalDetail(currentRole, activePersona.name, targetProposal);
+    const canView = canViewProposalDetail(currentRole, activePersona.name, targetProposal, currentAccount?.memberId);
     if (!canView) {
       alert(`🔒 AKSES DETIL TERBATAS:\n\nSebagai Ketua Bidang, Anda hanya dapat membuka detil kegiatan yang Anda usulkan sendiri.\n\nDetil kegiatan "${targetProposal.title}" ini hanya dapat dibuka oleh Pengusul (${targetProposal.createdBy}) atau Pimpinan (Ketua, Wakil, Sekretaris).`);
       return;

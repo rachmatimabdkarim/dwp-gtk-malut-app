@@ -193,7 +193,8 @@ export const getRoleDescription = (role: UserRole): { label: string; icon: strin
 export const canViewProposalDetail = (
   role: UserRole,
   activePersonaName: string,
-  proposal: { createdBy: string; creatorRole?: UserRole }
+  proposal: { createdBy: string; creatorRole?: UserRole; committeeMembers?: { memberId?: string }[]; documentJobDesks?: { assignedMemberId?: string }[] },
+  myMemberId?: string
 ): boolean => {
   if (
     role === 'ketua' || 
@@ -206,5 +207,19 @@ export const canViewProposalDetail = (
   }
 
   const isCreator = proposal.createdBy === activePersonaName || proposal.creatorRole === role;
-  return isCreator;
+  if (isCreator) return true;
+
+  // Ketua Bidang tetap boleh membuka kegiatan bila ia ditunjuk sebagai
+  // anggota panitia pelaksana / penanggung jawab dokumen (jobdesk) kegiatan tsb.
+  if (role === 'admin_bidang' && myMemberId) {
+    const inCommittee = (proposal.committeeMembers || []).some(
+      m => m.memberId && String(m.memberId) === String(myMemberId)
+    );
+    const inJobDesk = (proposal.documentJobDesks || []).some(
+      d => d.assignedMemberId && String(d.assignedMemberId) === String(myMemberId)
+    );
+    if (inCommittee || inJobDesk) return true;
+  }
+
+  return false;
 };

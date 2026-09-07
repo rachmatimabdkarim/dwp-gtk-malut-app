@@ -362,7 +362,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
           const isRevision = proposal.currentStage === 'revision_requested';
           const userCanAct = canPersonaActOnStage(proposal);
           const isMyProposal = proposal.createdBy === activePersona.name;
-          const userCanViewDetail = canViewProposalDetail(currentRole, activePersona.name, proposal);
+          const userCanViewDetail = canViewProposalDetail(currentRole, activePersona.name, proposal, currentAccount?.memberId);
 
           return (
             <div 

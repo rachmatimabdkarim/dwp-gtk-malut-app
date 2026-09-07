@@ -294,7 +294,8 @@ export const cloudSync = {
         role: row.role as UserRole,
         memberId: row.member_id || undefined,
         status: row.status === 'non-aktif' ? 'non-aktif' : 'aktif',
-        createdAt: row.created_at ? row.created_at.split('T')[0] : new Date().toISOString().split('T')[0]
+        createdAt: row.created_at ? row.created_at.split('T')[0] : new Date().toISOString().split('T')[0],
+        auth_id: row.auth_id || undefined
       }));
     } catch (e) {
       console.warn('Supabase fetchUserAccounts exception:', e);
@@ -314,7 +315,8 @@ export const cloudSync = {
         role: u.role,
         member_id: u.memberId ? ensureUUID(u.memberId) : null,
         status: u.status || 'aktif',
-        created_at: toISOStringSafe(u.createdAt)
+        created_at: toISOStringSafe(u.createdAt),
+        ...(u.auth_id ? { auth_id: ensureUUID(u.auth_id) } : {})
       }));
 
       const { error } = await supabase.from('user_accounts').upsert(rows, { onConflict: 'id' });
