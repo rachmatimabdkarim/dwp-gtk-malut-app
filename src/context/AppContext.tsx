@@ -863,6 +863,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const prevProposalsRef = useRef<ActivityProposal[]>(proposals);
   const prevAttendanceRef = useRef<AttendanceRecord[]>(attendanceRecords);
   const prevNewsRef = useRef<NewsArticle[]>(news);
+  const prevReportsRef = useRef<ExecutionReport[]>(reports);
   const prevSiteConfigRef = useRef<SiteConfig>(siteConfig);
   const prevActivityDocumentsRef = useRef<ActivityDocument[]>(activityDocuments);
   const prevNotificationsRef = useRef<AppNotification[]>(notifications);
@@ -1215,6 +1216,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           return merged;
         });
       }
+      if (hasAuth && cloudData.reports && cloudData.reports.length > 0) {
+        setReports(cloudData.reports);
+        prevReportsRef.current = cloudData.reports;
+        localStorage.setItem('dwp_reports', JSON.stringify(cloudData.reports));
+      }
     } catch (err) {
       console.warn('Reload from cloud error:', err);
     } finally {
@@ -1366,6 +1372,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             return merged;
           });
         }
+
+        // 10. Reports (LPJ)
+        if (hasAuth && cloudData.reports && cloudData.reports.length > 0) {
+          setReports(cloudData.reports);
+          prevReportsRef.current = cloudData.reports;
+          localStorage.setItem('dwp_reports', JSON.stringify(cloudData.reports));
+        } else if (hasAuth && cloudData.reports !== null && cloudData.reports.length === 0) {
+          // Auto-seed jika tabel cloud benar-benar KOSONG (0 baris)
+          await cloudSync.syncReports(INITIAL_REPORTS);
+          setReports(INITIAL_REPORTS);
+          prevReportsRef.current = INITIAL_REPORTS;
+          localStorage.setItem('dwp_reports', JSON.stringify(INITIAL_REPORTS));
+        }
       } catch (err) {
         console.warn('Initial cloud data loading error, fallback to local data:', err);
       } finally {
@@ -1449,7 +1468,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     localStorage.setItem('dwp_reports', JSON.stringify(reports));
-  }, [reports]);
+    if (isReceivingFromCloudRef.current) {
+      prevReportsRef.current = reports;
+      return;
+    }
+    if (prevReportsRef.current === reports) {
+      return;
+    }
+    prevReportsRef.current = reports;
+    if (isInitialized && isAuthenticated) {
+      cloudSync.syncReports(reports);
+    }
+  }, [reports, isInitialized, isAuthenticated]);
 
   useEffect(() => {
     localStorage.setItem('dwp_news', JSON.stringify(news));
@@ -2394,8 +2424,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const nowStr = new Date().toISOString().split('T')[0];
     const proposal = proposals.find(p => p.id === repData.activityId);
 
+    let savedReport: ExecutionReport;
+
     if (existing) {
-      setReports(prev => prev.map(r => r.id === existing.id ? { ...r, ...repData, updatedAt: nowStr } : r));
+      savedReport = { ...existing, ...repData, updatedAt: nowStr };
+      setReports(prev => prev.map(r => r.id === existing.id ? savedReport : r));
     } else {
       const newRep: ExecutionReport = {
         id: generateUUID(),
@@ -2414,7 +2447,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         createdAt: nowStr,
         updatedAt: nowStr
       };
+      savedReport = newRep;
       setReports(prev => [newRep, ...prev]);
+    }
+
+    // Push ke cloud bila ada sesi login dan bukan saat menerima data cloud (anti-echo)
+    if (isAuthenticated && !isReceivingFromCloudRef.current) {
+      cloudSync.syncReports([savedReport]);
     }
   };
 
@@ -2422,12 +2461,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const targetReport = reports.find(r => r.id === reportId);
     if (!targetReport) return;
 
-    // 1. Update report status to approved_published
-    setReports(prev => prev.map(r => r.id === reportId ? {
-      ...r,
+    const updatedReport: ExecutionReport = {
+      ...targetReport,
       status: 'approved_published',
-      ketuaNotes
-    } : r));
+      ketuaNotes,
+      updatedAt: new Date().toISOString().split('T')[0]
+    };
+
+    // 1. Update report status to approved_published
+    setReports(prev => prev.map(r => r.id === reportId ? updatedReport : r));
 
     // 2. Automatically generate News Article for Public Web!
     const newArticle: NewsArticle = {
@@ -2453,6 +2495,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       action: 'Persetujuan LPJ & Publikasi Berita',
       details: `Laporan Pelaksanaan Kegiatan "${targetReport.activityTitle}" telah disetujui resmi oleh Ketua DWP dan diterbitkan sebagai Berita Publik.`
     });
+
+    // 3. Push status laporan lokal->cloud & simpan berita ke cloud news saat login (anti-echo)
+    if (isAuthenticated && !isReceivingFromCloudRef.current) {
+      cloudSync.syncReports([updatedReport]);
+      cloudSync.syncNews([newArticle]);
+    }
   };
 
   const addNewsArticle = (art: Omit<NewsArticle, 'id'>) => {

@@ -4,12 +4,19 @@ import { ExecutionReport } from '../../types';
 import { FileCheck, Printer, Globe, Edit3, CheckCircle2, Sparkles, Image as ImageIcon, Send, ArrowRight } from 'lucide-react';
 import { formatDateDDMMYYYY } from '../../utils/dateFormatter';
 
-export const ReportGeneratorModal: React.FC = () => {
+interface ReportGeneratorModalProps {
+  initialActivityId?: string;
+}
+
+export const ReportGeneratorModal: React.FC<ReportGeneratorModalProps> = ({ initialActivityId }) => {
   const { proposals, reports, createOrUpdateReport, approveReportAndPublishNews, attendanceRecords, activePersona } = useApp();
 
-  const [selectedActivityId, setSelectedActivityId] = useState<string>(
-    proposals.length > 0 ? proposals[0].id : ''
-  );
+  const [selectedActivityId, setSelectedActivityId] = useState<string>(() => {
+    if (initialActivityId && proposals.some(p => p.id === initialActivityId)) {
+      return initialActivityId;
+    }
+    return proposals.length > 0 ? proposals[0].id : '';
+  });
 
   const activeReport = reports.find(r => r.activityId === selectedActivityId);
   const activeProposal = proposals.find(p => p.id === selectedActivityId);
@@ -18,16 +25,41 @@ export const ReportGeneratorModal: React.FC = () => {
   // Form State
   const [isEditing, setIsEditing] = useState(false);
   const [reportTitle, setReportTitle] = useState(
-    activeReport?.reportTitle || `LAPORAN PELAKSANAAN KEGIATAN ${activeProposal?.title.toUpperCase()}`
+    activeReport?.reportTitle || (activeProposal ? `LAPORAN PELAKSANAAN KEGIATAN ${activeProposal.title.toUpperCase()}` : '')
   );
   const [background, setBackground] = useState(activeReport?.background || activeProposal?.background || '');
   const [executionSummary, setExecutionSummary] = useState(activeReport?.executionSummary || '');
   const [totalParticipants, setTotalParticipants] = useState(activeReport?.totalParticipants || currentAttendance.length || 50);
   const [actualBudget, setActualBudget] = useState(activeReport?.actualBudget || activeProposal?.estimatedBudget || 10000000);
   const [outcomeResults, setOutcomeResults] = useState(activeReport?.outcomeResults || '');
-  const [photoUrl, setPhotoUrl] = useState(activeReport?.photoUrls[0] || 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=800&auto=format&fit=crop&q=80');
+  const [photoUrl, setPhotoUrl] = useState(activeReport?.photoUrls?.[0] || 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=800&auto=format&fit=crop&q=80');
 
   const [ketuaNotes, setKetuaNotes] = useState('');
+
+  React.useEffect(() => {
+    if (initialActivityId && proposals.some(p => p.id === initialActivityId)) {
+      setSelectedActivityId(initialActivityId);
+      const foundRep = reports.find(r => r.activityId === initialActivityId);
+      const foundProp = proposals.find(p => p.id === initialActivityId);
+      const foundAtt = attendanceRecords.filter(a => a.activityId === initialActivityId);
+      if (foundRep) {
+        setReportTitle(foundRep.reportTitle);
+        setBackground(foundRep.background);
+        setExecutionSummary(foundRep.executionSummary);
+        setTotalParticipants(foundRep.totalParticipants);
+        setActualBudget(foundRep.actualBudget);
+        setOutcomeResults(foundRep.outcomeResults);
+        setPhotoUrl(foundRep.photoUrls?.[0] || 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=800&auto=format&fit=crop&q=80');
+      } else if (foundProp) {
+        setReportTitle(`LAPORAN PELAKSANAAN KEGIATAN ${foundProp.title.toUpperCase()}`);
+        setBackground(foundProp.background || '');
+        setExecutionSummary('');
+        setTotalParticipants(foundAtt.length || 50);
+        setActualBudget(foundProp.estimatedBudget || 10000000);
+        setOutcomeResults('');
+      }
+    }
+  }, [initialActivityId]);
 
   const handleSaveReport = (e: React.FormEvent) => {
     e.preventDefault();

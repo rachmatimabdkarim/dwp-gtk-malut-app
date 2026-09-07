@@ -37,6 +37,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { ensureUUID } from '../../services/cloudSync';
+import { ReportGeneratorModal } from './ReportGeneratorModal';
 
 export const FiveStageApprovalWorkflow: React.FC = () => {
   const { 
@@ -2401,25 +2402,7 @@ export const FiveStageApprovalWorkflow: React.FC = () => {
               {/* TAB 5: LPJ & BERITA */}
               {activeTabWorkspace === 'lpj' && (
                 <div className="space-y-4">
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                    <div className="font-bold text-slate-900">Laporan Pelaksanaan & Publikasi Berita Website:</div>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
-                        <span className="font-bold text-slate-800 block">📊 Upload LPJ & RAB Akhir</span>
-                        <p className="text-[10px] text-slate-500">Upload laporan pertanggungjawaban kegiatan & realisasi anggaran.</p>
-                        <button className="bg-dwp-burgundy text-white text-[11px] font-bold px-3 py-2 rounded-lg w-full">
-                          Upload Dokumen LPJ
-                        </button>
-                      </div>
-                      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
-                        <span className="font-bold text-slate-800 block">📰 Terbitkan Berita Kegiatan</span>
-                        <p className="text-[10px] text-slate-500">Publikasikan dokumentasi & narasi berita ke Halaman Depan Website.</p>
-                        <button className="bg-emerald-700 text-white text-[11px] font-bold px-3 py-2 rounded-lg w-full">
-                          Publish ke Berita Publik
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                  <ReportGeneratorModal initialActivityId={detailProposal.id} />
                 </div>
               )}
 

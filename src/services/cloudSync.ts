@@ -17,7 +17,8 @@ import {
   CommitteeStatus,
   CommitteeLog,
   DocumentJobDesk,
-  JobDeskLog
+  JobDeskLog,
+  ExecutionReport
 } from '../types';
 import { toISODateSafe, toISOStringSafe } from '../utils/dateFormatter';
 
@@ -982,7 +983,137 @@ export const cloudSync = {
   },
 
   // ==========================================
-  // 10. INITIAL BULK LOADER
+  // 10. LAPORAN PERTANGGUNGJAWABAN (EXECUTION REPORTS)
+  // ==========================================
+  async fetchReports(isLoggedIn?: boolean): Promise<ExecutionReport[] | null> {
+    try {
+      const isAuth = isLoggedIn !== undefined ? isLoggedIn : await hasActiveAuthSession();
+      if (!isAuth) {
+        // Mode Anonim: JANGAN baca execution_reports privat dari Supabase (cegah 403 RLS)
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from('execution_reports')
+        .select('*');
+
+      if (error) {
+        handleSupabaseError('fetchReports', error);
+        return null;
+      }
+      if (!data) return null;
+      if (data.length === 0) return [];
+
+      return data.map((row: any): ExecutionReport => ({
+        id: row.id,
+        activityId: row.proposal_id || row.activity_id || '',
+        activityTitle: row.activity_title || 'Kegiatan DWP GTK Malut',
+        reportTitle: row.report_title || `LAPORAN PELAKSANAAN KEGIATAN ${(row.activity_title || '').toUpperCase()}`,
+        background: row.background || '',
+        executionSummary: row.executive_summary || row.execution_summary || '',
+        totalParticipants: Number(row.actual_participants_count ?? row.total_participants) || 0,
+        actualBudget: Number(row.total_budget_spent ?? row.actual_budget) || 0,
+        outcomeResults: row.outcome_results || '',
+        photoUrls: parseJsonArray<string>(row.documentation_urls || row.photo_urls),
+        status: (row.status === 'approved' ? 'approved_published' : row.status) || 'draft',
+        ketuaNotes: row.notes || row.ketua_notes || undefined,
+        createdAt: row.submitted_at ? row.submitted_at.split('T')[0] : (row.created_at ? row.created_at.split('T')[0] : new Date().toISOString().split('T')[0]),
+        updatedAt: row.updated_at ? row.updated_at.split('T')[0] : (row.submitted_at ? row.submitted_at.split('T')[0] : (row.created_at ? row.created_at.split('T')[0] : new Date().toISOString().split('T')[0]))
+      }));
+    } catch (e) {
+      console.warn('Supabase fetchReports exception:', e);
+      return null;
+    }
+  },
+
+  async syncReports(reportsList: ExecutionReport[]) {
+    try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
+      if (!reportsList || reportsList.length === 0) return;
+
+      for (const rep of reportsList) {
+        const repId = ensureUUID(rep.id);
+        const propId = ensureUUID(rep.activityId);
+
+        // Mapping camel->snake sesuai kolom tabel execution_reports (Instruksi F7)
+        const rowA: any = {
+          id: repId,
+          proposal_id: propId,
+          activity_title: rep.activityTitle,
+          executive_summary: rep.executionSummary,
+          actual_participants_count: Number(rep.totalParticipants) || 0,
+          total_budget_spent: Number(rep.actualBudget) || 0,
+          documentation_urls: Array.isArray(rep.photoUrls) ? rep.photoUrls : [],
+          status: rep.status === 'approved_published' ? 'approved' : (rep.status || 'draft'),
+          submitted_at: toISOStringSafe(rep.createdAt)
+        };
+        if (rep.ketuaNotes) {
+          rowA.notes = rep.ketuaNotes;
+        }
+
+        const { error: errA } = await supabase.from('execution_reports').upsert(rowA, { onConflict: 'id' });
+
+        if (errA) {
+          // Bila gagal karena nama kolom catatan, coba dengan kolom ketua_notes
+          if (errA.message && errA.message.toLowerCase().includes('notes') && rep.ketuaNotes) {
+            const rowA2 = { ...rowA };
+            delete rowA2.notes;
+            rowA2.ketua_notes = rep.ketuaNotes;
+            const { error: errA2 } = await supabase.from('execution_reports').upsert(rowA2, { onConflict: 'id' });
+            if (!errA2) continue;
+          }
+
+          // Bila skema tabel memakai nama kolom alternatif (mis. dari supabase_schema.sql)
+          const isColumnError = 
+            errA.code === 'PGRST204' || 
+            (errA.message && (
+              errA.message.toLowerCase().includes('column') || 
+              errA.message.toLowerCase().includes('schema cache') ||
+              errA.message.toLowerCase().includes('could not find')
+            ));
+
+          if (isColumnError) {
+            const rowB: any = {
+              id: repId,
+              activity_id: propId,
+              activity_title: rep.activityTitle,
+              report_title: rep.reportTitle || `LAPORAN PELAKSANAAN KEGIATAN ${rep.activityTitle.toUpperCase()}`,
+              background: rep.background || '',
+              execution_summary: rep.executionSummary,
+              total_participants: Number(rep.totalParticipants) || 0,
+              actual_budget: Number(rep.actualBudget) || 0,
+              outcome_results: rep.outcomeResults || '',
+              photo_urls: Array.isArray(rep.photoUrls) ? rep.photoUrls : [],
+              status: rep.status || 'draft',
+              ketua_notes: rep.ketuaNotes || null,
+              created_at: toISODateSafe(rep.createdAt),
+              updated_at: toISODateSafe(rep.updatedAt)
+            };
+            const { error: errB } = await supabase.from('execution_reports').upsert(rowB, { onConflict: 'id' });
+            if (errB) handleSupabaseError('syncReports (fallback)', errB);
+          } else {
+            handleSupabaseError('syncReports', errA);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Sync reports error:', e);
+    }
+  },
+
+  async deleteReport(id: string) {
+    try {
+      if (!await hasActiveAuthSession()) return; // Lewati push ke cloud jika tidak login
+      const uuid = ensureUUID(id);
+      const { error } = await supabase.from('execution_reports').delete().eq('id', uuid);
+      if (error) handleSupabaseError('deleteReport', error);
+    } catch (e) {
+      console.warn('Delete report error:', e);
+    }
+  },
+
+  // ==========================================
+  // 11. INITIAL BULK LOADER
   // ==========================================
   async fetchAllInitialData(isLoggedIn?: boolean) {
     try {
@@ -996,7 +1127,8 @@ export const cloudSync = {
         attendanceRes,
         activityDocumentsRes,
         notificationsRes,
-        kopSuratConfigRes
+        kopSuratConfigRes,
+        reportsRes
       ] = await Promise.allSettled([
         this.fetchMembers(isAuth),
         this.fetchUserAccounts(isAuth),
@@ -1006,7 +1138,8 @@ export const cloudSync = {
         this.fetchAttendance(isAuth),
         this.fetchActivityDocuments(isAuth),
         this.fetchNotifications(isAuth),
-        this.fetchKopSuratConfig(isAuth)
+        this.fetchKopSuratConfig(isAuth),
+        this.fetchReports(isAuth)
       ]);
 
       return {
@@ -1018,7 +1151,8 @@ export const cloudSync = {
         attendance: attendanceRes.status === 'fulfilled' ? attendanceRes.value : null,
         activityDocuments: activityDocumentsRes.status === 'fulfilled' ? activityDocumentsRes.value : null,
         notifications: notificationsRes.status === 'fulfilled' ? notificationsRes.value : null,
-        kopSuratConfig: kopSuratConfigRes.status === 'fulfilled' ? kopSuratConfigRes.value : null
+        kopSuratConfig: kopSuratConfigRes.status === 'fulfilled' ? kopSuratConfigRes.value : null,
+        reports: reportsRes.status === 'fulfilled' ? reportsRes.value : null
       };
     } catch (e) {
       console.warn('Fetch all initial data exception:', e);
